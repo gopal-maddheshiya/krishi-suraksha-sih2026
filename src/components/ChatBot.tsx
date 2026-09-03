@@ -3,7 +3,7 @@ import {
   MessageCircle, X, Send, Loader2, ImagePlus, 
   XCircle, Sparkles, Leaf, Bot, Trash2, Volume2, 
   VolumeX, ShieldCheck, CheckCircle2, FlaskConical,
-  Sprout, HelpCircle
+  Sprout, HelpCircle, KeyRound, Check
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 
@@ -20,9 +20,6 @@ const GEMINI_MODEL_CANDIDATES = [
   'gemini-3.5-flash',
   'gemini-3.6-flash',
   'gemini-3.7-flash',
-  'gemini-2.5-flash-lite',
-  'gemini-flash-latest',
-  'gemini-2.5-pro',
   'gemini-1.5-flash',
 ];
 
@@ -200,6 +197,9 @@ export default function ChatBot() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [welcomeMsg, setWelcomeMsg] = useState('');
+  const [showKeyModal, setShowKeyModal] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState(() => localStorage.getItem('crophealth_gemini_key') || '');
+  const [keySaved, setKeySaved] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -265,11 +265,16 @@ export default function ChatBot() {
     setLoading(true);
 
     try {
-      const directApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      const directApiKey = (
+        import.meta.env.VITE_GEMINI_API_KEY || 
+        localStorage.getItem('crophealth_gemini_key') || 
+        localStorage.getItem('custom_gemini_api_key') || 
+        ''
+      ).trim();
       let reply: string | null = null;
 
-      // 1. If valid AI Studio key exists, call Gemini Vision / Text
-      if (directApiKey && directApiKey.startsWith('AIzaSy')) {
+      // 1. Call Google Gemini LLM
+      if (directApiKey) {
         try {
           const directBody = buildGeminiRequest(newMessages, lang);
           const directData = await callGeminiWithFallback(directApiKey, directBody);
@@ -411,6 +416,13 @@ export default function ChatBot() {
 
             <div className="flex items-center gap-1">
               <button
+                onClick={() => setShowKeyModal(!showKeyModal)}
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors"
+                title="Gemini API Key सेटिंग्स"
+              >
+                <KeyRound className="w-4 h-4" />
+              </button>
+              <button
                 onClick={handleClearChat}
                 className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors"
                 title="चैट रीसेट करें"
@@ -426,6 +438,46 @@ export default function ChatBot() {
               </button>
             </div>
           </div>
+
+          {/* Gemini API Key Settings Dropdown */}
+          {showKeyModal && (
+            <div className="p-3 bg-emerald-950 text-white border-b border-emerald-800 text-xs space-y-2 animate-in slide-in-from-top-2">
+              <div className="flex items-center justify-between font-black">
+                <span className="flex items-center gap-1.5 text-emerald-300">
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>Google Gemini API Key</span>
+                </span>
+                <span className="text-[10px] text-emerald-400 font-medium">Free AI Studio Key</span>
+              </div>
+              <p className="text-[11px] text-emerald-200/80">
+                यदि AI कनेक्ट नहीं हो रहा है, तो यहाँ अपनी Google AI Studio Key डालें:
+              </p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="password"
+                  value={apiKeyInput}
+                  onChange={(e) => setApiKeyInput(e.target.value)}
+                  placeholder="AIzaSy... या AQ..."
+                  className="flex-1 px-3 py-1.5 rounded-lg bg-emerald-900/60 border border-emerald-700 text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.setItem('crophealth_gemini_key', apiKeyInput.trim());
+                    setKeySaved(true);
+                    setTimeout(() => {
+                      setKeySaved(false);
+                      setShowKeyModal(false);
+                    }, 1200);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold text-xs flex items-center gap-1"
+                >
+                  {keySaved ? <Check className="w-3.5 h-3.5" /> : null}
+                  <span>{keySaved ? 'Saved!' : 'Save'}</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Quick Tap Question Pills */}
           <div className="px-3 py-2 bg-stone-100/90 border-b border-stone-200 flex items-center gap-1.5 overflow-x-auto text-[11px]">
