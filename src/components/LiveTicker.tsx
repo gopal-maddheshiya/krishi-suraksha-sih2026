@@ -1,4 +1,4 @@
-import { AlertTriangle, CloudRain, Bug, ShieldAlert, Sparkles } from 'lucide-react';
+import { AlertTriangle, CloudRain, Bug, ShieldAlert, Sparkles, ChevronRight } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 
 interface LiveTickerProps {
@@ -13,67 +13,68 @@ export default function LiveTicker({ onNavigate }: LiveTickerProps) {
       id: 1,
       type: 'pest',
       icon: Bug,
-      badge: lang === 'hi' ? 'कीट चेतावनी' : lang === 'mr' ? 'कीड इशारा' : 'Pest Alert',
+      badge: lang === 'hi' ? 'कीट अलर्ट' : 'Pest Alert',
       text: lang === 'hi' 
-        ? 'नासिक & जलगांव: कपास में पिंक बॉलवर्म की सक्रियता बढ़ी (18+ कीट/जाल)' 
-        : lang === 'mr' 
-        ? 'नाशिक व जळगाव: कापूस पिकात बोंडअळीचा प्रादुर्भाव वाढला (१८+ कीटक/सापळा)'
-        : 'Nashik & Jalgaon: Pink Bollworm spike in Cotton (18+ moths/trap)',
-      action: 'pest'
+        ? 'कपास में गुलाबी सुंडी (पिंक बॉलवर्म) का प्रकोप - फेरोमोन ट्रैप लगाएं' 
+        : 'Pink Bollworm spike in Cotton - Install pheromone traps',
+      action: 'hotspots',
+      color: 'bg-rose-50 text-rose-800 border-rose-200',
     },
     {
       id: 2,
       type: 'weather',
       icon: CloudRain,
-      badge: lang === 'hi' ? 'मौसम जोखिम' : lang === 'mr' ? 'हवामान जोखीम' : 'Weather Risk',
+      badge: lang === 'hi' ? 'मौसम अलर्ट' : 'Weather Alert',
       text: lang === 'hi'
-        ? 'विदर्भ & मराठवाड़ा: 85%+ आर्द्रता के कारण सोयाबीन में फंगल रस्ट का उच्च जोखिम'
-        : lang === 'mr'
-        ? 'विदर्भ व मराठवाडा: ८५%+ आर्द्रतेमुळे सोयाबीन तांबेरा रोगाचा उच्च धोका'
-        : 'Vidarbha & Marathwada: 85%+ Humidity triggers Soybean Rust & Fungal alert',
-      action: 'weather'
+        ? '80%+ आर्द्रता के कारण टमाटर व सोयाबीन में फंगल रस्ट का खतरा'
+        : 'High humidity triggers fungal rust warning for Tomato & Soybean',
+      action: 'weather',
+      color: 'bg-amber-50 text-amber-800 border-amber-200',
     },
     {
       id: 3,
       type: 'hotspot',
       icon: AlertTriangle,
-      badge: lang === 'hi' ? 'हॉटस्पॉट' : lang === 'mr' ? 'हॉटस्पॉट' : 'Hotspot',
+      badge: lang === 'hi' ? 'क्षेत्रीय हॉटस्पॉट' : 'Hotspot',
       text: lang === 'hi'
-        ? 'पुणे & अहमदनगर: टमाटर में अर्ली ब्लाइट के 42 नए मामले दर्ज'
-        : lang === 'mr'
-        ? 'पुणे व अहिल्यानगर: टोमॅटो करपा रोगाची ४२ नवीन प्रकरणे नोंदवली'
-        : 'Pune & Ahmednagar: 42 new Early Blight cases verified in Tomato',
-      action: 'hotspots'
+        ? 'निकटवर्ती 5 किमी क्षेत्र में 28+ नए फसल रोग मामले दर्ज'
+        : '28+ verified foliar cases reported within 5km zone',
+      action: 'hotspots',
+      color: 'bg-emerald-50 text-emerald-800 border-emerald-200',
     }
   ];
 
   return (
-    <div className="bg-gradient-to-r from-emerald-950 via-gray-900 to-emerald-950 text-white border-y border-emerald-800/40 py-2.5 px-4 shadow-inner overflow-hidden">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs sm:text-sm">
+    <div className="w-full bg-white rounded-2xl p-2.5 sm:p-3 border border-stone-200 shadow-2xs">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2.5 text-xs">
+        
+        {/* Live Pulse Label */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="flex h-2.5 w-2.5 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+          <span className="flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
           </span>
-          <span className="font-bold tracking-wider uppercase text-[11px] text-emerald-400 flex items-center gap-1.5">
-            <ShieldAlert className="w-3.5 h-3.5" />
-            {lang === 'hi' ? 'लाइव फील्ड अलर्ट्स' : lang === 'mr' ? 'थेट क्षेत्रीय इशारे' : 'Live Field Surveillance Alerts'}
+          <span className="font-black text-[11px] text-stone-900 uppercase tracking-wider flex items-center gap-1">
+            <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+            <span>{lang === 'hi' ? 'क्षेत्रीय कृषि अलर्ट' : 'Regional Alerts'}</span>
           </span>
-          <span className="text-emerald-600 hidden sm:inline">|</span>
+          <span className="text-stone-300 hidden md:inline">|</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 w-full">
+        {/* Scrolling Alerts Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
           {alerts.map((a) => {
             const Icon = a.icon;
             return (
               <button
                 key={a.id}
+                type="button"
                 onClick={() => onNavigate(a.action)}
-                className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-2.5 py-1.5 text-left transition-all group"
+                className={`flex items-center gap-2 rounded-xl px-2.5 py-1.5 border text-left transition-all hover:scale-[1.01] active:scale-98 ${a.color}`}
               >
-                <Icon className="w-4 h-4 text-emerald-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
-                <span className="truncate text-gray-200 text-xs font-normal">
-                  <span className="font-semibold text-white mr-1.5">[{a.badge}]</span>
+                <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate text-xs font-semibold">
+                  <span className="font-extrabold mr-1">[{a.badge}]</span>
                   {a.text}
                 </span>
               </button>
@@ -81,13 +82,15 @@ export default function LiveTicker({ onNavigate }: LiveTickerProps) {
           })}
         </div>
 
+        {/* View Map Action */}
         <button
           onClick={() => onNavigate('hotspots')}
-          className="hidden lg:flex items-center gap-1 text-xs text-emerald-300 hover:text-white font-medium flex-shrink-0 transition-colors"
+          className="hidden lg:flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex-shrink-0"
         >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>{lang === 'hi' ? 'पूरा मैप देखें' : lang === 'mr' ? 'नकाशा पहा' : 'View GIS Map'} &rarr;</span>
+          <span>{lang === 'hi' ? 'पूरा नक्शा' : 'Live Map'}</span>
+          <ChevronRight className="w-3.5 h-3.5" />
         </button>
+
       </div>
     </div>
   );

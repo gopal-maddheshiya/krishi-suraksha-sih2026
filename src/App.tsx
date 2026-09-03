@@ -3,13 +3,10 @@ import { LanguageProvider, useLang } from '@/lib/LanguageContext';
 import { FarmProvider, useFarmContext } from '@/contexts/FarmContext';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
-import QuickFeatures from '@/components/QuickFeatures';
-import QuickInfoStrip from '@/components/QuickInfoStrip';
-import QuickActionHub from '@/components/QuickActionHub';
+import TopQuickActionHub from '@/components/TopQuickActionHub';
+import LiveTicker from '@/components/LiveTicker';
 import TodayDecisionLayer from '@/components/TodayDecisionLayer';
-import FarmHealthOverview from '@/components/FarmHealthOverview';
 import LatestCropCheckCard from '@/components/LatestCropCheckCard';
-import CropJourneyTimeline from '@/components/CropJourneyTimeline';
 import InteractiveFarmMap from '@/components/InteractiveFarmMap';
 import ImageUpload from '@/components/ImageUpload';
 import Footer from '@/components/Footer';
@@ -17,9 +14,9 @@ import ChatBot from '@/components/ChatBot';
 import LanguageModal from '@/components/LanguageModal';
 import FarmerOnboardingModal from '@/components/FarmerOnboardingModal';
 import AccountProfileSection from '@/components/AccountProfileSection';
-import ActiveFarmBar from '@/components/ActiveFarmBar';
+import ObservationHistorySection from '@/components/ObservationHistorySection';
 import MobileBottomNav from '@/components/MobileBottomNav';
-import { WifiOff, ShieldCheck, UserCheck, MapPin } from 'lucide-react';
+import { WifiOff } from 'lucide-react';
 
 const WeatherRisk = lazy(() => import('@/components/WeatherRisk'));
 const HotspotMap = lazy(() => import('@/components/HotspotMap'));
@@ -61,7 +58,6 @@ function OfflineBanner() {
 function AppContent() {
   const [activeSection, setActiveSection] = useState('home');
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const { activeFarm, setActiveFarm } = useFarmContext();
 
   useEffect(() => {
     // Check if farmer has completed first-time onboarding
@@ -73,19 +69,11 @@ function AppContent() {
 
   const handleNavigate = (section: string) => {
     setActiveSection(section);
-    if (section === 'home') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      setTimeout(() => {
-        const el = document.getElementById(section);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 60);
-    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <div className="min-h-screen bg-slate-100/80 pb-16 md:pb-0 font-sans selection:bg-emerald-500 selection:text-white flex flex-col justify-between">
+    <div className="min-h-screen bg-slate-100/90 pb-20 md:pb-0 font-sans selection:bg-emerald-500 selection:text-white flex flex-col justify-between">
       {/* First-time Farmer Onboarding / Farm Setup Modal */}
       <FarmerOnboardingModal
         isOpen={showOnboarding}
@@ -93,40 +81,49 @@ function AppContent() {
       />
 
       <LanguageModal />
+      
       <Header 
         activeSection={activeSection} 
         onNavigate={handleNavigate} 
         onOpenAccount={() => handleNavigate('account')}
       />
+      
       <OfflineBanner />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 flex-1 w-full">
-        {/* Active Farm & Crop Summary Bar */}
-        <ActiveFarmBar 
-          onFarmChange={(f) => setActiveFarm(f)}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 flex-1 w-full space-y-6">
+        
+        {/* ============================================================= */}
+        {/* TOP QUICK ACTION HUB: JUST BENEATH THE NAVBAR                 */}
+        {/* ============================================================= */}
+        <TopQuickActionHub
+          onNavigateToWeather={() => handleNavigate('weather')}
+          onNavigateToMap={() => handleNavigate('hotspots')}
+          onNavigateToHistory={() => handleNavigate('history')}
+          onNavigateToAdvisory={() => handleNavigate('advisory')}
           onAddNewFarm={() => setShowOnboarding(true)}
         />
 
+        {/* ============================================================= */}
+        {/* 1. HOME SECTION                                               */}
+        {/* ============================================================= */}
         {activeSection === 'home' && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-in fade-in duration-200">
+            
+            {/* Live Regional Pest & Outbreak Alert Ticker */}
+            <LiveTicker onNavigate={handleNavigate} />
+
+            {/* Hero Banner */}
             <Hero 
               onNavigate={handleNavigate} 
               onOpenOnboarding={() => setShowOnboarding(true)} 
             />
 
-            {/* Quick Info & Farm Utilities Strip */}
-            <QuickInfoStrip
-              onNavigateToWeather={() => handleNavigate('weather')}
-              onNavigateToMap={() => {
-                const mapEl = document.getElementById('map-section');
-                if (mapEl) mapEl.scrollIntoView({ behavior: 'smooth' });
-                else handleNavigate('hotspots');
-              }}
-              onNavigateToHistory={() => handleNavigate('report')}
-              onNavigateToAdvisory={() => handleNavigate('advisory')}
-            />
+            {/* Instant AI Leaf Diagnosis & Sample Scans */}
+            <div id="scanner-section" className="scroll-mt-20">
+              <ImageUpload />
+            </div>
 
-            {/* Dynamic "Today" Decision Layer */}
+            {/* Today's Weather & Safe Spray Decision Layer */}
             <TodayDecisionLayer
               onCheckCrop={() => handleNavigate('report')}
               onViewAdvisory={() => handleNavigate('advisory')}
@@ -134,62 +131,34 @@ function AppContent() {
               onViewWeather={() => handleNavigate('weather')}
             />
 
-            {/* Farm Health & Latest Crop Check: Responsive 2-Column Desktop Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <FarmHealthOverview
-                farmId={activeFarm?.id || 'default_farm'}
-                cropName={activeFarm?.crop?.name || 'Cotton'}
-                cropStage={activeFarm?.crop?.stage || 'Flowering'}
-                onNavigateToCheck={() => handleNavigate('report')}
-                onNavigateToAdvisory={() => handleNavigate('advisory')}
-              />
-
+            {/* Recent Check & Regional Map 2-Column Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <LatestCropCheckCard
                 onCheckCrop={() => handleNavigate('report')}
-                onViewHistory={() => handleNavigate('report')}
+                onViewHistory={() => handleNavigate('history')}
               />
+
+              <div id="map-section">
+                <InteractiveFarmMap onNavigateToSurveillance={() => handleNavigate('hotspots')} />
+              </div>
             </div>
 
-            {/* Farmer Action Hub: 4 Key Field Actions */}
-            <QuickActionHub
-              onCheckCrop={() => handleNavigate('report')}
-              onConsultExpert={() => handleNavigate('expert')}
-              onInspectFoliage={() => handleNavigate('advisory')}
-              onManageMoisture={() => handleNavigate('weather')}
-            />
-
-            {/* Real Weather & Early Warning Risk Engine */}
-            <Suspense fallback={<SectionFallback />}>
-              <WeatherRisk />
-            </Suspense>
-
-            {/* Step-by-Step AI Leaf Scanner */}
-            <div id="scanner-section">
-              <ImageUpload />
-            </div>
-
-            {/* Interactive Farm Map */}
-            <div id="map-section">
-              <InteractiveFarmMap onNavigateToSurveillance={() => handleNavigate('hotspots')} />
-            </div>
-
-            {/* Verified ICAR Advisories */}
-            <Suspense fallback={<SectionFallback />}>
-              <AdvisoryList />
-            </Suspense>
-
-            {/* End-to-End Crop Health Journey */}
-            <CropJourneyTimeline
-              onCheckCrop={() => handleNavigate('report')}
-              onViewAdvisory={() => handleNavigate('advisory')}
-            />
           </div>
         )}
 
+        {/* ============================================================= */}
+        {/* 2. DEDICATED SECTIONS                                         */}
+        {/* ============================================================= */}
         {activeSection !== 'home' && (
-          <div className="py-2">
+          <div className="py-2 animate-in fade-in duration-150">
             <Suspense fallback={<SectionFallback />}>
               {activeSection === 'report' && <ImageUpload />}
+              {activeSection === 'history' && (
+                <ObservationHistorySection
+                  onScanNewCrop={() => handleNavigate('report')}
+                  onNavigateToAdvisory={() => handleNavigate('advisory')}
+                />
+              )}
               {activeSection === 'weather' && <WeatherRisk />}
               {activeSection === 'advisory' && <AdvisoryList />}
               {activeSection === 'hotspots' && <HotspotMap />}
@@ -211,11 +180,13 @@ function AppContent() {
         onNavigate={handleNavigate} 
         onOpenAccount={() => handleNavigate('account')}
       />
+
       <MobileBottomNav 
         activeSection={activeSection} 
         onNavigate={handleNavigate} 
         onOpenAccount={() => handleNavigate('account')}
       />
+
       <ChatBot />
     </div>
   );

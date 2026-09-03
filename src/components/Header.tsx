@@ -4,7 +4,7 @@ import {
   Cloud, MapPin, Bug, ShieldCheck, BarChart3, 
   Sparkles, Check, Home, Users, Bell, AlertTriangle, 
   Leaf, Phone, User, BookOpen, Compass, ChevronRight,
-  ExternalLink, LogOut, LogIn
+  ExternalLink, LogOut, LogIn, History
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { languages, type LanguageCode } from '@/lib/i18n';
@@ -42,11 +42,11 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
   const mainNav = [
     { key: 'nav_home', section: 'home', label: lang === 'hi' ? 'होम' : lang === 'mr' ? 'मुख्य' : 'Home', icon: Home },
     { key: 'nav_report', section: 'report', label: lang === 'hi' ? 'फसल जांच' : lang === 'mr' ? 'पीक तपासणी' : 'Check Crop', icon: Camera },
+    { key: 'nav_history', section: 'history', label: lang === 'hi' ? 'जांच इतिहास' : lang === 'mr' ? 'तपासणी इतिहास' : 'My History', icon: History },
     { key: 'nav_weather', section: 'weather', label: lang === 'hi' ? 'मौसम व जोखिम' : lang === 'mr' ? 'हवामान जोखीम' : 'Weather & Risk', icon: Cloud },
     { key: 'nav_advisory', section: 'advisory', label: lang === 'hi' ? 'कृषि सलाह' : lang === 'mr' ? 'कृषी सल्ला' : 'Advisory', icon: BookOpen },
     { key: 'nav_hotspots', section: 'hotspots', label: lang === 'hi' ? 'क्षेत्रीय निगरानी' : lang === 'mr' ? 'क्षेत्रीय पाहणी' : 'Surveillance', icon: Compass },
     { key: 'nav_expert', section: 'expert', label: lang === 'hi' ? 'विशेषज्ञ कक्ष' : lang === 'mr' ? 'तज्ज्ञ कक्ष' : 'Expert Portal', icon: Users },
-    { key: 'nav_dashboard', section: 'dashboard', label: lang === 'hi' ? 'डैशबोर्ड' : lang === 'mr' ? 'डॅशबोर्ड' : 'Dashboard', icon: BarChart3 },
   ];
 
   const handleNav = (section: string) => {
