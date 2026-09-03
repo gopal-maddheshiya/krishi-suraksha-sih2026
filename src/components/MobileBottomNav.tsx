@@ -1,5 +1,6 @@
 import { Home, CloudRain, Camera, User, UserCheck } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
+import { useFarmContext } from '@/contexts/FarmContext';
 
 interface MobileBottomNavProps {
   activeSection: string;
@@ -9,6 +10,11 @@ interface MobileBottomNavProps {
 
 export default function MobileBottomNav({ activeSection, onNavigate, onOpenAccount }: MobileBottomNavProps) {
   const { lang } = useLang();
+  const { currentUser } = useFarmContext();
+
+  const accountLabel = currentUser
+    ? (currentUser.fullName ? currentUser.fullName.split(' ')[0] : (lang === 'hi' ? 'प्रोफाइल' : 'Profile'))
+    : (lang === 'hi' ? 'लॉगिन' : 'Login');
 
   const navItems = [
     {
@@ -29,7 +35,7 @@ export default function MobileBottomNav({ activeSection, onNavigate, onOpenAccou
     },
     {
       id: 'login',
-      label: lang === 'hi' ? 'लॉगिन' : lang === 'mr' ? 'लॉगिन' : 'Login',
+      label: accountLabel,
       icon: User,
       isAccountAction: true,
     },

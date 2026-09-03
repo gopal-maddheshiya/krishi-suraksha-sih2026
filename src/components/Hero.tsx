@@ -13,7 +13,7 @@ type HeroProps = {
 
 export default function Hero({ onNavigate, onOpenOnboarding }: HeroProps) {
   const { lang } = useLang();
-  const { activeFarm, weather, risk, latestObservation } = useFarmContext();
+  const { activeFarm, weather, risk, latestObservation, currentUser } = useFarmContext();
 
   // Natural localized greetings
   const getGreeting = () => {
@@ -40,6 +40,7 @@ export default function Hero({ onNavigate, onOpenOnboarding }: HeroProps) {
   };
 
   const getFarmerRoleTitle = () => {
+    if (currentUser?.fullName) return currentUser.fullName;
     if (lang === 'hi') return 'किसान मित्र';
     if (lang === 'mr') return 'शेतकरी मित्र';
     if (lang === 'bn') return 'কৃষক বন্ধু';

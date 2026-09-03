@@ -12,6 +12,8 @@ import { AuthService, type UserProfile } from '@/services/AuthService';
 import { supabase } from '@/lib/supabase';
 import type { GeoLocation } from '@/services/types';
 
+import { useFarmContext } from '@/contexts/FarmContext';
+
 interface FarmerOnboardingModalProps {
   isOpen: boolean;
   onComplete: () => void;
@@ -19,6 +21,7 @@ interface FarmerOnboardingModalProps {
 
 export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnboardingModalProps) {
   const { lang, setLang } = useLang();
+  const { setCurrentUser: setGlobalCurrentUser, setActiveFarm: setGlobalActiveFarm } = useFarmContext();
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
 
   // Step 1: Auth State
@@ -59,11 +62,12 @@ export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnbo
     AuthService.getCurrentUser().then((user) => {
       if (user) {
         setCurrentUser(user);
+        setGlobalCurrentUser(user);
         setFullName(user.fullName || '');
         if (user.phone) setPhone(user.phone);
       }
     });
-  }, [isOpen]);
+  }, [isOpen, setGlobalCurrentUser]);
 
   if (!isOpen) return null;
 
@@ -85,6 +89,7 @@ export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnbo
     try {
       const user = await AuthService.signUpWithPhone(fullName, phone, password);
       setCurrentUser(user);
+      setGlobalCurrentUser(user);
       setStep(2); // Proceed to location
     } catch (err: any) {
       setAuthError(err.message || 'खाता निर्माण विफल रहा (Sign up failed).');
@@ -101,6 +106,7 @@ export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnbo
     try {
       const user = await AuthService.loginWithPhone(phone, password);
       setCurrentUser(user);
+      setGlobalCurrentUser(user);
       setStep(2); // Proceed to location
     } catch (err: any) {
       setAuthError(err.message || 'लॉगिन विफल रहा (Authentication failed).');
@@ -204,7 +210,7 @@ export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnbo
         console.warn('Database farm insert warning (offline fallback active):', dbErr);
       }
 
-      // 2. Local State Sync
+      // 2. Local State Sync & Context Update
       const savedFarm = {
         id: databaseFarmId,
         farm_name: farmName || 'Main Farm',
@@ -225,6 +231,8 @@ export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnbo
         },
       };
 
+      setGlobalActiveFarm(savedFarm);
+      if (currentUser) setGlobalCurrentUser(currentUser);
       localStorage.setItem('crophealth_active_farm', JSON.stringify(savedFarm));
       localStorage.setItem('crophealth_onboarded', 'true');
       onComplete();
