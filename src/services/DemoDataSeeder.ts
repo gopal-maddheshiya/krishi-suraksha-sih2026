@@ -297,38 +297,19 @@ export const REAL_DEMO_OBSERVATIONS: CropObservationEntity[] = [
 
 export class DemoDataSeeder {
   /**
-   * Seed authentic real observation history into local cache & Supabase
+   * Only real farmer data is retained
    */
   public static async seedAllRealData(): Promise<void> {
+    // Keep local cache clean of any hardcoded mock observations
     try {
-      // 1. Local Cache initialization for zero-latency instant offline access
       const existing = localStorage.getItem('crophealth_observations_cache');
-      if (!existing || JSON.parse(existing).length === 0) {
-        localStorage.setItem('crophealth_observations_cache', JSON.stringify(REAL_DEMO_OBSERVATIONS));
-      }
-
-      // 2. Try inserting master records into Supabase if connected
-      const { data: authData } = await supabase.auth.getUser();
-      if (authData.user) {
-        for (const obs of REAL_DEMO_OBSERVATIONS) {
-          try {
-            await supabase.from('crop_observations').upsert({
-              id: obs.id,
-              reported_by: authData.user.id,
-              description: obs.description,
-              priority: obs.priority,
-              status: obs.status,
-              observed_at: obs.observed_at,
-              created_at: obs.created_at,
-              updated_at: obs.updated_at,
-              latitude: obs.latitude,
-              longitude: obs.longitude,
-            });
-          } catch {}
+      if (existing) {
+        const list = JSON.parse(existing);
+        if (Array.isArray(list)) {
+          const onlyReal = list.filter((r: any) => !r.id?.startsWith('obs_demo_'));
+          localStorage.setItem('crophealth_observations_cache', JSON.stringify(onlyReal));
         }
       }
-    } catch (err) {
-      console.warn('DemoDataSeeder notice:', err);
-    }
+    } catch {}
   }
 }

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { 
   Camera, ImageIcon, Loader2, CheckCircle2, AlertTriangle, 
   Send, X, Sparkles, Sprout, Bot, ShieldCheck, 
-  FlaskConical, Leaf, Clock, ArrowRight, History
+  FlaskConical, Leaf, Clock, ArrowRight, History, Check, Eye
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { 
@@ -12,6 +12,8 @@ import {
   type CropDiagnosisResponse, 
   type CropContext 
 } from '@/services/DiagnosisService';
+import { ComputerVisionDiagnosis } from '@/services/ComputerVisionDiagnosis';
+import { GeminiVisionLiveService } from '@/services/GeminiVisionLiveService';
 import { 
   getLocalizedCropName, 
   getLocalizedStageName, 
@@ -175,20 +177,16 @@ export default function ImageUpload({ onNavigateToHistory }: ImageUploadProps) {
       setDiagnosis(result);
 
       const detectedName = result.primaryPrediction?.diseaseName || getCommonLabel('healthyCrop', lang);
+      const aiReviewText = result.aiReview || result.visualSymptoms;
 
-      // Multi-Language Welcome Messages
-      const welcomeMessages: Record<LanguageCode, string> = {
-        hi: `🌾 **कृषि-रक्षा AI सलाहकार:** आपकी ${localizedCrop} की फसल में **${detectedName}** के लक्षण मिले हैं। बाईं तरफ ICAR अनुमोदित दवा और जैविक उपचार दिया गया है। छिड़काव के समय, पानी के अनुपात या सावधानी से संबंधित कोई भी सवाल नीचे पूछें।`,
-        mr: `🌾 **कृषी-रक्षा AI सल्लागार:** आपल्या ${localizedCrop} पिकात **${detectedName}** ची लक्षणे आढळली आहेत. डाव्या बाजूला ICAR प्रमाणित औषध आणि जैविक उपचार दिले आहेत. फवारणीची वेळ, पाण्याचे प्रमाण किंवा सुरक्षिततेबद्दल खाली कोणताही प्रश्न विचारा.`,
-        bn: `🌾 **কৃষি-রক্ষা AI উপদেষ্টা:** আপনার ${localizedCrop} ফসলে **${detectedName}** এর লক্ষণ পাওয়া গেছে। বাম পাশে ICAR অনুমোদিত ওষুধ এবং জৈব প্রতিকার দেওয়া হয়েছে। স্প্রে করার সময় বা সতর্কতা সম্পর্কে নিচে যেকোনো প্রশ্ন জিজ্ঞাসা করুন।`,
-        ta: `🌾 **வேளாண் AI ஆலோசகர்:** உங்கள் ${localizedCrop} பயிரில் **${detectedName}** அறிகுறிகள் கண்டறியப்பட்டுள்ளன. இடதுபுறத்தில் ICAR பரிந்துரைக்கப்பட்ட மருந்து மற்றும் இயற்கை சிகிச்சை கொடுக்கப்பட்டுள்ளது. எந்த கேள்வியையும் கீழே கேளுங்கள்.`,
-        te: `🌾 **వ్యవసాయ AI సలహాదారు:** మీ ${localizedCrop} పంటలో **${detectedName}** లక్షణాలు గుర్తించబడ్డాయి. ఎడమవైపున ICAR సిఫార్సు చేసిన మందు మరియు సేంద్రీయ నివారణ ఇవ్వబడ్డాయి. పిచికారీ గురించి ఏదైనా ప్రశ్న అడగండి.`,
-        gu: `🌾 **કૃષિ-રક્ષા AI સલાહકાર:** તમારા ${localizedCrop} પાકમાં **${detectedName}** ના લક્ષણો જણાયા છે. ડાબી બાજુએ ICAR માન્ય દવા અને જૈવિક ઉપચાર આપેલ છે. છંટકાવના સમય અંગે નીચે કોઈ પણ પ્રશ્ન પૂછો.`,
-        pa: `🌾 **ਖੇਤੀ-ਰੱਖਿਆ AI ਸਲਾਹਕਾਰ:** ਤੁਹਾਡੀ ${localizedCrop} ਦੀ ਫ਼ਸਲ ਵਿੱਚ **${detectedName}** ਦੇ ਲੱਛਣ ਮਿਲੇ ਹਨ। ਖੱਬੇ ਪਾਸੇ ICAR ਪ੍ਰਮਾਣਿਤ ਦਵਾਈ ਅਤੇ ਜੈਵਿਕ ਇਲਾਜ ਦਿੱਤਾ ਗਿਆ ਹੈ। ਛਿੜਕਾਅ ਬਾਰੇ ਹੇਠਾਂ ਕੋਈ ਵੀ ਸਵਾਲ ਪੁੱਛੋ।`,
-        en: `🌾 **CropHealth AI Advisor:** **${detectedName}** detected on your ${localizedCrop}. Certified ICAR chemical and organic remedies are listed on the left. Ask any follow-up questions below regarding dosages or safe spray timing.`,
-      };
+      // Multi-Language Grounded AI Welcome Message based on real photo findings
+      const welcomeText = lang === 'hi'
+        ? `🌾 **कृषि-रक्षा AI विश्लेषण रिपोर्ट:**\nआपकी ${localizedCrop} की पत्ती की जांच में **${detectedName}** की पुष्टि हुई है।\n\n🔍 **फोटो में AI द्वारा देखे गए लक्षण:** ${result.visualSymptoms}\n\n💡 **AI समीक्षा:** ${aiReviewText}\n\nबाईं तरफ ICAR अनुमोदित दवा और जैविक उपचार दिया गया है। छिड़काव या सावधानी संबंधी कोई भी प्रश्न नीचे पूछें।`
+        : lang === 'mr'
+        ? `🌾 **कृषी-रक्षा AI तपासणी अहवाल:**\nआपल्या ${localizedCrop} पिकात **${detectedName}** चे निदान झाले आहे.\n\n🔍 **फोटोतील AI निरीक्षण:** ${result.visualSymptoms}\n\n💡 **AI पुनरावलोकन:** ${aiReviewText}\n\nडाव्या बाजूला ICAR प्रमाणित औषध दिले आहे. खाली कोणताही प्रश्न विचारा.`
+        : `🌾 **CropHealth AI Vision Report:**\n**${detectedName}** confirmed on your ${localizedCrop} leaf.\n\n🔍 **Visual Symptoms Identified on Photo:** ${result.visualSymptoms}\n\n💡 **AI Agronomist Review:** ${aiReviewText}\n\nRecommended ICAR dosages are listed on the left. Ask any follow-up questions below.`;
 
-      setChatHistory([{ role: 'assistant', text: welcomeMessages[lang] || welcomeMessages.en }]);
+      setChatHistory([{ role: 'assistant', text: welcomeText }]);
 
       if (imagePreview) {
         try {
@@ -218,12 +216,17 @@ export default function ImageUpload({ onNavigateToHistory }: ImageUploadProps) {
             farm_crop: {
               current_stage: cropContext.cropStage || 'Flowering Stage',
               variety: cropContext.variety || 'Certified Variety',
-              crop: { name: cropContext.cropName || 'Cotton' },
+              crop: { 
+                name: (cropContext.cropName && cropContext.cropName !== 'Auto-Detect') 
+                  ? cropContext.cropName 
+                  : (detectedName.includes('अमरूद') || detectedName.includes('Guava') ? 'Guava' : detectedName.includes('टमाटर') || detectedName.includes('Tomato') ? 'Tomato' : detectedName.includes('धान') || detectedName.includes('Rice') ? 'Rice' : 'Guava') 
+              },
             },
           };
 
           const currentCache = JSON.parse(localStorage.getItem('crophealth_observations_cache') || '[]');
           localStorage.setItem('crophealth_observations_cache', JSON.stringify([newRecord, ...currentCache]));
+          window.dispatchEvent(new CustomEvent('crophealth-scan-saved', { detail: newRecord }));
         } catch (saveErr) {
           console.warn('Cache save notice:', saveErr);
         }
@@ -236,7 +239,7 @@ export default function ImageUpload({ onNavigateToHistory }: ImageUploadProps) {
   };
 
   /**
-   * Multi-Turn AI Consultation Engine
+   * Multi-Turn AI Consultation Engine Grounded in Current Photo
    */
   const handleAskAI = async (queryText: string) => {
     const q = queryText.trim();
@@ -252,42 +255,24 @@ export default function ImageUpload({ onNavigateToHistory }: ImageUploadProps) {
 
     const diagnosedIssue = diagnosis?.primaryPrediction?.diseaseName || 'Crop Disease';
     const targetLanguageName = getFullLanguageName(lang);
+    const photoContextStr = `Current Leaf Photo Context: Diagnosed Issue: ${diagnosedIssue} on ${localizedCrop}. Visual Symptoms: ${diagnosis?.visualSymptoms || ''}. Chemical: ${diagnosis?.chemicalTreatment || ''}. Organic: ${diagnosis?.biologicalTreatment || ''}.`;
 
     const apiMessages = [
       {
         role: 'system',
-        content: `You are the Official Senior CropHealth Agronomist. The farmer scanned ${localizedCrop} with diagnosed ${diagnosedIssue}. Provide direct, crisp, structured ICAR advice STRICTLY in ${targetLanguageName}. Include exact chemical doses, time of day (after 4 PM), PHI safety period, and bio-pesticide alternatives. Avoid raw asterisks.`,
+        content: `You are the Official Senior CropHealth Agronomist. Context from farmer's current leaf photo: ${photoContextStr}. Answer the farmer's question directly in ${targetLanguageName}. Give exact chemical doses (ml/L or g/L), application instructions, PHI interval, and organic remedies. Avoid raw markdown asterisks.`,
       },
       ...updatedHistory.map((m) => ({ role: m.role, content: m.text })),
     ];
 
     try {
-      let reply: string | null = null;
-
-      try {
-        const res = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: apiMessages,
-            language: lang,
-          }),
-        });
-        if (res.ok) {
-          const json = await res.json();
-          if (json?.reply) reply = json.reply;
-        }
-      } catch {}
-
-      if (!reply) {
-        if (lang === 'hi') {
-          reply = `🌾 **कृषि-रक्षा AI सलाह:**\n\n1. **दवा एवं मात्रा:** एमामेक्टिन बेंजोएट 5% SG @ 0.4 ग्राम/लीटर या कॉपर ऑक्सीक्लोराइड @ 2.5 ग्राम/लीटर का छिड़काव करें।\n2. **सही समय:** हमेशा शाम 4:00 बजे के बाद छिड़काव करें जब धूप कम हो।\n3. **जैविक उपाय:** नीम तेल 1500 ppm @ 5 ml/लीटर का स्प्रे करें।`;
-        } else if (lang === 'mr') {
-          reply = `🌾 **कृषी-रक्षा AI सल्ला:**\n\n1. **औषध व प्रमाण:** इमामेक्टिन बेंझोएट 5% SG @ 0.4 ग्रॅम/लिटर किंवा कॉपर ऑक्सिक्लोराईड @ 2.5 ग्रॅम/लिटर फवारणी करा.\n2. **योग्य वेळ:** ऊन कमी झाल्यावर नेहमी दुपारी 4:00 नंतर फवारणी करा.\n3. **सेंद्रिय उपाय:** निंबोळी तेल 1500 ppm @ 5 ml/लिटर फवारा.`;
-        } else {
-          reply = `🌾 **CropHealth AI Advisory:**\n\n1. **Dosage:** Apply Emamectin Benzoate 5% SG @ 0.4g/L or Copper Oxychloride @ 2.5g/L.\n2. **Spray Timing:** Best sprayed after 4:00 PM in calm weather.\n3. **Organic Care:** Spray Neem Oil 1500 ppm @ 5 ml/L.`;
-        }
-      }
+      const reply = await GeminiVisionLiveService.chatWithGemini(
+        queryText,
+        chatHistory,
+        imagePreview,
+        diagnosis,
+        lang
+      );
 
       // Stream text progressively into the chat
       const words = reply.split(' ');
@@ -396,9 +381,29 @@ export default function ImageUpload({ onNavigateToHistory }: ImageUploadProps) {
           </h2>
         </div>
 
-        <div className="px-3 py-1.5 rounded-2xl bg-stone-50 border border-stone-200 text-xs font-bold text-stone-700 flex items-center gap-2 shadow-2xs">
-          <Sprout className="w-4 h-4 text-emerald-700" />
-          <span>{localizedCrop} • {cropContext.variety || 'Certified'}</span>
+        <div className="flex items-center gap-2">
+          <label className="text-[11px] font-bold text-stone-500 hidden sm:inline">
+            {lang === 'hi' ? 'फसल चुनें:' : 'Crop:'}
+          </label>
+          <div className="relative">
+            <select
+              value={cropContext.cropName}
+              onChange={(e) => setCropContext((prev) => ({ ...prev, cropName: e.target.value }))}
+              className="px-3 py-1.5 rounded-2xl bg-stone-50 hover:bg-stone-100 border border-stone-200 text-xs font-bold text-emerald-900 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+            >
+              <option value="Auto-Detect">{lang === 'hi' ? '🔍 ऑटो पहचान (कोई भी फसल/फल)' : '🔍 Auto-Detect Any Plant/Fruit'}</option>
+              <option value="Guava">{lang === 'hi' ? 'अमरूद (Guava)' : 'Guava'}</option>
+              <option value="Tomato">{lang === 'hi' ? 'टमाटर (Tomato)' : 'Tomato'}</option>
+              <option value="Cotton">{lang === 'hi' ? 'कपास (Cotton)' : 'Cotton'}</option>
+              <option value="Rice">{lang === 'hi' ? 'धान (Rice Paddy)' : 'Rice Paddy'}</option>
+              <option value="Soybean">{lang === 'hi' ? 'सोयाबीन (Soybean)' : 'Soybean'}</option>
+              <option value="Chilli">{lang === 'hi' ? 'मिर्च (Chilli)' : 'Chilli'}</option>
+              <option value="Potato">{lang === 'hi' ? 'आलू (Potato)' : 'Potato'}</option>
+              <option value="Wheat">{lang === 'hi' ? 'गेहूं (Wheat)' : 'Wheat'}</option>
+              <option value="Onion">{lang === 'hi' ? 'प्याज (Onion)' : 'Onion'}</option>
+              <option value="Mango">{lang === 'hi' ? 'आम (Mango)' : 'Mango'}</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -511,7 +516,7 @@ export default function ImageUpload({ onNavigateToHistory }: ImageUploadProps) {
         </div>
       ) : (
         /* ============================================================= */
-        /* VIEW B: STRUCTURED 2-COLUMN DIAGNOSIS & AI CONSULTATION HUB   */
+        /* VIEW B: REAL-TIME AI VISION DIAGNOSIS & CONSULTATION HUB       */
         /* ============================================================= */
         <div className="mt-6 space-y-6">
           
@@ -555,11 +560,11 @@ export default function ImageUpload({ onNavigateToHistory }: ImageUploadProps) {
             </div>
           )}
 
-          {/* DIAGNOSIS RESULTS: ORGANIZED 2-COLUMN STRUCTURE */}
+          {/* DIAGNOSIS RESULTS: FULLY DYNAMIC AI PHOTO EVIDENCE */}
           {diagnosis && (
             <div className="space-y-5 animate-in fade-in duration-200">
               
-              {/* TOP SUMMARY STRIP: THUMBNAIL + DISEASE NAME + CONFIDENCE */}
+              {/* TOP SUMMARY STRIP: THUMBNAIL + DIAGNOSED DISEASE + CONFIDENCE */}
               <div className="p-4 sm:p-5 rounded-3xl bg-emerald-50/90 border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
                 <div className="flex items-center gap-3.5">
                   <img 
@@ -570,7 +575,7 @@ export default function ImageUpload({ onNavigateToHistory }: ImageUploadProps) {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-black uppercase text-emerald-900 bg-emerald-200/80 px-2 py-0.5 rounded-md">
-                        ✓ ICAR AI Diagnosed
+                        ✓ AI Vision Verified
                       </span>
                       <span className="text-[11px] font-bold text-stone-500">
                         {localizedCrop} ({getLocalizedStageName(cropContext.cropStage, lang)})
@@ -597,11 +602,28 @@ export default function ImageUpload({ onNavigateToHistory }: ImageUploadProps) {
                 </div>
               </div>
 
-              {/* MAIN 2-COLUMN GRID: LEFT (PRESCRIPTION) + RIGHT (AI DOCTOR CHAT) */}
+              {/* DEDICATED AI PHOTO FINDINGS & REVIEW BANNER */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-stone-900 text-white shadow-md space-y-2">
+                <div className="flex items-center gap-2 text-xs font-black text-emerald-400">
+                  <Eye className="w-4 h-4" />
+                  <span>{lang === 'hi' ? 'फोटो में AI द्वारा देखे गए वास्तविक लक्षण:' : lang === 'mr' ? 'फोटोत AI द्वारे आढळलेली लक्षणे:' : 'Visual Symptoms Detected on Uploaded Photo:'}</span>
+                </div>
+                <p className="text-xs sm:text-sm text-stone-200 leading-relaxed font-medium">
+                  {diagnosis.visualSymptoms}
+                </p>
+                {diagnosis.aiReview && (
+                  <div className="pt-2 border-t border-white/15 text-[11px] sm:text-xs text-stone-300">
+                    <strong className="text-emerald-300 font-bold">{lang === 'hi' ? 'AI वैज्ञानिक समीक्षा: ' : 'AI Review: '}</strong>
+                    <span>{diagnosis.aiReview}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* MAIN 2-COLUMN GRID: LEFT (DYNAMIC DOSAGES) + RIGHT (AI CONSULTATION CHAT) */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
                 
                 {/* ----------------------------------------------------------- */}
-                {/* COLUMN 1: ICAR CERTIFIED PRESCRIPTION (5 COLS)             */}
+                {/* COLUMN 1: DYNAMIC ICAR PRESCRIPTION FROM AI (5 COLS)        */}
                 {/* ----------------------------------------------------------- */}
                 <div className="lg:col-span-5 space-y-3.5">
                   
@@ -613,33 +635,31 @@ export default function ImageUpload({ onNavigateToHistory }: ImageUploadProps) {
                     </h4>
                   </div>
 
-                  {/* Chemical Dosage Card */}
+                  {/* Chemical Dosage Card (Real AI Prescription) */}
                   <div className="p-4 rounded-2xl bg-white border border-stone-200/90 shadow-2xs space-y-1.5">
                     <div className="flex items-center gap-1.5 text-xs font-black text-stone-800">
                       <FlaskConical className="w-4 h-4 text-indigo-600" />
-                      <span>{lang === 'hi' ? 'अनुशंसित रासायनिक दवा:' : lang === 'mr' ? 'शिफारस केलेले रासायनिक औषध:' : 'Chemical Spray (ICAR):'}</span>
+                      <span>{lang === 'hi' ? 'अनुशंसित रासायनिक दवा (ICAR):' : lang === 'mr' ? 'शिफारस केलेले रासायनिक औषध:' : 'Chemical Treatment (ICAR):'}</span>
                     </div>
                     <div className="text-sm font-black text-stone-900 pl-5">
-                      {diagnosis.primaryPrediction?.category === 'pest_infestation'
-                        ? 'Emamectin Benzoate 5% SG @ 0.4 gm/L'
-                        : 'Copper Oxychloride 50% WP @ 2.5 gm/L'}
+                      {diagnosis.chemicalTreatment || 'Azoxystrobin 18.2% + Difenoconazole 11.4% SC @ 1.0 ml/L'}
                     </div>
-                    <p className="text-[11px] text-stone-500 pl-5">
-                      {lang === 'hi' ? '200 लीटर पानी में मिलाकर प्रति एकड़ छिड़काव करें।' : lang === 'mr' ? '200 लिटर पाण्यात मिसळून प्रति एकर फवारणी करा.' : 'Mix in 200L water per acre for foliar spray.'}
+                    <p className="text-[11px] text-stone-500 pl-5 font-medium">
+                      {diagnosis.chemicalDosageInstructions || (lang === 'hi' ? '200 लीटर पानी में मिलाकर प्रति एकड़ छिड़काव करें।' : 'Mix in 200L water per acre for foliar spray.')}
                     </p>
                   </div>
 
-                  {/* Biological Alternative Card */}
+                  {/* Biological Alternative Card (Real AI Prescription) */}
                   <div className="p-4 rounded-2xl bg-white border border-stone-200/90 shadow-2xs space-y-1.5">
                     <div className="flex items-center gap-1.5 text-xs font-black text-stone-800">
                       <Leaf className="w-4 h-4 text-emerald-600" />
                       <span>{lang === 'hi' ? 'जैविक व देसी उपाय:' : lang === 'mr' ? 'सेंद्रिय व जैविक उपचार:' : 'Bio-Control / Organic:'}</span>
                     </div>
                     <div className="text-sm font-black text-emerald-900 pl-5">
-                      Trichoderma viride 1% WP @ 5.0 gm/L
+                      {diagnosis.biologicalTreatment || 'Trichoderma viride 1% WP @ 5.0 gm/L or Neem Oil 1500ppm'}
                     </div>
-                    <p className="text-[11px] text-stone-500 pl-5">
-                      {lang === 'hi' ? 'नीम तेल 1500 ppm @ 5 ml/L के साथ मिलाकर स्प्रे करें।' : lang === 'mr' ? 'निंबोळी तेल 1500 ppm @ 5 ml/L सोबत फवारा.' : 'Or Neem Oil 1500ppm @ 5ml/L.'}
+                    <p className="text-[11px] text-stone-500 pl-5 font-medium">
+                      {diagnosis.biologicalInstructions || (lang === 'hi' ? 'नीम तेल 1500 ppm @ 5 ml/L के साथ मिलाकर स्प्रे करें।' : 'Foliar spray with adhesive spreader.')}
                     </p>
                   </div>
 
@@ -650,11 +670,9 @@ export default function ImageUpload({ onNavigateToHistory }: ImageUploadProps) {
                       <span>{getCommonLabel('bestSprayWindow', lang)}</span>
                     </div>
                     <p className="text-amber-900 font-medium leading-relaxed pl-5 text-[11px]">
-                      {lang === 'hi' 
+                      {diagnosis.sprayTimingAdvice || (lang === 'hi' 
                         ? 'शाम को 4:00 बजे के बाद ही स्प्रे करें। फसल तुड़ाई से पहले 7 दिन का अंतराल (PHI) रखें।'
-                        : lang === 'mr'
-                        ? 'दुपारी 4:00 नंतरच फवारणी करा. काढणीपूर्वी 7 दिवसांचा सुरक्षित कालावधी (PHI) ठेवा.'
-                        : 'Spray after 4:00 PM during calm weather. Pre-Harvest Interval (PHI): 7 days.'}
+                        : 'Spray after 4:00 PM during calm weather. Pre-Harvest Interval (PHI): 7 days.')}
                     </p>
                   </div>
 
@@ -699,7 +717,7 @@ export default function ImageUpload({ onNavigateToHistory }: ImageUploadProps) {
                   {/* Scrollable Chat History */}
                   <div 
                     ref={chatScrollRef}
-                    className="flex-1 min-h-[200px] max-h-[260px] overflow-y-auto space-y-2.5 p-3 rounded-2xl bg-white border border-stone-200 shadow-inner text-xs"
+                    className="flex-1 min-h-[220px] max-h-[280px] overflow-y-auto space-y-2.5 p-3 rounded-2xl bg-white border border-stone-200 shadow-inner text-xs"
                   >
                     {chatHistory.map((msg, index) => (
                       <div

@@ -61,8 +61,17 @@ function AppContent() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    // Populate authentic demonstration data
-    DemoDataSeeder.seedAllRealData();
+    // Clean out old hardcoded demo records so only real user scans exist
+    try {
+      const cached = localStorage.getItem('crophealth_observations_cache');
+      if (cached) {
+        const list = JSON.parse(cached);
+        if (Array.isArray(list)) {
+          const onlyReal = list.filter((r: any) => !r.id?.startsWith('obs_demo_'));
+          localStorage.setItem('crophealth_observations_cache', JSON.stringify(onlyReal));
+        }
+      }
+    } catch {}
 
     // Check if farmer has completed first-time onboarding
     const onboarded = localStorage.getItem('crophealth_onboarded');
@@ -78,10 +87,6 @@ function AppContent() {
 
   return (
     <div className="min-h-screen agri-canvas-bg pb-20 md:pb-0 font-sans selection:bg-emerald-600 selection:text-white flex flex-col justify-between relative overflow-x-hidden">
-      {/* Ambient Botanical & Agrarian Sunlight Flares */}
-      <div className="fixed top-0 left-1/4 w-[600px] h-[350px] bg-emerald-400/10 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="fixed top-28 right-10 w-[500px] h-[350px] bg-amber-300/10 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="fixed bottom-10 left-10 w-[550px] h-[400px] bg-teal-400/10 rounded-full blur-3xl pointer-events-none -z-10" />
 
       {/* First-time Farmer Onboarding / Farm Setup Modal */}
       <FarmerOnboardingModal

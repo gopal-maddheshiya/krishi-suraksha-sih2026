@@ -19,21 +19,62 @@ export default function Hero({ onNavigate }: HeroProps) {
   const { activeFarm, weather, risk, latestObservation } = useFarmContext();
   const [recentScan, setRecentScan] = useState<any>(null);
 
-  useEffect(() => {
+  const loadRecentScan = () => {
     try {
       const cached = localStorage.getItem('crophealth_observations_cache');
       if (cached) {
         const list = JSON.parse(cached);
         if (list && list.length > 0) {
           setRecentScan(list[0]);
+          return;
         }
       }
     } catch {}
+  };
+
+  useEffect(() => {
+    loadRecentScan();
+
+    const handleScanSaved = (e: any) => {
+      if (e.detail) {
+        setRecentScan(e.detail);
+      } else {
+        loadRecentScan();
+      }
+    };
+
+    window.addEventListener('crophealth-scan-saved', handleScanSaved);
+    window.addEventListener('storage', loadRecentScan);
+    return () => {
+      window.removeEventListener('crophealth-scan-saved', handleScanSaved);
+      window.removeEventListener('storage', loadRecentScan);
+    };
   }, []);
 
-  const rawCropName = recentScan?.farm_crop?.crop?.name || activeFarm?.crop?.name || 'Cotton';
+  // Smart Crop Name Extraction from Recent Photo / Scan
+  const extractCropName = () => {
+    if (recentScan) {
+      const text = `${recentScan.diagnoses?.[0]?.disease_id || ''} ${recentScan.description || ''} ${recentScan.farm_crop?.crop?.name || ''}`.toLowerCase();
+      if (text.includes('guava') || text.includes('अमरूद') || text.includes('पेरू')) return 'Guava';
+      if (text.includes('tomato') || text.includes('टमाटर') || text.includes('टोमॅटो')) return 'Tomato';
+      if (text.includes('rice') || text.includes('धान') || text.includes('भात') || text.includes('paddy')) return 'Rice';
+      if (text.includes('soybean') || text.includes('सोयाबीन')) return 'Soybean';
+      if (text.includes('chilli') || text.includes('मिर्च') || text.includes('मिरची')) return 'Chilli';
+      if (text.includes('potato') || text.includes('आलू') || text.includes('बटाटा')) return 'Potato';
+      if (text.includes('wheat') || text.includes('गेहूं') || text.includes('गहू')) return 'Wheat';
+      if (text.includes('onion') || text.includes('प्याज') || text.includes('कांदा')) return 'Onion';
+      if (text.includes('mango') || text.includes('आम')) return 'Mango';
+      if (text.includes('cotton') || text.includes('कपास') || text.includes('कापूस')) return 'Cotton';
+      if (recentScan.farm_crop?.crop?.name && recentScan.farm_crop.crop.name !== 'Auto-Detect') {
+        return recentScan.farm_crop.crop.name;
+      }
+    }
+    return activeFarm?.crop?.name || 'Guava';
+  };
+
+  const rawCropName = extractCropName();
   const cropName = getLocalizedCropName(rawCropName, lang);
-  const rawCropStage = recentScan?.farm_crop?.current_stage || activeFarm?.crop?.stage || 'Flowering & Boll Stage';
+  const rawCropStage = recentScan?.farm_crop?.current_stage || activeFarm?.crop?.stage || 'Flowering Stage';
   const cropStage = getLocalizedStageName(rawCropStage, lang);
   const cropVariety = recentScan?.farm_crop?.variety || activeFarm?.crop?.variety || t('upload_form_variety') || 'Certified Hybrid';
   const farmerName = (activeFarm as any)?.farmer?.full_name || (activeFarm as any)?.farmer?.name || '';
@@ -52,7 +93,8 @@ export default function Hero({ onNavigate }: HeroProps) {
     if (cLower.includes('tomato') || cLower.includes('टमाटर') || cLower.includes('टोमॅटो')) return '/images/sample-tomato.jpg';
     if (cLower.includes('rice') || cLower.includes('धान') || cLower.includes('भात')) return '/images/sample-rice.jpg';
     if (cLower.includes('soybean') || cLower.includes('सोयाबीन')) return '/images/sample-soybean.jpg';
-    return '/images/sample-cotton.jpg';
+    if (cLower.includes('cotton') || cLower.includes('कपास') || cLower.includes('कापूस')) return '/images/sample-cotton.jpg';
+    return '/images/sample-tomato.jpg';
   };
 
   const cropImageUrl = getRecentCropImage();
