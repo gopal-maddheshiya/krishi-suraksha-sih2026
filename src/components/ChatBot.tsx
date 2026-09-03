@@ -17,10 +17,13 @@ type Message = {
 type GeminiPart = { text?: string; inline_data?: { mime_type: string; data: string } };
 
 const GEMINI_MODEL_CANDIDATES = [
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
+  'gemini-3.5-flash',
+  'gemini-3.6-flash',
+  'gemini-3.7-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-flash-latest',
+  'gemini-2.5-pro',
   'gemini-1.5-flash',
-  'gemini-1.5-pro',
 ];
 
 function getLanguageName(language: string): string {
@@ -130,7 +133,7 @@ function getNaturalAgriculturalAdvice(query: string, lang: string): string {
 }
 
 async function callGeminiWithFallback(apiKey: string, payload: unknown) {
-  if (!apiKey || !apiKey.startsWith('AIzaSy')) {
+  if (!apiKey || apiKey.trim().length < 5) {
     throw new Error('Invalid Gemini API Key');
   }
 
@@ -138,7 +141,7 @@ async function callGeminiWithFallback(apiKey: string, payload: unknown) {
   for (const model of GEMINI_MODEL_CANDIDATES) {
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey.trim())}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
