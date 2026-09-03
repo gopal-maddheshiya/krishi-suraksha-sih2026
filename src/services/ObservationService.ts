@@ -201,9 +201,9 @@ export class ObservationService {
   /**
    * Get observation history for a farmer
    */
-  public static async getFarmerObservations(farmerId: string): Promise<CropObservationEntity[]> {
+  public static async getFarmerObservations(farmerId?: string): Promise<CropObservationEntity[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('crop_observations')
         .select(`
           *,
@@ -211,16 +211,32 @@ export class ObservationService {
           diagnoses:diagnoses(*),
           expert_reviews:expert_reviews(*, expert:profiles(full_name, role))
         `)
-        .eq('reported_by', farmerId)
         .order('observed_at', { ascending: false });
 
-      if (error) {
-        console.warn('Fetch observations error:', error.message);
+      if (farmerId && farmerId !== 'farmer_guest' && farmerId !== 'farmer_active' && farmerId.includes('-')) {
+        query = query.eq('reported_by', farmerId);
+      }
+
+      const { data, error } = await query;
+
+      if (error || !data || data.length === 0) {
+        const localCache = localStorage.getItem('crophealth_observations_cache');
+        if (localCache) {
+          try {
+            return JSON.parse(localCache);
+          } catch {}
+        }
         return [];
       }
-      return data || [];
+      return data;
     } catch (e) {
       console.warn('ObservationService.getFarmerObservations exception:', e);
+      const localCache = localStorage.getItem('crophealth_observations_cache');
+      if (localCache) {
+        try {
+          return JSON.parse(localCache);
+        } catch {}
+      }
       return [];
     }
   }

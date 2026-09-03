@@ -125,26 +125,87 @@ export default function AICropDoctor() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const assistantTitle = lang === 'hi' 
-    ? 'कृषि-रक्षा AI सलाहकार' 
-    : lang === 'mr' 
-    ? 'कृषी-रक्षा AI सल्लागार' 
-    : 'CropHealth AI Advisor';
+  const assistantTitles: Record<LanguageCode, string> = {
+    hi: '🌾 कृषि-रक्षा AI सलाहकार',
+    mr: '🌾 कृषी-रक्षा AI सल्लागार',
+    bn: '🌾 কৃষি-রক্ষা AI সহকারী',
+    ta: '🌾 வேளாண் AI ஆலோசகர்',
+    te: '🌾 వ్యవసాయ AI సలహాదారు',
+    gu: '🌾 કૃષિ-રક્ષા AI સલાહકાર',
+    pa: '🌾 ਖੇਤੀ-ਰੱਖਿਆ AI ਸਲਾਹਕਾਰ',
+    en: '🌾 CropHealth AI Advisor',
+  };
 
-  const quickPills = [
-    { label: lang === 'hi' ? '🌿 पत्तों पर पीले धब्बे' : 'Yellow Leaves', query: 'फसल की पत्तियों पर पीले धब्बे आ रहे हैं, क्या उपाय करें?' },
-    { label: lang === 'hi' ? '🐛 सुंडी / कीड़ों की दवा' : 'Caterpillar / Worm', query: 'फसल में इल्ली और सुंडी लग गई है, कौन सी दवा छिड़कें?' },
-    { label: lang === 'hi' ? '🌧️ आज स्प्रे करें या नहीं?' : 'Spray Decision', query: 'क्या आज कीटनाशक का स्प्रे करना सुरक्षित है?' },
-    { label: lang === 'hi' ? '🧪 NPK खाद की मात्रा' : 'NPK Fertilizer', query: 'NPK 19:19:19 और यूरिया खाद की सही मात्रा क्या है?' },
-  ];
+  const assistantTitle = assistantTitles[lang] || assistantTitles.en;
+
+  const getQuickPills = (curLang: LanguageCode) => {
+    const map: Record<LanguageCode, Array<{ label: string; query: string }>> = {
+      hi: [
+        { label: '🌿 पत्तों पर पीले धब्बे', query: 'फसल की पत्तियों पर पीले धब्बे आ रहे हैं, क्या उपाय करें?' },
+        { label: '🐛 सुंडी / कीड़ों की दवा', query: 'फसल में इल्ली और सुंडी लग गई है, कौन सी दवा छिड़कें?' },
+        { label: '🌧️ आज स्प्रे करें या नहीं?', query: 'क्या आज कीटनाशक का स्प्रे करना सुरक्षित है?' },
+        { label: '🧪 NPK खाद की मात्रा', query: 'NPK 19:19:19 और यूरिया खाद की सही मात्रा क्या है?' },
+      ],
+      mr: [
+        { label: '🌿 पानांवर पिवळे डाग', query: 'पिकाच्या पानांवर पिवळे डाग येत आहेत, काय उपाय करावा?' },
+        { label: '🐛 अळी / बोंडअळी नियंत्रण', query: 'पिकात अळीचा प्रादुर्भाव झाला आहे, कोणते औषध फवारावे?' },
+        { label: '🌧️ आज फवारणी करावी का?', query: 'आज कीटकनाशक फवारणी करणे सुरक्षित आहे का?' },
+        { label: '🧪 NPK खताचे प्रमाण', query: 'NPK 19:19:19 आणि युरिया खताचे योग्य प्रमाण काय आहे?' },
+      ],
+      bn: [
+        { label: '🌿 পাতায় হলুদ দাগ', query: 'ফসলের পাতায় হলুদ দাগ দেখা দিচ্ছে, কী ব্যবস্থা নেব?' },
+        { label: '🐛 পোকা / শুঁয়োপোকা দমন', query: 'ফসলে পোকা লেগেছে, কোন কীটনাশক ব্যবহার করব?' },
+        { label: '🌧️ আজ স্প্রে করব কি?', query: 'আজ জমিতে ওষুধ স্প্রে করা নিরাপদ হবে?' },
+        { label: '🧪 NPK সারের মাত্রা', query: 'NPK সার ব্যবহারের সঠিক নিয়ম ও মাত্রা কী?' },
+      ],
+      ta: [
+        { label: '🌿 இலைகளில் மஞ்சள் புள்ளிகள்', query: 'பயிர் இலைகளில் மஞ்சள் புள்ளிகள் உள்ளன, என்ன தீர்வு?' },
+        { label: '🐛 புழு மற்றும் பூச்சி கட்டுப்பாடு', query: 'பயிரில் புழுக்கள் தாக்கியுள்ளன, என்ன மருந்து தெளிக்க வேண்டும்?' },
+        { label: '🌧️ இன்று தெளிக்கலாமா?', query: 'இன்று பூச்சிக்கொல்லி தெளிப்பது பாதுகாப்பானதா?' },
+        { label: '🧪 NPK உர அளவு', query: 'NPK உரத்தின் சரியான அளவு என்ன?' },
+      ],
+      te: [
+        { label: '🌿 ఆకులపై పసుపు మచ్చలు', query: 'పంట ఆకులపై పసుపు మచ్చలు వస్తున్నాయి, నివారణ ఏమిటి?' },
+        { label: '🐛 పురుగులు / లద్దె పురుగు', query: 'పంటలో పురుగుల నివారణకు ఏ మందు పిచికారీ చేయాలి?' },
+        { label: '🌧️ ఈ రోజు పిచికారీ చేయవచ్చా?', query: 'ఈ రోజు పురుగుమందు పిచికారీ చేయడం సురక్షితమేనా?' },
+        { label: '🧪 NPK ఎరువుల మోతాదు', query: 'NPK ఎరువుల సరైన మోతాదు ఎంత?' },
+      ],
+      gu: [
+        { label: '🌿 પાંદડા પર પીળા ડાઘ', query: 'પાકના પાંદડા પર પીળા ડાઘા આવી રહ્યા છે, શું કરવું?' },
+        { label: '🐛 ઇયળ / કીટકની દવા', query: 'પાકમાં ઇયળ આવી છે, કઈ દવાનો છંટકાવ કરવો?' },
+        { label: '🌧️ આજે છંટકાવ કરવો કે નહીં?', query: 'શું આજે કીટનાશક છાંટવું સુરક્ષિત છે?' },
+        { label: '🧪 NPK ખાતરનું પ્રમાણ', query: 'NPK અને યુરિયા ખાતરનું યોગ્ય પ્રમાણ શું છે?' },
+      ],
+      pa: [
+        { label: '🌿 ਪੱਤਿਆਂ ਤੇ ਪੀਲੇ ਧੱਬੇ', query: 'ਫ਼ਸਲ ਦੇ ਪੱਤਿਆਂ ਉੱਤੇ ਪੀਲੇ ਧੱਬੇ ਆ ਰਹੇ ਹਨ, ਕੀ ਇਲਾਜ ਕਰੀਏ?' },
+        { label: '🐛 ਸੁੰਡੀ / ਕੀੜਿਆਂ ਦੀ ਦਵਾਈ', query: 'ਫ਼ਸਲ ਵਿੱਚ ਸੁੰਡੀ ਲੱਗ ਗਈ ਹੈ, ਕਿਹੜੀ ਦਵਾਈ ਛਿੜਕੀਏ?' },
+        { label: '🌧️ ਅੱਜ ਸਪਰੇਅ ਕਰੀਏ ਜਾਂ ਨਹੀਂ?', query: 'ਕੀ ਅੱਜ ਦਵਾਈ ਦਾ ਸਪਰੇਅ ਕਰਨਾ ਸੁਰੱਖਿਅਤ ਹੈ?' },
+        { label: '🧪 NPK ਖਾਦ ਦੀ ਮਾਤਰਾ', query: 'NPK ਖਾਦ ਦੀ ਸਹੀ ਮਾਤਰਾ ਕੀ ਹੈ?' },
+      ],
+      en: [
+        { label: '🌿 Yellow Leaf Spots', query: 'My crop leaves are turning yellow with spots, what is the ICAR treatment?' },
+        { label: '🐛 Caterpillar / Worms', query: 'How do I control bollworms and caterpillars effectively?' },
+        { label: '🌧️ Safe to spray today?', query: 'Is it safe to spray foliar chemicals today?' },
+        { label: '🧪 NPK Dosage Guide', query: 'What is the recommended dosage for foliar NPK 19:19:19 and Urea?' },
+      ],
+    };
+    return map[curLang] || map.en;
+  };
+
+  const quickPills = getQuickPills(lang);
 
   useEffect(() => {
-    const greeting = lang === 'hi'
-      ? 'राम-राम किसान भाई! 🙏 मैं आपका कृषि-रक्षा AI सलाहकार हूँ। फसल रोग, कीड़े, खाद या आज के छिड़काव संबंधी कोई भी प्रश्न पूछें।'
-      : lang === 'mr'
-      ? 'नमस्कार शेतकरी मित्र! 🙏 मी आपला कृषी-रक्षा AI सल्लागार आहे. पिकातील रोग, कीड किंवा खताविषयी काहीही विचारा.'
-      : 'Hello farmer friend! 🙏 I am your CropHealth AI Advisor. Ask me anything regarding crop diseases, pest dosages, or fertilizers.';
-    setWelcomeMsg(greeting);
+    const greetings: Record<LanguageCode, string> = {
+      hi: 'राम-राम किसान भाई! 🙏 मैं आपका कृषि-रक्षा AI सलाहकार हूँ। फसल रोग, कीड़े, खाद या आज के छिड़काव संबंधी कोई भी प्रश्न पूछें।',
+      mr: 'नमस्कार शेतकरी मित्र! 🙏 मी आपला कृषी-रक्षा AI सल्लागार आहे. पिकातील रोग, कीड किंवा खताविषयी काहीही विचारा.',
+      bn: 'নমস্কার কৃষক বন্ধু! 🙏 আমি আপনার কৃষি-রক্ষা AI উপদেষ্টা। ফসলের রোগ, পোকা বা সার সম্পর্কে যেকোনো প্রশ্ন জিজ্ঞাসা করুন।',
+      ta: 'வணக்கம் விவசாய நண்பரே! 🙏 நான் உங்கள் வேளாண் AI ஆலோசகர். பயிர் நோய்கள், பூச்சிகள் அல்லது உரங்கள் பற்றி எதையும் கேளுங்கள்.',
+      te: 'నమస్కారం రైతు మిత్రమా! 🙏 నేను మీ వ్యవసాయ AI సలహాదారుని. పంట వ్యాధులు, పురుగులు లేదా ఎరువుల గురించి ఏదైనా అడగండి.',
+      gu: 'નમસ્તે ખેડૂત મિત્ર! 🙏 હું તમારો કૃષિ-રક્ષા AI સલાહકાર છું. પાકના રોગ, કીટકો કે ખાતર અંગે કોઈ પણ પ્રશ્ન પૂછો.',
+      pa: 'ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਕਿਸਾਨ ਵੀਰੋ! 🙏 ਮੈਂ ਤੁਹਾਡਾ ਖੇਤੀ-ਰੱਖਿਆ AI ਸਲਾਹਕਾਰ ਹਾਂ। ਫ਼ਸਲ ਦੇ ਰੋਗਾਂ ਜਾਂ ਖਾਦ ਬਾਰੇ ਕੋਈ ਵੀ ਸਵਾਲ ਪੁੱਛੋ।',
+      en: 'Hello farmer friend! 🙏 I am your dedicated CropHealth AI Advisor. Ask me anything regarding crop diseases, pest dosages, or fertilizers.',
+    };
+    setWelcomeMsg(greetings[lang] || greetings.en);
   }, [lang]);
 
   useEffect(() => {
@@ -392,14 +453,14 @@ export default function AICropDoctor() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-40 flex items-center gap-2.5 px-4 sm:px-5 py-3 rounded-full bg-gradient-to-r from-emerald-800 via-emerald-800 to-teal-900 hover:from-emerald-900 hover:to-teal-950 text-white shadow-xl hover:shadow-2xl hover:shadow-emerald-900/30 transition-all duration-200 active:scale-95 group border-2 border-white ring-4 ring-emerald-500/20 select-none"
+          className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-40 flex items-center gap-2.5 px-4 sm:px-5 py-3 rounded-full bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 hover:from-emerald-950 hover:to-teal-950 text-white shadow-xl hover:shadow-2xl hover:shadow-emerald-900/40 transition-all duration-200 active:scale-95 group border border-emerald-400/40 ring-4 ring-emerald-500/15 select-none"
           aria-label="Open CropHealth AI Advisor"
         >
           <div className="relative">
             <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-              <Leaf className="w-3.5 h-3.5 text-white stroke-[2.4]" />
+              <Leaf className="w-3.5 h-3.5 text-emerald-200 stroke-[2.4]" />
             </div>
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_#34d399]" />
           </div>
           <span className="font-black text-xs sm:text-sm tracking-tight pr-1">
             {assistantTitle}

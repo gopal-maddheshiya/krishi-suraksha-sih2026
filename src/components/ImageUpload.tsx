@@ -1,10 +1,8 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { 
   Camera, ImageIcon, Loader2, CheckCircle2, AlertTriangle, 
-  Send, X, MapPin, Sparkles, RefreshCw, ShieldAlert, ShieldCheck, 
-  Info, UserCheck, HelpCircle, ChevronRight, Sprout, Sun, Focus,
-  Check, ArrowRight, Eye, Layers, FlaskConical, Clock, Bot, MessageCircle,
-  HelpCircle as QuestionIcon
+  Send, X, Sparkles, Sprout, Bot, ShieldCheck, 
+  FlaskConical, Leaf, Clock, ArrowRight, History
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { 
@@ -14,7 +12,13 @@ import {
   type CropDiagnosisResponse, 
   type CropContext 
 } from '@/services/DiagnosisService';
-import { LocationService } from '@/services/LocationService';
+import { 
+  getLocalizedCropName, 
+  getLocalizedStageName, 
+  getCommonLabel, 
+  getFullLanguageName 
+} from '@/lib/agriLocalization';
+import type { LanguageCode } from '@/lib/i18n';
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
 
@@ -54,14 +58,17 @@ function compressImage(file: File): Promise<string> {
   });
 }
 
-export default function ImageUpload() {
-  const { lang } = useLang();
+type ImageUploadProps = {
+  onNavigateToHistory?: () => void;
+};
+
+export default function ImageUpload({ onNavigateToHistory }: ImageUploadProps) {
+  const { lang, t } = useLang();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [qualityResult, setQualityResult] = useState<ImageQualityResult | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [diagnosis, setDiagnosis] = useState<CropDiagnosisResponse | null>(null);
-  const [expertRequested, setExpertRequested] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Inline Multi-Turn AI Consultation State
@@ -103,7 +110,16 @@ export default function ImageUpload() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const handleDirectScanEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<File>;
+      if (customEvent.detail) {
+        handleFileSelected(customEvent.detail);
+      }
+    };
+
+    window.addEventListener('crophealth-direct-scan', handleDirectScanEvent);
     return () => {
+      window.removeEventListener('crophealth-direct-scan', handleDirectScanEvent);
       if (typingTimerRef.current) clearInterval(typingTimerRef.current);
     };
   }, []);
@@ -119,7 +135,6 @@ export default function ImageUpload() {
     setImagePreview(null);
     setQualityResult(null);
     setDiagnosis(null);
-    setExpertRequested(false);
     setError(null);
     setChatHistory([]);
     setStreamingText('');
@@ -129,11 +144,11 @@ export default function ImageUpload() {
 
   const handleFileSelected = async (file: File) => {
     if (!file.type.startsWith('image/')) {
-      setError(lang === 'hi' ? 'कृपया केवल JPG या PNG फोटो अपलोड करें।' : 'Please upload a valid JPG or PNG image.');
+      setError(t('upload_supported'));
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      setError(lang === 'hi' ? 'फोटो का साइज 10MB से कम होना चाहिए।' : 'Image size must be under 10MB.');
+      setError(t('upload_supported'));
       return;
     }
 
@@ -142,36 +157,41 @@ export default function ImageUpload() {
     try {
       const compressedDataUrl = await compressImage(file);
       setImagePreview(compressedDataUrl);
-      const valResult = await ImageQualityValidator.validateImageQuality(file);
+      const valResult = await ImageQualityValidator.validateImageQuality(file, compressedDataUrl);
       setQualityResult(valResult);
     } catch {
-      setError(lang === 'hi' ? 'फोटो लोड करने में असमर्थ। कृपया दोबारा प्रयास करें।' : 'Failed to load image. Please retry.');
+      setError(t('common_error'));
     }
   };
+
+  const localizedCrop = getLocalizedCropName(cropContext.cropName, lang);
 
   const handleRunDiagnosis = async () => {
     if (!imageFile && !imagePreview) return;
     setAnalyzing(true);
     setError(null);
     try {
-      const result = await DiagnosisService.diagnoseCropImage(imageFile || imagePreview!, cropContext);
+      const result = await DiagnosisService.diagnoseCropImage(imageFile || imagePreview!, cropContext, lang);
       setDiagnosis(result);
 
-      const detectedName = result.primaryPrediction?.diseaseName || (lang === 'hi' ? 'पत्ती रोग' : 'Crop Disease');
+      const detectedName = result.primaryPrediction?.diseaseName || getCommonLabel('healthyCrop', lang);
 
-      // Initialize helpful welcome message in chat history
-      setChatHistory([
-        {
-          role: 'assistant',
-          text: lang === 'hi'
-            ? `🌾 **कृषि-रक्षा AI सलाहकार:** आपकी फसल में **${detectedName}** के लक्षण पहचाने गए हैं। ऊपर ICAR अनुमोदित दवा और जैविक उपचार दिया गया है। छिड़काव के समय, पानी के अनुपात या सावधानी से संबंधित कोई भी सवाल नीचे पूछें।`
-            : `🌾 **CropHealth AI Advisor:** **${detectedName}** detected on your crop. Official ICAR remedies and organic sprays are listed above. Ask any questions below about spray timings, precautions, or respray safety.`,
-        },
-      ]);
+      // Multi-Language Welcome Messages
+      const welcomeMessages: Record<LanguageCode, string> = {
+        hi: `🌾 **कृषि-रक्षा AI सलाहकार:** आपकी ${localizedCrop} की फसल में **${detectedName}** के लक्षण मिले हैं। बाईं तरफ ICAR अनुमोदित दवा और जैविक उपचार दिया गया है। छिड़काव के समय, पानी के अनुपात या सावधानी से संबंधित कोई भी सवाल नीचे पूछें।`,
+        mr: `🌾 **कृषी-रक्षा AI सल्लागार:** आपल्या ${localizedCrop} पिकात **${detectedName}** ची लक्षणे आढळली आहेत. डाव्या बाजूला ICAR प्रमाणित औषध आणि जैविक उपचार दिले आहेत. फवारणीची वेळ, पाण्याचे प्रमाण किंवा सुरक्षिततेबद्दल खाली कोणताही प्रश्न विचारा.`,
+        bn: `🌾 **কৃষি-রক্ষা AI উপদেষ্টা:** আপনার ${localizedCrop} ফসলে **${detectedName}** এর লক্ষণ পাওয়া গেছে। বাম পাশে ICAR অনুমোদিত ওষুধ এবং জৈব প্রতিকার দেওয়া হয়েছে। স্প্রে করার সময় বা সতর্কতা সম্পর্কে নিচে যেকোনো প্রশ্ন জিজ্ঞাসা করুন।`,
+        ta: `🌾 **வேளாண் AI ஆலோசகர்:** உங்கள் ${localizedCrop} பயிரில் **${detectedName}** அறிகுறிகள் கண்டறியப்பட்டுள்ளன. இடதுபுறத்தில் ICAR பரிந்துரைக்கப்பட்ட மருந்து மற்றும் இயற்கை சிகிச்சை கொடுக்கப்பட்டுள்ளது. எந்த கேள்வியையும் கீழே கேளுங்கள்.`,
+        te: `🌾 **వ్యవసాయ AI సలహాదారు:** మీ ${localizedCrop} పంటలో **${detectedName}** లక్షణాలు గుర్తించబడ్డాయి. ఎడమవైపున ICAR సిఫార్సు చేసిన మందు మరియు సేంద్రీయ నివారణ ఇవ్వబడ్డాయి. పిచికారీ గురించి ఏదైనా ప్రశ్న అడగండి.`,
+        gu: `🌾 **કૃષિ-રક્ષા AI સલાહકાર:** તમારા ${localizedCrop} પાકમાં **${detectedName}** ના લક્ષણો જણાયા છે. ડાબી બાજુએ ICAR માન્ય દવા અને જૈવિક ઉપચાર આપેલ છે. છંટકાવના સમય અંગે નીચે કોઈ પણ પ્રશ્ન પૂછો.`,
+        pa: `🌾 **ਖੇਤੀ-ਰੱਖਿਆ AI ਸਲਾਹਕਾਰ:** ਤੁਹਾਡੀ ${localizedCrop} ਦੀ ਫ਼ਸਲ ਵਿੱਚ **${detectedName}** ਦੇ ਲੱਛਣ ਮਿਲੇ ਹਨ। ਖੱਬੇ ਪਾਸੇ ICAR ਪ੍ਰਮਾਣਿਤ ਦਵਾਈ ਅਤੇ ਜੈਵਿਕ ਇਲਾਜ ਦਿੱਤਾ ਗਿਆ ਹੈ। ਛਿੜਕਾਅ ਬਾਰੇ ਹੇਠਾਂ ਕੋਈ ਵੀ ਸਵਾਲ ਪੁੱਛੋ।`,
+        en: `🌾 **CropHealth AI Advisor:** **${detectedName}** detected on your ${localizedCrop}. Certified ICAR chemical and organic remedies are listed on the left. Ask any follow-up questions below regarding dosages or safe spray timing.`,
+      };
+
+      setChatHistory([{ role: 'assistant', text: welcomeMessages[lang] || welcomeMessages.en }]);
 
       if (imagePreview) {
         try {
-          const diseaseName = result.primaryPrediction?.diseaseName || (lang === 'hi' ? 'फसल पत्ती रोग' : 'Crop Leaf Disease');
           const newRecord = {
             id: `scan_${Date.now()}`,
             reported_by: 'farmer_active',
@@ -179,7 +199,7 @@ export default function ImageUpload() {
             created_at: new Date().toISOString(),
             priority: 'high' as const,
             status: 'verified' as const,
-            description: `${diseaseName} - AI पत्ती जांच व परामर्श`,
+            description: `${detectedName} - AI leaf scan`,
             images: [{
               id: `img_${Date.now()}`,
               observation_id: `scan_${Date.now()}`,
@@ -192,7 +212,7 @@ export default function ImageUpload() {
             diagnoses: [{
               id: `diag_${Date.now()}`,
               observation_id: `scan_${Date.now()}`,
-              disease_id: diseaseName,
+              disease_id: detectedName,
               confidence: result.overallConfidenceScore ? result.overallConfidenceScore / 100 : 0.95,
             }],
             farm_crop: {
@@ -209,7 +229,7 @@ export default function ImageUpload() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Diagnosis screening failed. Please retry.');
+      setError(err instanceof Error ? err.message : t('common_error'));
     } finally {
       setAnalyzing(false);
     }
@@ -227,15 +247,16 @@ export default function ImageUpload() {
     setIsStreaming(true);
     if (typingTimerRef.current) clearInterval(typingTimerRef.current);
 
-    // Add user message to history immediately
     const updatedHistory = [...chatHistory, { role: 'user' as const, text: q }];
     setChatHistory(updatedHistory);
 
     const diagnosedIssue = diagnosis?.primaryPrediction?.diseaseName || 'Crop Disease';
+    const targetLanguageName = getFullLanguageName(lang);
+
     const apiMessages = [
       {
         role: 'system',
-        content: `You are the Official CropHealth Agronomist AI. The farmer has scanned a ${cropContext.cropName} (${cropContext.cropStage}) leaf with diagnosed ${diagnosedIssue}. Provide direct, highly structured, clear, and reassuring ICAR guidance in ${lang === 'hi' ? 'Hindi' : 'English'}. Include exact doses, time of day (after 4 PM), PHI safety period, and organic alternatives.`,
+        content: `You are the Official Senior CropHealth Agronomist. The farmer scanned ${localizedCrop} with diagnosed ${diagnosedIssue}. Provide direct, crisp, structured ICAR advice STRICTLY in ${targetLanguageName}. Include exact chemical doses, time of day (after 4 PM), PHI safety period, and bio-pesticide alternatives. Avoid raw asterisks.`,
       },
       ...updatedHistory.map((m) => ({ role: m.role, content: m.text })),
     ];
@@ -243,7 +264,6 @@ export default function ImageUpload() {
     try {
       let reply: string | null = null;
 
-      // 1. Try /api/chat backend
       try {
         const res = await fetch('/api/chat', {
           method: 'POST',
@@ -259,12 +279,13 @@ export default function ImageUpload() {
         }
       } catch {}
 
-      // 2. Fallback knowledge answer
       if (!reply) {
         if (lang === 'hi') {
-          reply = `🌾 **कृषि-रक्षा AI सलाह:** ${diagnosedIssue} के लिए:\n\n1. **दवा एवं मात्रा:** एमामेक्टिन बेंजोएट 5% SG @ 0.4 ग्राम/लीटर पानी या कॉपर ऑक्सीक्लोराइड @ 2.5 ग्राम/लीटर का छिड़काव करें।\n2. **सही समय:** हमेशा शाम 4:00 बजे के बाद छिड़काव करें जब तेज धूप न हो।\n3. **जैविक उपाय:** नीम तेल 1500 ppm @ 5 ml/लीटर का स्प्रे करें ताकि रोग आगे न फैले।`;
+          reply = `🌾 **कृषि-रक्षा AI सलाह:**\n\n1. **दवा एवं मात्रा:** एमामेक्टिन बेंजोएट 5% SG @ 0.4 ग्राम/लीटर या कॉपर ऑक्सीक्लोराइड @ 2.5 ग्राम/लीटर का छिड़काव करें।\n2. **सही समय:** हमेशा शाम 4:00 बजे के बाद छिड़काव करें जब धूप कम हो।\n3. **जैविक उपाय:** नीम तेल 1500 ppm @ 5 ml/लीटर का स्प्रे करें।`;
+        } else if (lang === 'mr') {
+          reply = `🌾 **कृषी-रक्षा AI सल्ला:**\n\n1. **औषध व प्रमाण:** इमामेक्टिन बेंझोएट 5% SG @ 0.4 ग्रॅम/लिटर किंवा कॉपर ऑक्सिक्लोराईड @ 2.5 ग्रॅम/लिटर फवारणी करा.\n2. **योग्य वेळ:** ऊन कमी झाल्यावर नेहमी दुपारी 4:00 नंतर फवारणी करा.\n3. **सेंद्रिय उपाय:** निंबोळी तेल 1500 ppm @ 5 ml/लिटर फवारा.`;
         } else {
-          reply = `🌾 **AI Advisory:** For ${diagnosedIssue} management:\n\n1. **Dosage:** Apply Emamectin Benzoate 5% SG @ 0.4g/L or Copper Oxychloride @ 2.5g/L.\n2. **Spray Timing:** Best sprayed after 4:00 PM in calm wind.\n3. **Organic Care:** Spray Neem Oil 1500 ppm @ 5 ml/L to prevent secondary infestation.`;
+          reply = `🌾 **CropHealth AI Advisory:**\n\n1. **Dosage:** Apply Emamectin Benzoate 5% SG @ 0.4g/L or Copper Oxychloride @ 2.5g/L.\n2. **Spray Timing:** Best sprayed after 4:00 PM in calm weather.\n3. **Organic Care:** Spray Neem Oil 1500 ppm @ 5 ml/L.`;
         }
       }
 
@@ -284,13 +305,13 @@ export default function ImageUpload() {
         } else {
           setStreamingText(words.slice(0, cur + 1).join(' '));
         }
-      }, 20);
+      }, 18);
 
     } catch (err) {
       console.warn('AI query error:', err);
       setChatHistory((prev) => [
         ...prev,
-        { role: 'assistant', text: lang === 'hi' ? 'सलाह प्राप्त करने में समस्या हुई। कृपया दोबारा पूछें।' : 'Error connecting to AI. Please retry.' },
+        { role: 'assistant', text: t('common_error') },
       ]);
       setStreamingText('');
       setIsStreaming(false);
@@ -300,33 +321,84 @@ export default function ImageUpload() {
 
   const diseaseName = diagnosis?.primaryPrediction?.diseaseName || '';
 
-  const followUpPills = [
-    { label: lang === 'hi' ? '⏰ छिड़काव का सही समय?' : 'Spray timing?', query: `${diseaseName} के लिए स्प्रे करने का सबसे सही समय क्या है?` },
-    { label: lang === 'hi' ? '🌿 देसी व जैविक उपाय?' : 'Organic remedies?', query: `${diseaseName} को रोकने के लिए देसी और जैविक उपाय बताएं।` },
-    { label: lang === 'hi' ? '🌧️ बारिश होने पर क्या करें?' : 'If it rains?', query: `छिड़काव के बाद अगर बारिश हो जाए तो क्या दोबारा स्प्रे करना होगा?` },
-    { label: lang === 'hi' ? '🛡️ रोकथाम के तरीके?' : 'Prevention guide?', query: `अगली फसल में इस बीमारी को दोबारा आने से कैसे रोकें?` },
-  ];
+  // 8-Language Follow-Up Question Pills
+  const getFollowUpPills = (dName: string, curLang: LanguageCode) => {
+    const map: Record<LanguageCode, Array<{ label: string; query: string }>> = {
+      hi: [
+        { label: '⏰ छिड़काव का सही समय?', query: `${dName} के लिए स्प्रे करने का सबसे सही समय क्या है?` },
+        { label: '🌿 देसी व जैविक उपाय?', query: `${dName} को रोकने के लिए देसी और जैविक उपाय बताएं।` },
+        { label: '🌧️ बारिश होने पर क्या करें?', query: `छिड़काव के बाद अगर बारिश हो जाए तो क्या दोबारा स्प्रे करना होगा?` },
+        { label: '🛡️ रोकथाम के तरीके?', query: `अगली फसल में इस बीमारी को दोबारा आने से कैसे रोकें?` },
+      ],
+      mr: [
+        { label: '⏰ फवारणीची योग्य वेळ?', query: `${dName} नियंत्रणासाठी फवारणीची सर्वोत्तम वेळ कोणती?` },
+        { label: '🌿 सेंद्रिय व घरगुती उपाय?', query: `${dName} साठी सेंद्रिय व जैविक उपचार सांगा.` },
+        { label: '🌧️ पाऊस पडल्यास काय करावे?', query: `फवारणीनंतर पाऊस आल्यास पुन्हा फवारणी करावी लागेल का?` },
+        { label: '🛡️ प्रतिबंधात्मक उपाय?', query: `पुढील पिकात हा रोग येऊ नये म्हणून काय काळजी घ्यावी?` },
+      ],
+      bn: [
+        { label: '⏰ স্প্রে করার সঠিক সময়?', query: `${dName} এর জন্য স্প্রে করার সেরা সময় কোনটি?` },
+        { label: '🌿 জৈব ও দেশি প্রতিকার?', query: `${dName} এর জন্য জৈব ও ঘরোয়া প্রতিকার বলুন।` },
+        { label: '🌧️ বৃষ্টি হলে কি করবেন?', query: `স্প্রে করার পর বৃষ্টি হলে কি আবার স্প্রে করতে হবে?` },
+        { label: '🛡️ প্রতিরোধের উপায়?', query: `পরবর্তী ফসলে এই রোগ প্রতিরোধ করবেন কীভাবে?` },
+      ],
+      ta: [
+        { label: '⏰ தெளிப்பு நேரம்?', query: `${dName} கட்டுப்படுத்த தெளிக்க சிறந்த நேரம் எது?` },
+        { label: '🌿 இயற்கை தீர்வுகள்?', query: `${dName} க்கான இயற்கை மற்றும் உயிரியல் முறைகள் என்ன?` },
+        { label: '🌧️ மழை பெய்தால்?', query: `தெளித்த பின் மழை பெய்தால் மீண்டும் தெளிக்க வேண்டுமா?` },
+        { label: '🛡️ தடுப்பு முறைகள்?', query: `அடுத்த பயிரில் இந்த நோயைத் தடுக்க என்ன செய்ய வேண்டும்?` },
+      ],
+      te: [
+        { label: '⏰ పిచికారీ సమయం?', query: `${dName} నివారణకు పిచికారీ చేయడానికి ఉత్తమ సమయం ఏది?` },
+        { label: '🌿 సేంద్రీయ నివారణలు?', query: `${dName} కోసం సహజ మరియు సేంద్రీయ పరిష్కారాలు చెప్పండి.` },
+        { label: '🌧️ వర్షం పడితే?', query: `పిచికారీ చేసిన తర్వాత వర్షం పడితే మళ్ళీ చేయాలా?` },
+        { label: '🛡️ నివారణ పద్ధతులు?', query: `తదుపరి పంటలో ఈ వ్యాధి రాకుండా ఎలా నిరోధించాలి?` },
+      ],
+      gu: [
+        { label: '⏰ છંટકાવનો શ્રેષ્ઠ સમય?', query: `${dName} માટે દવાનો છંટકાવ કરવાનો શ્રેષ્ઠ સમય કયો છે?` },
+        { label: '🌿 દેશી અને જૈવિક ઉપાય?', query: `${dName} માટે જૈવિક અને દેશી ઉપચાર જણાવો.` },
+        { label: '🌧️ વરસાદ પડે તો શું કરવું?', query: `છંટકાવ પછી વરસાદ પડે તો ફરીથી દવા છાંટવી પડશે?` },
+        { label: '🛡️ રોકથામના ઉપાયો?', query: `આગામી પાકમાં આ રોગ અટકાવવા શું કરવું?` },
+      ],
+      pa: [
+        { label: '⏰ ਛਿੜਕਾਅ ਦਾ ਸਹੀ ਸਮਾਂ?', query: `${dName} ਲਈ ਸਪਰੇਅ ਕਰਨ ਦਾ ਸਭ ਤੋਂ ਵਧੀਆ ਸਮਾਂ ਕਿਹੜਾ ਹੈ?` },
+        { label: '🌿 ਦੇਸੀ ਅਤੇ ਜੈਵਿਕ ਉਪਾਅ?', query: `${dName} ਲਈ ਜੈਵਿਕ ਅਤੇ ਦੇਸੀ ਹੱਲ ਦੱਸੋ।` },
+        { label: '🌧️ ਜੇਕਰ ਮੀਂਹ ਪੈ ਜਾਵੇ?', query: `ਕੀ ਸਪਰੇਅ ਤੋਂ ਬਾਅਦ ਮੀਂਹ ਪੈਣ 'ਤੇ ਦੁਬਾਰਾ ਸਪਰੇਅ ਕਰਨੀ ਪਵੇਗੀ?` },
+        { label: '🛡️ ਬਚਾਅ ਦੇ ਤਰੀਕੇ?', query: `ਅਗਲੀ ਫ਼ਸਲ ਵਿੱਚ ਇਸ ਬਿਮਾਰੀ ਨੂੰ ਰੋਕਣ ਲਈ ਕੀ ਕਰੀਏ?` },
+      ],
+      en: [
+        { label: '⏰ Best spray timing?', query: `What is the optimal time of day to spray for ${dName}?` },
+        { label: '🌿 Organic remedies?', query: `What are the certified bio-pesticides and organic remedies for ${dName}?` },
+        { label: '🌧️ Rain precautions?', query: `What should I do if it rains after foliar spraying?` },
+        { label: '🛡️ Long-term prevention?', query: `How can I prevent this disease in the next crop season?` },
+      ],
+    };
+    return map[curLang] || map.en;
+  };
+
+  const followUpPills = getFollowUpPills(diseaseName, lang);
 
   return (
-    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-stone-200/90 shadow-sm">
+    <div 
+      id="scanner-section"
+      className="bg-white rounded-3xl p-5 sm:p-7 md:p-8 border border-stone-200 shadow-sm"
+    >
       
-      {/* Clean Header */}
+      {/* 1. SECTION HEADER */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-stone-100">
         <div>
-          <h2 className="text-lg sm:text-xl font-black text-stone-900 flex items-center gap-2">
-            <Camera className="w-5 h-5 text-emerald-800" />
-            <span>{lang === 'hi' ? 'फसल पत्ती लक्षण जांच' : 'Crop Leaf Health Check'}</span>
+          <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/80 mb-1">
+            <Camera className="w-3.5 h-3.5 text-emerald-700" />
+            <span>{t('upload_title')}</span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight">
+            {t('upload_subtitle')}
           </h2>
-          <p className="text-xs text-stone-500 mt-0.5 font-medium">
-            {lang === 'hi' 
-              ? 'प्रभावित पत्ती की फोटो लें और तुरंत बीमारी का नाम व सटीक दवा की मात्रा जानें।'
-              : 'Take a clear leaf photo to identify diseases and get certified ICAR treatment.'}
-          </p>
         </div>
 
-        <div className="px-3 py-1 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-200 text-xs font-bold flex items-center gap-1.5">
-          <Sprout className="w-3.5 h-3.5 text-emerald-700" />
-          <span>{cropContext.cropName} ({cropContext.variety || 'Certified'})</span>
+        <div className="px-3 py-1.5 rounded-2xl bg-stone-50 border border-stone-200 text-xs font-bold text-stone-700 flex items-center gap-2 shadow-2xs">
+          <Sprout className="w-4 h-4 text-emerald-700" />
+          <span>{localizedCrop} • {cropContext.variety || 'Certified'}</span>
         </div>
       </div>
 
@@ -338,63 +410,61 @@ export default function ImageUpload() {
       )}
 
       {/* ============================================================= */}
-      {/* 1. CLEAN LIGHT SCANNER CARD                                   */}
+      {/* VIEW A: UPLOAD / CAMERA CAPTURE ZONE (When no image selected) */}
       {/* ============================================================= */}
       {!imagePreview ? (
-        <div className="mt-5 space-y-5">
+        <div className="mt-6 space-y-6">
           
-          {/* Soft Elegant Upload Area */}
-          <div className="rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 p-6 sm:p-8 text-center space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-100/80 text-emerald-800 flex items-center justify-center mx-auto border border-emerald-200 shadow-2xs">
-              <Camera className="w-7 h-7 stroke-[2.2]" />
+          {/* Main Dropzone Card */}
+          <div className="rounded-3xl border-2 border-dashed border-emerald-200 bg-gradient-to-b from-emerald-50/50 via-stone-50/40 to-white p-6 sm:p-10 text-center space-y-4">
+            <div className="w-16 h-16 rounded-3xl bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto border border-emerald-200/80 shadow-xs">
+              <Camera className="w-8 h-8 stroke-[2.2]" />
             </div>
 
             <div>
-              <h3 className="text-base sm:text-lg font-black text-stone-900">
-                {lang === 'hi' ? 'प्रभावित पत्ती की फोटो अपलोड करें' : 'Upload Affected Plant Leaf Photo'}
+              <h3 className="text-lg sm:text-xl font-black text-stone-900">
+                {t('qs_step1_title')}
               </h3>
-              <p className="text-xs text-stone-600 mt-1 max-w-sm mx-auto font-medium">
-                {lang === 'hi' 
-                  ? 'सीधे कैमरे से फोटो खींचें या फोन की गैलरी से चुनें' 
-                  : 'Capture directly using camera or select from your gallery'}
+              <p className="text-xs sm:text-sm text-stone-600 mt-1 max-w-md mx-auto font-medium">
+                {t('qs_step1_text')}
               </p>
             </div>
 
-            {/* Clean Dual Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95"
+                className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-emerald-800 hover:bg-emerald-900 text-white font-black text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2.5 active:scale-95"
               >
-                <Camera className="w-4 h-4" />
-                <span>{lang === 'hi' ? 'कैमरे से फोटो लें' : 'Take Photo'}</span>
+                <Camera className="w-4 h-4 stroke-[2.5]" />
+                <span>{t('chat_attach')}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white hover:bg-stone-50 text-stone-700 font-bold text-xs sm:text-sm border border-stone-200 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-2xs"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-white hover:bg-stone-50 text-stone-800 font-black text-sm border border-stone-200 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-2xs"
               >
                 <ImageIcon className="w-4 h-4 text-stone-500" />
-                <span>{lang === 'hi' ? 'गैलरी से चुनें' : 'Choose from Gallery'}</span>
+                <span>{t('upload_drag')}</span>
               </button>
             </div>
           </div>
 
           {/* Quick 1-Tap Sample Demos */}
-          <div className="pt-2">
-            <div className="text-xs font-bold text-stone-500 mb-2 flex items-center gap-1.5">
+          <div className="pt-1">
+            <div className="text-xs font-bold text-stone-500 mb-2.5 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>{lang === 'hi' ? 'या डेमो के लिए नीचे दिए गए पत्तों पर टैप करें:' : 'Or tap a sample to test:'}</span>
+              <span>{t('qs_step2_title')}:</span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {[
-                { name: 'टमाटर झुलसा', img: '/images/sample-tomato.jpg', crop: 'Tomato' },
-                { name: 'कपास बोंडअळी', img: '/images/sample-cotton.jpg', crop: 'Cotton' },
-                { name: 'धान ब्लास्ट', img: '/images/sample-rice.jpg', crop: 'Rice' },
-                { name: 'सोयाबीन रस्ट', img: '/images/sample-soybean.jpg', crop: 'Soybean' },
+                { name: `${getLocalizedCropName('Tomato', lang)} (Blight)`, img: '/images/sample-tomato.jpg', crop: 'Tomato' },
+                { name: `${getLocalizedCropName('Cotton', lang)} (Bollworm)`, img: '/images/sample-cotton.jpg', crop: 'Cotton' },
+                { name: `${getLocalizedCropName('Rice', lang)} (Blast)`, img: '/images/sample-rice.jpg', crop: 'Rice' },
+                { name: `${getLocalizedCropName('Soybean', lang)} (Rust)`, img: '/images/sample-soybean.jpg', crop: 'Soybean' },
               ].map((s) => (
                 <button
                   key={s.name}
@@ -409,12 +479,14 @@ export default function ImageUpload() {
                       setImageFile(file);
                     } catch {}
                   }}
-                  className="p-2.5 rounded-xl bg-stone-50 hover:bg-emerald-50 border border-stone-200 hover:border-emerald-300 text-left transition-all flex items-center gap-2.5 group active:scale-95"
+                  className="p-3 rounded-2xl bg-stone-50 hover:bg-emerald-50/70 border border-stone-200 hover:border-emerald-300 text-left transition-all flex items-center gap-3 group active:scale-95 shadow-2xs"
                 >
-                  <img src={s.img} alt={s.name} className="w-9 h-9 rounded-lg object-cover border border-stone-200 group-hover:scale-105 transition-transform" />
-                  <div className="truncate">
-                    <span className="text-[11px] font-black text-stone-900 block truncate">{s.name}</span>
-                    <span className="text-[10px] text-emerald-700 font-bold">जांचें →</span>
+                  <img src={s.img} alt={s.name} className="w-11 h-11 rounded-xl object-cover border border-stone-200 group-hover:scale-105 transition-transform flex-shrink-0" />
+                  <div className="truncate min-w-0">
+                    <span className="text-xs font-black text-stone-900 block truncate">{s.name}</span>
+                    <span className="text-[11px] text-emerald-700 font-bold flex items-center gap-0.5 mt-0.5">
+                      {t('home_check_crop')} <ArrowRight className="w-3 h-3" />
+                    </span>
                   </div>
                 </button>
               ))}
@@ -439,166 +511,195 @@ export default function ImageUpload() {
         </div>
       ) : (
         /* ============================================================= */
-        /* 2. PREVIEW & DIAGNOSIS + INLINE AI CONSULTATION               */
+        /* VIEW B: STRUCTURED 2-COLUMN DIAGNOSIS & AI CONSULTATION HUB   */
         /* ============================================================= */
-        <div className="mt-5 space-y-4">
+        <div className="mt-6 space-y-6">
           
-          <div className="relative rounded-2xl overflow-hidden bg-stone-100 border border-stone-200 max-w-md mx-auto">
-            <img 
-              src={imagePreview} 
-              alt="Leaf Preview" 
-              className="w-full max-h-72 object-contain mx-auto" 
-            />
-            
-            <button
-              onClick={reset}
-              className="absolute top-3 right-3 p-2 rounded-full bg-white/90 hover:bg-white text-stone-700 shadow-md transition-all active:scale-90"
-              aria-label="Retake Photo"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          {qualityResult && !qualityResult.isValid && (
-            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs">
-              <div className="font-bold flex items-center gap-1.5">
-                <AlertTriangle className="w-4 h-4 text-amber-600" />
-                <span>{lang === 'hi' ? 'फोटो स्पष्ट नहीं है' : 'Photo Not Clear'}</span>
-              </div>
-              <p className="mt-0.5">{lang === 'hi' ? qualityResult.userGuidanceMessageHi : qualityResult.userGuidanceMessage}</p>
-            </div>
-          )}
-
+          {/* Pre-Diagnosis Trigger Bar (If not yet analyzed) */}
           {!diagnosis && (
-            <div className="text-center pt-2">
+            <div className="space-y-4 max-w-lg mx-auto text-center">
+              <div className="relative rounded-3xl overflow-hidden bg-stone-100 border border-stone-200 shadow-sm">
+                <img 
+                  src={imagePreview} 
+                  alt="Leaf Preview" 
+                  className="w-full max-h-80 object-contain mx-auto" 
+                />
+                
+                <button
+                  onClick={reset}
+                  className="absolute top-3 right-3 p-2 rounded-full bg-white/90 hover:bg-white text-stone-700 shadow-md transition-all active:scale-90"
+                  title="Retake Photo"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
               <button
                 type="button"
                 onClick={handleRunDiagnosis}
                 disabled={analyzing}
-                className="px-6 py-3 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-black text-xs sm:text-sm shadow-sm transition-all inline-flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                className="w-full py-4 rounded-2xl bg-emerald-800 hover:bg-emerald-900 text-white font-black text-base shadow-md transition-all inline-flex items-center justify-center gap-2.5 active:scale-95 disabled:opacity-50"
               >
                 {analyzing ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>{lang === 'hi' ? 'AI जांच जारी है...' : 'Diagnosing...'}</span>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>{t('upload_analyzing')}</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4 text-emerald-200" />
-                    <span>{lang === 'hi' ? 'रोग की पहचान करें' : 'Diagnose Disease'}</span>
+                    <Sparkles className="w-5 h-5 text-emerald-200" />
+                    <span>{t('upload_analyze')}</span>
                   </>
                 )}
               </button>
             </div>
           )}
 
+          {/* DIAGNOSIS RESULTS: ORGANIZED 2-COLUMN STRUCTURE */}
           {diagnosis && (
-            <div className="p-5 rounded-3xl bg-emerald-50/80 border border-emerald-200/90 space-y-4 animate-in fade-in duration-150">
+            <div className="space-y-5 animate-in fade-in duration-200">
               
-              {/* Top Result Meta */}
-              <div className="flex items-center justify-between pb-3 border-b border-emerald-200/70">
-                <div>
-                  <span className="text-[10px] font-black uppercase text-emerald-900 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-300/60">
-                    ✓ ICAR AI Diagnosis
-                  </span>
-                  <h3 className="text-base sm:text-lg font-black text-emerald-950 mt-1">
-                    {diagnosis.primaryPrediction?.diseaseName || 'Crop Disease'}
-                  </h3>
-                </div>
-
-                <div className="text-right">
-                  <span className="text-[10px] text-stone-500 font-bold block">{lang === 'hi' ? 'सटीकता' : 'Confidence'}</span>
-                  <span className="text-sm font-black text-emerald-800">{Math.round(diagnosis.overallConfidenceScore || 95)}%</span>
-                </div>
-              </div>
-
-              {/* ICAR Chemical & Bio Prescription */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-                <div className="p-3 bg-white rounded-2xl border border-emerald-100 shadow-2xs">
-                  <span className="font-bold text-stone-500 block text-[11px]">{lang === 'hi' ? 'रासायनिक दवा (ICAR):' : 'Chemical Spray:'}</span>
-                  <span className="font-black text-stone-900 mt-0.5 block">
-                    {diagnosis.primaryPrediction?.category === 'pest_infestation'
-                      ? 'इमामेक्टिन बेंजोएट 5% SG @ 0.4 gm/L'
-                      : 'कॉपर ऑक्सीक्लोराइड 50% WP @ 2.5 gm/L'}
-                  </span>
-                </div>
-
-                <div className="p-3 bg-white rounded-2xl border border-emerald-100 shadow-2xs">
-                  <span className="font-bold text-stone-500 block text-[11px]">{lang === 'hi' ? 'जैविक व देसी उपचार:' : 'Biological Remedy:'}</span>
-                  <span className="font-black text-stone-900 mt-0.5 block">
-                    ट्राइकोडर्मा विरिडी 1% WP @ 5.0 gm/L पानी
-                  </span>
-                </div>
-              </div>
-
-              {/* ============================================================= */}
-              {/* 3. INLINE AI ADVISOR CONSULTATION SECTION                     */}
-              {/* ============================================================= */}
-              <div className="pt-3 border-t border-emerald-200/80 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center">
-                      <Bot className="w-4 h-4 stroke-[2.2]" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-black text-emerald-950 block leading-tight">
-                        {lang === 'hi' ? '🌾 AI सलाहकार से और पूछें' : '🌾 Ask AI Advisor More'}
+              {/* TOP SUMMARY STRIP: THUMBNAIL + DISEASE NAME + CONFIDENCE */}
+              <div className="p-4 sm:p-5 rounded-3xl bg-emerald-50/90 border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+                <div className="flex items-center gap-3.5">
+                  <img 
+                    src={imagePreview} 
+                    alt="Diagnosed leaf" 
+                    className="w-16 h-16 rounded-2xl object-cover border-2 border-white shadow-xs flex-shrink-0"
+                  />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase text-emerald-900 bg-emerald-200/80 px-2 py-0.5 rounded-md">
+                        ✓ ICAR AI Diagnosed
                       </span>
-                      <span className="text-[10px] text-emerald-800 font-medium">
-                        {lang === 'hi' ? 'इस बीमारी के बारे में कोई भी प्रश्न पूछें' : 'Ask any questions about this disease'}
+                      <span className="text-[11px] font-bold text-stone-500">
+                        {localizedCrop} ({getLocalizedStageName(cropContext.cropStage, lang)})
                       </span>
                     </div>
+                    <h3 className="text-lg sm:text-xl font-black text-stone-900 mt-0.5">
+                      {diagnosis.primaryPrediction?.diseaseName || getCommonLabel('healthyCrop', lang)}
+                    </h3>
                   </div>
                 </div>
 
-                {/* Quick 1-Tap Question Pills */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]">
-                  {followUpPills.map((pill, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleAskAI(pill.query)}
-                      className="px-2.5 py-1 rounded-full bg-white hover:bg-emerald-100 text-emerald-950 font-bold border border-emerald-200 whitespace-nowrap shadow-2xs transition-all active:scale-95"
-                    >
-                      {pill.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Inline Question Input Bar */}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={aiCustomQuestion}
-                    onChange={(e) => setAiCustomQuestion(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAskAI(aiCustomQuestion);
-                        setAiCustomQuestion('');
-                      }
-                    }}
-                    placeholder={lang === 'hi' ? 'इस बीमारी या दवा के बारे में कुछ भी पूछें...' : 'Ask AI anything about this diagnosis...'}
-                    className="flex-1 px-3.5 py-2 rounded-xl bg-white border border-emerald-300 text-xs font-bold text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
+                <div className="flex items-center gap-3 self-end sm:self-auto">
+                  <div className="text-right">
+                    <span className="text-[10px] text-stone-500 font-bold block">{t('upload_confidence')}</span>
+                    <span className="text-base font-black text-emerald-800">{Math.round(diagnosis.overallConfidenceScore || 95)}%</span>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      handleAskAI(aiCustomQuestion);
-                      setAiCustomQuestion('');
-                    }}
-                    disabled={!aiCustomQuestion.trim() || aiLoading}
-                    className="p-2 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white disabled:opacity-40 transition-all shadow-2xs"
+                    onClick={reset}
+                    className="px-3 py-2 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 font-bold text-xs shadow-2xs transition-all active:scale-95"
                   >
-                    <Send className="w-4 h-4" />
+                    {t('upload_retake')}
                   </button>
                 </div>
+              </div>
 
-                {/* Multi-Turn AI Conversation History & Streaming Bubble */}
-                {chatHistory.length > 0 && (
+              {/* MAIN 2-COLUMN GRID: LEFT (PRESCRIPTION) + RIGHT (AI DOCTOR CHAT) */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                
+                {/* ----------------------------------------------------------- */}
+                {/* COLUMN 1: ICAR CERTIFIED PRESCRIPTION (5 COLS)             */}
+                {/* ----------------------------------------------------------- */}
+                <div className="lg:col-span-5 space-y-3.5">
+                  
+                  {/* Card Title */}
+                  <div className="flex items-center gap-2 px-1">
+                    <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                    <h4 className="text-xs font-black uppercase tracking-wider text-stone-600">
+                      {t('upload_recommendation')}
+                    </h4>
+                  </div>
+
+                  {/* Chemical Dosage Card */}
+                  <div className="p-4 rounded-2xl bg-white border border-stone-200/90 shadow-2xs space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-xs font-black text-stone-800">
+                      <FlaskConical className="w-4 h-4 text-indigo-600" />
+                      <span>{lang === 'hi' ? 'अनुशंसित रासायनिक दवा:' : lang === 'mr' ? 'शिफारस केलेले रासायनिक औषध:' : 'Chemical Spray (ICAR):'}</span>
+                    </div>
+                    <div className="text-sm font-black text-stone-900 pl-5">
+                      {diagnosis.primaryPrediction?.category === 'pest_infestation'
+                        ? 'Emamectin Benzoate 5% SG @ 0.4 gm/L'
+                        : 'Copper Oxychloride 50% WP @ 2.5 gm/L'}
+                    </div>
+                    <p className="text-[11px] text-stone-500 pl-5">
+                      {lang === 'hi' ? '200 लीटर पानी में मिलाकर प्रति एकड़ छिड़काव करें।' : lang === 'mr' ? '200 लिटर पाण्यात मिसळून प्रति एकर फवारणी करा.' : 'Mix in 200L water per acre for foliar spray.'}
+                    </p>
+                  </div>
+
+                  {/* Biological Alternative Card */}
+                  <div className="p-4 rounded-2xl bg-white border border-stone-200/90 shadow-2xs space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-xs font-black text-stone-800">
+                      <Leaf className="w-4 h-4 text-emerald-600" />
+                      <span>{lang === 'hi' ? 'जैविक व देसी उपाय:' : lang === 'mr' ? 'सेंद्रिय व जैविक उपचार:' : 'Bio-Control / Organic:'}</span>
+                    </div>
+                    <div className="text-sm font-black text-emerald-900 pl-5">
+                      Trichoderma viride 1% WP @ 5.0 gm/L
+                    </div>
+                    <p className="text-[11px] text-stone-500 pl-5">
+                      {lang === 'hi' ? 'नीम तेल 1500 ppm @ 5 ml/L के साथ मिलाकर स्प्रे करें।' : lang === 'mr' ? 'निंबोळी तेल 1500 ppm @ 5 ml/L सोबत फवारा.' : 'Or Neem Oil 1500ppm @ 5ml/L.'}
+                    </p>
+                  </div>
+
+                  {/* Spray Timing Safety Advice */}
+                  <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-xs space-y-1">
+                    <div className="flex items-center gap-1.5 font-bold text-amber-950 text-[11px]">
+                      <Clock className="w-3.5 h-3.5 text-amber-700" />
+                      <span>{getCommonLabel('bestSprayWindow', lang)}</span>
+                    </div>
+                    <p className="text-amber-900 font-medium leading-relaxed pl-5 text-[11px]">
+                      {lang === 'hi' 
+                        ? 'शाम को 4:00 बजे के बाद ही स्प्रे करें। फसल तुड़ाई से पहले 7 दिन का अंतराल (PHI) रखें।'
+                        : lang === 'mr'
+                        ? 'दुपारी 4:00 नंतरच फवारणी करा. काढणीपूर्वी 7 दिवसांचा सुरक्षित कालावधी (PHI) ठेवा.'
+                        : 'Spray after 4:00 PM during calm weather. Pre-Harvest Interval (PHI): 7 days.'}
+                    </p>
+                  </div>
+
+                </div>
+
+                {/* ----------------------------------------------------------- */}
+                {/* COLUMN 2: INTERACTIVE AI DOCTOR CONSULTATION (7 COLS)       */}
+                {/* ----------------------------------------------------------- */}
+                <div className="lg:col-span-7 flex flex-col justify-between bg-stone-50/70 p-4 sm:p-5 rounded-3xl border border-emerald-200/90 shadow-xs space-y-3.5">
+                  
+                  {/* Chatbox Header */}
+                  <div className="flex items-center justify-between pb-2 border-b border-emerald-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-700 text-white flex items-center justify-center shadow-2xs">
+                        <Bot className="w-4 h-4 stroke-[2.2]" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-stone-900">
+                          {getCommonLabel('askAiAboutDisease', lang)}
+                        </h4>
+                        <span className="text-[10px] text-emerald-800 font-medium">
+                          {t('chat_subtitle')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 1-Tap Quick Question Suggestion Pills */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]">
+                    {followUpPills.map((pill, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleAskAI(pill.query)}
+                        className="px-2.5 py-1 rounded-full bg-white hover:bg-emerald-100 text-emerald-950 font-bold border border-emerald-200/90 whitespace-nowrap shadow-2xs transition-all active:scale-95"
+                      >
+                        {pill.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Scrollable Chat History */}
                   <div 
                     ref={chatScrollRef}
-                    className="max-h-60 overflow-y-auto space-y-2 p-3 rounded-2xl bg-white/90 border border-emerald-200/90 shadow-2xs text-xs"
+                    className="flex-1 min-h-[200px] max-h-[260px] overflow-y-auto space-y-2.5 p-3 rounded-2xl bg-white border border-stone-200 shadow-inner text-xs"
                   >
                     {chatHistory.map((msg, index) => (
                       <div
@@ -617,7 +718,19 @@ export default function ImageUpload() {
                               : 'bg-stone-50 border border-stone-200/80 text-stone-900 rounded-tl-xs'
                           }`}
                         >
-                          {msg.text}
+                          {(() => {
+                            const parts = msg.text.split(/(\*\*.*?\*\*)/g);
+                            return parts.map((part, i) => {
+                              if (part.startsWith('**') && part.endsWith('**')) {
+                                return (
+                                  <strong key={i} className="font-black text-stone-950">
+                                    {part.slice(2, -2)}
+                                  </strong>
+                                );
+                              }
+                              return <span key={i}>{part}</span>;
+                            });
+                          })()}
                         </div>
                       </div>
                     ))}
@@ -628,26 +741,58 @@ export default function ImageUpload() {
                         <div className="w-6 h-6 rounded-lg bg-emerald-700 text-white flex items-center justify-center flex-shrink-0 mt-0.5 shadow-2xs">
                           <Bot className="w-3.5 h-3.5" />
                         </div>
-                        <div className="p-2.5 rounded-2xl max-w-[85%] bg-stone-50 border border-stone-200/80 text-stone-900 leading-relaxed rounded-tl-xs">
-                          {streamingText}
+                        <div className="p-2.5 rounded-2xl max-w-[85%] bg-stone-50 border border-stone-200/80 text-stone-900 leading-relaxed rounded-tl-xs whitespace-pre-wrap">
+                          {(() => {
+                            const parts = streamingText.split(/(\*\*.*?\*\*)/g);
+                            return parts.map((part, i) => {
+                              if (part.startsWith('**') && part.endsWith('**')) {
+                                return (
+                                  <strong key={i} className="font-black text-stone-950">
+                                    {part.slice(2, -2)}
+                                  </strong>
+                                );
+                              }
+                              return <span key={i}>{part}</span>;
+                            });
+                          })()}
                           <span className="inline-block w-1.5 h-3.5 bg-emerald-600 animate-pulse ml-0.5 align-middle" />
                         </div>
                       </div>
                     )}
                   </div>
-                )}
-              </div>
 
-              {/* Bottom Actions */}
-              <div className="pt-2 flex items-center justify-between text-xs">
-                <span className="text-emerald-900 font-medium">✓ जांच इतिहास में सहेजा गया</span>
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-xs shadow-2xs transition-all active:scale-95"
-                >
-                  {lang === 'hi' ? 'दूसरी फोटो जांचें' : 'Check Another'}
-                </button>
+                  {/* Input Bar */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="text"
+                      value={aiCustomQuestion}
+                      onChange={(e) => setAiCustomQuestion(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAskAI(aiCustomQuestion);
+                          setAiCustomQuestion('');
+                        }
+                      }}
+                      placeholder={t('chat_placeholder')}
+                      className="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-emerald-300 text-xs font-bold text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleAskAI(aiCustomQuestion);
+                        setAiCustomQuestion('');
+                      }}
+                      disabled={!aiCustomQuestion.trim() || aiLoading}
+                      className="px-4 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white disabled:opacity-40 transition-all shadow-xs flex items-center gap-1.5 font-bold text-xs"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>{t('chat_send')}</span>
+                    </button>
+                  </div>
+
+                </div>
+
               </div>
 
             </div>

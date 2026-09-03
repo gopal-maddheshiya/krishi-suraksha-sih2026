@@ -25,9 +25,9 @@ export default function MobileBottomNav({ activeSection, onNavigate, onOpenAccou
       icon: Home,
     },
     {
-      id: 'history',
-      label: lang === 'hi' ? 'इतिहास' : lang === 'mr' ? 'इतिहास' : 'History',
-      icon: History,
+      id: 'weather',
+      label: lang === 'hi' ? 'मौसम' : lang === 'mr' ? 'हवामान' : 'Weather',
+      icon: CloudRain,
     },
     {
       id: 'report',
@@ -36,9 +36,9 @@ export default function MobileBottomNav({ activeSection, onNavigate, onOpenAccou
       primary: true,
     },
     {
-      id: 'weather',
-      label: lang === 'hi' ? 'मौसम' : lang === 'mr' ? 'हवामान' : 'Weather',
-      icon: CloudRain,
+      id: 'history',
+      label: lang === 'hi' ? 'इतिहास' : lang === 'mr' ? 'इतिहास' : 'History',
+      icon: History,
     },
     {
       id: 'account',

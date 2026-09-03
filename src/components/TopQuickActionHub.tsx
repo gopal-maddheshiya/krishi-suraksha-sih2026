@@ -4,6 +4,8 @@ import {
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { useFarmContext } from '@/contexts/FarmContext';
+import { getLocalizedCropName, getLocalizedStageName } from '@/lib/agriLocalization';
+import type { LanguageCode } from '@/lib/i18n';
 
 interface TopQuickActionHubProps {
   onAddNewFarm?: () => void;
@@ -16,44 +18,59 @@ export default function TopQuickActionHub({
   const { activeFarm, setActiveFarm } = useFarmContext();
   const [farmDropdownOpen, setFarmDropdownOpen] = useState(false);
 
-  const farmName = activeFarm?.farm_name || (lang === 'hi' ? 'मुख्य खेत (प्लॉट 1)' : 'Main Field (Plot 1)');
-  const cropName = activeFarm?.crop?.name || (lang === 'hi' ? 'कपास' : 'Cotton');
-  const cropStage = activeFarm?.crop?.stage || (lang === 'hi' ? 'फूल आने की अवस्था' : 'Flowering Stage');
+  const rawCropName = activeFarm?.crop?.name || 'Cotton';
+  const cropName = getLocalizedCropName(rawCropName, lang);
+  const rawCropStage = activeFarm?.crop?.stage || 'Flowering Stage';
+  const cropStage = getLocalizedStageName(rawCropStage, lang);
+  const farmName = activeFarm?.farm_name || (lang === 'hi' ? 'मुख्य खेत (प्लॉट 1)' : lang === 'mr' ? 'मुख्य शेत (प्लॉट 1)' : 'Main Field (Plot 1)');
   const areaAcres = activeFarm?.area_acres || 2.5;
-  const district = activeFarm?.district || (lang === 'hi' ? 'पुणे, महाराष्ट्र' : 'Pune, MH');
+  const district = activeFarm?.district || (lang === 'hi' ? 'पुणे, महाराष्ट्र' : lang === 'mr' ? 'पुणे, महाराष्ट्र' : 'Pune, MH');
 
-  const sampleFarms = [
+  const defaultFarms = [
     {
       id: 'default_farm',
-      farm_name: lang === 'hi' ? 'मुख्य खेत (प्लॉट 1)' : 'Main Field (Plot 1)',
+      farm_name: lang === 'hi' ? 'मुख्य खेत (प्लॉट 1)' : lang === 'mr' ? 'मुख्य शेत (प्लॉट 1)' : 'Main Field (Plot 1)',
       district: lang === 'hi' ? 'पुणे, महाराष्ट्र' : 'Pune, MH',
       state: 'Maharashtra',
       latitude: 18.5204,
       longitude: 73.8567,
       area_acres: 2.5,
       crop: { 
-        name: lang === 'hi' ? 'कपास' : 'Cotton', 
-        stage: lang === 'hi' ? 'फूल आने की अवस्था' : 'Flowering Stage', 
+        name: 'Cotton', 
+        stage: 'Flowering Stage', 
         variety: 'Bt Cotton II', 
         sowing_date: '2026-06-15' 
       },
     },
     {
       id: 'farm_2',
-      farm_name: lang === 'hi' ? 'उत्तर प्लॉट (टमाटर)' : 'North Plot (Tomato)',
+      farm_name: lang === 'hi' ? 'उत्तर प्लॉट (टमाटर)' : lang === 'mr' ? 'उत्तर प्लॉट (टोमॅटो)' : 'North Plot (Tomato)',
       district: lang === 'hi' ? 'नासिक, महाराष्ट्र' : 'Nashik, MH',
       state: 'Maharashtra',
       latitude: 19.9975,
       longitude: 73.7898,
       area_acres: 1.5,
       crop: { 
-        name: lang === 'hi' ? 'टमाटर' : 'Tomato', 
-        stage: lang === 'hi' ? 'फल लगने की अवस्था' : 'Fruiting Stage', 
+        name: 'Tomato', 
+        stage: 'Fruiting Stage', 
         variety: 'Abhinav Hybrid', 
         sowing_date: '2026-07-01' 
       },
     },
   ];
+
+  const getCustomFarms = () => {
+    try {
+      const stored = localStorage.getItem('crophealth_farms_list');
+      if (stored) {
+        const list = JSON.parse(stored);
+        if (Array.isArray(list) && list.length > 0) return list;
+      }
+    } catch {}
+    return [];
+  };
+
+  const allFarms = [...getCustomFarms(), ...defaultFarms.filter(df => !getCustomFarms().some((cf: any) => cf.id === df.id))];
 
   return (
     <div className="w-full py-2.5">
@@ -85,51 +102,69 @@ export default function TopQuickActionHub({
           </div>
 
           <div className="flex items-center gap-1 text-xs font-bold text-stone-500 group-hover:text-stone-900 transition-colors flex-shrink-0 bg-stone-100/80 px-2.5 py-1 rounded-xl">
-            <span>{t('home_select_farm')}</span>
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${farmDropdownOpen ? 'rotate-180' : ''}`} />
+            <span className="hidden sm:inline">{lang === 'hi' ? 'खेत बदलें' : lang === 'mr' ? 'शेत बदला' : 'Switch'}</span>
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${farmDropdownOpen ? 'rotate-180 text-emerald-700' : ''}`} />
           </div>
         </button>
 
+        {/* ============================================================= */}
+        {/* DROPDOWN MENU: SWITCH OR ADD PLOT                             */}
+        {/* ============================================================= */}
         {farmDropdownOpen && (
           <>
-            <div className="fixed inset-0 z-40" onClick={() => setFarmDropdownOpen(false)} />
-            <div className="absolute top-full left-0 right-0 sm:left-auto sm:right-0 mt-2 w-full sm:w-88 bg-white rounded-3xl shadow-2xl border border-stone-200/90 p-2.5 z-50 animate-in zoom-in-95 duration-150">
-              <div className="text-[10px] font-black text-stone-400 uppercase tracking-wider px-3 py-1.5 border-b border-stone-100 flex items-center justify-between">
-                <span>{t('home_select_farm')}</span>
-                <Sparkles className="w-3 h-3 text-emerald-600" />
+            <div 
+              className="fixed inset-0 z-40" 
+              onClick={() => setFarmDropdownOpen(false)} 
+            />
+            
+            <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-stone-200 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 max-h-80 overflow-y-auto">
+              <div className="px-3 py-2 text-[10px] font-black uppercase tracking-wider text-stone-400 border-b border-stone-100 flex items-center justify-between">
+                <span>{lang === 'hi' ? 'आपके पंजीकृत खेत व प्लॉट' : lang === 'mr' ? 'नोंदणीकृत शेत व प्लॉट' : 'Registered Farms & Plots'}</span>
+                <span className="text-emerald-700 font-bold">{allFarms.length} {lang === 'hi' ? 'खेत' : lang === 'mr' ? 'शेत' : 'plots'}</span>
               </div>
 
-              <div className="space-y-1.5 py-2">
-                {sampleFarms.map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => {
-                      setActiveFarm(f as any);
-                      setFarmDropdownOpen(false);
-                    }}
-                    className={`w-full text-left p-3 rounded-2xl flex items-center justify-between gap-2 transition-all ${
-                      activeFarm?.id === f.id
-                        ? 'bg-emerald-50/90 border border-emerald-200 text-emerald-950 font-black'
-                        : 'hover:bg-stone-50 text-stone-700 font-bold'
-                    }`}
-                  >
-                    <div className="min-w-0">
-                      <div className="text-xs sm:text-sm truncate">{f.farm_name}</div>
-                      <div className="text-[11px] text-stone-500 font-medium mt-0.5 flex items-center gap-1">
-                        <span>{f.crop.name}</span>
-                        <span>•</span>
-                        <span>{f.area_acres} {t('home_acres')}</span>
-                        <span>•</span>
-                        <span>{f.district}</span>
+              <div className="py-1 space-y-1">
+                {allFarms.map((farm) => {
+                  const isSelected = activeFarm?.id === farm.id;
+                  const farmCropName = getLocalizedCropName(farm.crop?.name, lang);
+                  const farmStageName = getLocalizedStageName(farm.crop?.stage, lang);
+                  return (
+                    <button
+                      key={farm.id}
+                      onClick={() => {
+                        setActiveFarm(farm);
+                        setFarmDropdownOpen(false);
+                      }}
+                      className={`w-full text-left p-3 rounded-xl transition-all flex items-center justify-between gap-3 ${
+                        isSelected 
+                          ? 'bg-emerald-50 text-emerald-950 font-bold border border-emerald-200/80 shadow-2xs' 
+                          : 'hover:bg-stone-50 text-stone-800'
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <div className="text-xs sm:text-sm font-black flex items-center gap-1.5 truncate">
+                          <span>{farm.farm_name}</span>
+                          {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 flex-shrink-0" />}
+                        </div>
+                        <div className="text-[11px] text-stone-500 font-medium flex items-center gap-2 mt-0.5">
+                          <span>🌾 {farmCropName} ({farm.area_acres} {t('home_acres')})</span>
+                          <span>•</span>
+                          <span className="truncate">{farmStageName}</span>
+                        </div>
                       </div>
-                    </div>
-                    {activeFarm?.id === f.id && (
-                      <div className="w-5 h-5 rounded-full bg-emerald-700 text-white flex items-center justify-center flex-shrink-0">
-                        <Check className="w-3 h-3 stroke-[3]" />
-                      </div>
-                    )}
-                  </button>
-                ))}
+
+                      {isSelected ? (
+                        <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-2xs">
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        </div>
+                      ) : (
+                        <span className="text-[11px] font-bold text-stone-400 group-hover:text-stone-700">
+                          {lang === 'hi' ? 'चुनें' : lang === 'mr' ? 'निवडा' : 'Select'}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
               {onAddNewFarm && (
@@ -139,10 +174,10 @@ export default function TopQuickActionHub({
                       setFarmDropdownOpen(false);
                       onAddNewFarm();
                     }}
-                    className="w-full py-2.5 px-3 rounded-2xl bg-stone-900 hover:bg-black text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                    className="w-full p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100/80 text-emerald-900 font-black text-xs transition-colors flex items-center justify-center gap-2"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>{t('home_add_farm')}</span>
+                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span>{lang === 'hi' ? '+ नया खेत जोड़ें' : lang === 'mr' ? '+ नवीन शेत जोडा' : '+ Add New Farm Plot'}</span>
                   </button>
                 </div>
               )}

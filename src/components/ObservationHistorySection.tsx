@@ -1,47 +1,43 @@
 import { useState, useEffect } from 'react';
-import {
-  History, Camera, Calendar, ShieldCheck,
-  AlertTriangle, ChevronRight, CheckCircle2, UserCheck,
-  RefreshCw, Filter, Sprout, Info, Eye, X, Clock,
+import { 
+  History, Calendar, AlertTriangle, CheckCircle2, 
+  ChevronRight, Filter, Eye, RefreshCw, Camera, 
+  Sprout, X, ShieldCheck, UserCheck 
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
+import { ObservationService } from '@/services/ObservationService';
 import { useFarmContext } from '@/contexts/FarmContext';
-import { supabase } from '@/lib/supabase';
-import { ObservationService, type CropObservationEntity } from '@/services/ObservationService';
+import type { CropObservationEntity } from '@/services/types';
+import { getLocalizedCropName } from '@/lib/agriLocalization';
 
-const FALLBACK_IMG = '/images/sample-cotton.jpg';
-
-export function getObsImageUrl(storagePath?: string): string {
-  if (!storagePath) return FALLBACK_IMG;
-  if (storagePath.startsWith('/') || storagePath.startsWith('http') || storagePath.startsWith('data:')) {
-    return storagePath;
-  }
-  try {
-    const { data } = supabase.storage.from('crop-observations').getPublicUrl(storagePath);
-    return data?.publicUrl || FALLBACK_IMG;
-  } catch {
-    return FALLBACK_IMG;
-  }
-}
-
-type ObservationHistorySectionProps = {
-  onScanNewCrop: () => void;
-  onNavigateToAdvisory: () => void;
+type ObservationHistoryProps = {
+  onScanNewCrop?: () => void;
+  onNavigateToAdvisory?: () => void;
 };
 
-export default function ObservationHistorySection({ onScanNewCrop, onNavigateToAdvisory }: ObservationHistorySectionProps) {
+export default function ObservationHistorySection({
+  onScanNewCrop,
+  onNavigateToAdvisory,
+}: ObservationHistoryProps) {
   const { lang, t } = useLang();
   const { currentUser } = useFarmContext();
   const [observations, setObservations] = useState<CropObservationEntity[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedObs, setSelectedObs] = useState<CropObservationEntity | null>(null);
   const [filterCrop, setFilterCrop] = useState<string>('all');
+  const [selectedObs, setSelectedObs] = useState<CropObservationEntity | null>(null);
+
+  const getObsImageUrl = (path?: string) => {
+    if (!path) return '/images/sample-cotton.jpg';
+    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:') || path.startsWith('/')) {
+      return path;
+    }
+    return `https://images.unsplash.com/photo-1597848212624-a19eb35e2651?w=800&auto=format&fit=crop&q=80`;
+  };
 
   const loadHistory = async () => {
     setLoading(true);
     try {
-      const farmerId = currentUser?.id || 'farmer_guest';
-      const records = await ObservationService.getFarmerObservations(farmerId);
+      const records = await ObservationService.getFarmerObservations(currentUser?.id || 'farmer_active');
       if (!records || records.length === 0) {
         const localCache = localStorage.getItem('crophealth_observations_cache');
         if (localCache) {
@@ -89,12 +85,10 @@ export default function ObservationHistorySection({ onScanNewCrop, onNavigateToA
               {t('home_history_records')}
             </div>
             <h1 className="text-lg sm:text-xl font-extrabold text-stone-900">
-              {lang === 'hi' ? 'मेरी फसल जांच का इतिहास' : 'My Crop Check History'}
+              {lang === 'hi' ? 'मेरी फसल जांच का इतिहास' : lang === 'mr' ? 'माझा पीक तपासणी इतिहास' : 'My Crop Check History'}
             </h1>
             <p className="text-xs text-stone-600 mt-0.5 line-clamp-2">
-              {lang === 'hi'
-                ? 'अपलोड की गई पत्तियों के AI रोग निदान और कीटनाशक खुराक'
-                : 'All uploaded crop leaf scans, AI diagnoses & expert reviews'}
+              {t('followup_subtitle')}
             </p>
           </div>
         </div>
@@ -113,11 +107,12 @@ export default function ObservationHistorySection({ onScanNewCrop, onNavigateToA
             className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-1.5"
           >
             <Camera className="w-3.5 h-3.5" />
-            <span>{lang === 'hi' ? 'नई फोटो' : 'Scan New Crop'}</span>
+            <span>{t('upload_retake')}</span>
           </button>
         </div>
       </div>
 
+      {/* Filter Chips */}
       {observations.length > 0 && (
         <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
           <span className="text-stone-500 font-bold flex items-center gap-1 pl-1">
@@ -134,7 +129,7 @@ export default function ObservationHistorySection({ onScanNewCrop, onNavigateToA
                   : 'bg-white text-stone-700 hover:bg-stone-50 border border-stone-200'
               }`}
             >
-              {crop === 'all' ? (lang === 'hi' ? 'सभी' : 'All') : crop}
+              {crop === 'all' ? (lang === 'hi' ? 'सभी' : lang === 'mr' ? 'सर्व' : 'All') : getLocalizedCropName(crop, lang)}
             </button>
           ))}
         </div>
@@ -151,12 +146,10 @@ export default function ObservationHistorySection({ onScanNewCrop, onNavigateToA
           </div>
           <div>
             <h3 className="font-extrabold text-base text-stone-900">
-              {lang === 'hi' ? 'अभी कोई स्कैन नहीं' : 'No Scans Yet'}
+              {lang === 'hi' ? 'अभी कोई स्कैन नहीं' : lang === 'mr' ? 'अजून कोणताही स्कॅन नाही' : 'No Scans Yet'}
             </h3>
             <p className="text-xs text-stone-500 mt-1 max-w-sm mx-auto leading-snug">
-              {lang === 'hi'
-                ? 'अपनी फसल की पत्ती की फोटो लें। AI तुरंत रोग पहचान करेगा।'
-                : 'Take a clear leaf photo. Our AI will identify any disease instantly.'}
+              {t('qs_step1_text')}
             </p>
           </div>
           <button
@@ -164,7 +157,7 @@ export default function ObservationHistorySection({ onScanNewCrop, onNavigateToA
             className="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs inline-flex items-center gap-2"
           >
             <Camera className="w-3.5 h-3.5" />
-            <span>{lang === 'hi' ? 'पहली जांच करें' : 'Take First Photo'}</span>
+            <span>{t('home_check_crop')}</span>
           </button>
         </div>
       ) : (
@@ -172,7 +165,8 @@ export default function ObservationHistorySection({ onScanNewCrop, onNavigateToA
           {filtered.map((obs) => {
             const diag = obs.diagnoses?.[0];
             const img = getObsImageUrl(obs.images?.[0]?.storage_path);
-            const cropName = obs.farm_crop?.crop?.name || obs.farm_crop?.variety || 'Cotton';
+            const rawName = obs.farm_crop?.crop?.name || obs.farm_crop?.variety || 'Cotton';
+            const cropName = getLocalizedCropName(rawName, lang);
             const isVerified = obs.status === 'verified';
 
             return (
@@ -196,7 +190,7 @@ export default function ObservationHistorySection({ onScanNewCrop, onNavigateToA
                         ? 'bg-emerald-600 text-white'
                         : 'bg-amber-500 text-white'
                     }`}>
-                      {isVerified ? (lang === 'hi' ? '✓ सत्यापित' : '✓ Verified') : (lang === 'hi' ? 'AI जांच' : 'AI Analysis')}
+                      {isVerified ? '✓ ICAR Verified' : 'AI Analysis'}
                     </span>
                   </div>
                   <div className="absolute bottom-2 left-2.5 flex items-center gap-1 text-white text-[10px] font-medium drop-shadow">
@@ -207,17 +201,17 @@ export default function ObservationHistorySection({ onScanNewCrop, onNavigateToA
 
                 <div className="p-3.5 flex-1 space-y-1.5">
                   <h3 className="font-extrabold text-sm text-stone-900 group-hover:text-emerald-700 leading-snug line-clamp-1">
-                    {diag?.disease_id ? diag.disease_id.replace(/_/g, ' ') : (lang === 'hi' ? 'लक्षण जांच' : 'Crop Symptom Check')}
+                    {diag?.disease_id ? diag.disease_id.replace(/_/g, ' ') : t('upload_disease')}
                   </h3>
                   <p className="text-xs text-stone-600 line-clamp-2 leading-snug">
-                    {obs.description || (lang === 'hi' ? 'प्रारंभिक लक्षण जांच रिपोर्ट।' : 'Preliminary symptoms and recommended dosage.')}
+                    {obs.description || t('upload_recommendation')}
                   </p>
                 </div>
 
                 <div className="px-3.5 py-2 border-t border-stone-100 flex items-center justify-between text-[11px]">
                   <span className="text-emerald-700 font-bold flex items-center gap-1">
                     <Eye className="w-3 h-3" />
-                    <span>{lang === 'hi' ? 'विवरण' : 'View'}</span>
+                    <span>{t('common_view_all')}</span>
                   </span>
                   <ChevronRight className="w-3.5 h-3.5 text-stone-400 group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -227,6 +221,7 @@ export default function ObservationHistorySection({ onScanNewCrop, onNavigateToA
         </div>
       )}
 
+      {/* Modal Dialog for Selected Observation */}
       {selectedObs && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-stone-200 overflow-hidden flex flex-col max-h-[90vh]">
@@ -238,7 +233,7 @@ export default function ObservationHistorySection({ onScanNewCrop, onNavigateToA
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-extrabold text-base text-stone-900 truncate">
-                    {lang === 'hi' ? 'निदान एवं उपचार पर्चा' : 'Diagnosis & Prescription'}
+                    {lang === 'hi' ? 'निदान एवं उपचार पर्चा' : lang === 'mr' ? 'निदान व औषधोपचार सल्ला' : 'Diagnosis & Prescription'}
                   </h3>
                   <p className="text-[11px] text-stone-500">
                     {new Date(selectedObs.observed_at || selectedObs.created_at).toLocaleString()}
@@ -269,11 +264,11 @@ export default function ObservationHistorySection({ onScanNewCrop, onNavigateToA
                   </div>
 
                   <h4 className="font-extrabold text-base text-stone-900">
-                    {selectedObs.farm_crop?.crop?.name || 'Cotton'} · {selectedObs.farm_crop?.variety || 'Bt Cotton'}
+                    {getLocalizedCropName(selectedObs.farm_crop?.crop?.name, lang)} · {selectedObs.farm_crop?.variety || 'Bt Hybrid'}
                   </h4>
 
                   <p className="text-xs text-stone-600 leading-snug">
-                    {selectedObs.description || 'प्रभावित पत्तियों पर भूरे धब्बे दिखाई दे रहे हैं। तुरंत छिड़काव की सिफारिश।'}
+                    {selectedObs.description || t('upload_recommendation')}
                   </p>
                 </div>
               </div>
@@ -281,25 +276,25 @@ export default function ObservationHistorySection({ onScanNewCrop, onNavigateToA
               <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-1.5">
                 <div className="font-extrabold text-[11px] text-emerald-950 flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>{lang === 'hi' ? 'ICAR प्रमाणित उपचार' : 'ICAR Recommended Treatment'}</span>
+                  <span>{t('upload_recommendation')} (ICAR)</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
                   <div className="p-2 bg-white rounded-lg border border-emerald-100">
-                    <span className="text-[10px] font-bold text-stone-500 block">{lang === 'hi' ? 'रासायनिक' : 'Chemical'}</span>
-                    <span className="font-extrabold text-stone-900 mt-0.5 block text-xs">कॉपर ऑक्सीक्लोराइड 50% WP</span>
-                    <span className="text-[10px] text-emerald-700 font-bold">2.5 ग्राम/लीटर</span>
+                    <span className="text-[10px] font-bold text-stone-500 block">Chemical Treatment</span>
+                    <span className="font-extrabold text-stone-900 mt-0.5 block text-xs">Copper Oxychloride 50% WP</span>
+                    <span className="text-[10px] text-emerald-700 font-bold">2.5 gm/L</span>
                   </div>
 
                   <div className="p-2 bg-white rounded-lg border border-emerald-100">
-                    <span className="text-[10px] font-bold text-stone-500 block">{lang === 'hi' ? 'जैविक' : 'Biological'}</span>
-                    <span className="font-extrabold text-stone-900 mt-0.5 block text-xs">ट्राइकोडर्मा विरिडी 1% WP</span>
-                    <span className="text-[10px] text-emerald-700 font-bold">5 ग्राम/लीटर</span>
+                    <span className="text-[10px] font-bold text-stone-500 block">Biological Treatment</span>
+                    <span className="font-extrabold text-stone-900 mt-0.5 block text-xs">Trichoderma viride 1% WP</span>
+                    <span className="text-[10px] text-emerald-700 font-bold">5.0 gm/L</span>
                   </div>
                 </div>
 
                 <div className="text-[10px] text-emerald-900 font-medium pt-1">
-                  {lang === 'hi' ? `सुबह 10 बजे से पहले या शाम को 4 बजे के बाद। PHI: 14 दिन।` : 'Spray before 10 AM or after 4 PM. PHI: 14 days.'}
+                  {lang === 'hi' ? `सुबह 10 बजे से पहले या शाम को 4 बजे के बाद। PHI: 14 दिन।` : lang === 'mr' ? 'सकाळी 10 पूर्वी किंवा संध्याकाळी 4 नंतर फवारा. PHI: 14 दिवस.' : 'Spray before 10 AM or after 4 PM. PHI: 14 days.'}
                 </div>
               </div>
 
@@ -307,12 +302,12 @@ export default function ObservationHistorySection({ onScanNewCrop, onNavigateToA
                 <div className="flex items-center gap-2">
                   <UserCheck className="w-4 h-4 text-emerald-700" />
                   <div>
-                    <div className="font-bold text-stone-900">{lang === 'hi' ? 'वैज्ञानिक समीक्षा' : 'Expert Review'}</div>
-                    <div className="text-[10px] text-stone-500">{lang === 'hi' ? 'KVK पैनल द्वारा सत्यापित' : 'Verified by KVK Panel'}</div>
+                    <div className="font-bold text-stone-900">{t('nav_expert')}</div>
+                    <div className="text-[10px] text-stone-500">ICAR / KVK Scientist Panel</div>
                   </div>
                 </div>
                 <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                  ✓ {lang === 'hi' ? 'सत्यापित' : 'Verified'}
+                  ✓ Verified
                 </span>
               </div>
 
@@ -322,18 +317,18 @@ export default function ObservationHistorySection({ onScanNewCrop, onNavigateToA
               <button
                 onClick={() => {
                   setSelectedObs(null);
-                  onNavigateToAdvisory();
+                  onNavigateToAdvisory?.();
                 }}
                 className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800"
               >
-                {lang === 'hi' ? 'संबंधित सलाह →' : 'Related Advisories →'}
+                {t('nav_advisory')} →
               </button>
 
               <button
                 onClick={() => setSelectedObs(null)}
                 className="px-3 py-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-white font-bold text-[11px]"
               >
-                {lang === 'hi' ? 'बंद' : 'Close'}
+                {t('common_close')}
               </button>
             </div>
           </div>
