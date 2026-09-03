@@ -22,9 +22,10 @@ export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnbo
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
 
   // Step 1: Auth State
-  const [authSubView, setAuthSubView] = useState<'login' | 'forgot_password'>('login');
+  const [authSubView, setAuthSubView] = useState<'login' | 'signup' | 'forgot_password'>('signup');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [recoveryKey, setRecoveryKey] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
@@ -69,8 +70,31 @@ export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnbo
   const currentState = PAN_INDIA_STATES.find((s) => s.code === selectedStateCode) || PAN_INDIA_STATES[0];
   const currentDistrict = currentState.districts.find((d) => d.id === selectedDistrictId) || currentState.districts[0];
 
-  // Auth Handler: Phone + Password
-  const handlePhoneAuth = async (e: React.FormEvent) => {
+  // Auth Handler: Farmer Sign Up
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    setAuthError(null);
+
+    if (password !== confirmPassword) {
+      setAuthError('पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते (Passwords do not match).');
+      setAuthLoading(false);
+      return;
+    }
+
+    try {
+      const user = await AuthService.signUpWithPhone(fullName, phone, password);
+      setCurrentUser(user);
+      setStep(2); // Proceed to location
+    } catch (err: any) {
+      setAuthError(err.message || 'खाता निर्माण विफल रहा (Sign up failed).');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  // Auth Handler: Farmer Login
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthLoading(true);
     setAuthError(null);
@@ -230,7 +254,7 @@ export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnbo
           </div>
 
           <span className="text-xs font-black text-emerald-300 bg-emerald-950/80 px-2.5 py-1 rounded-full border border-emerald-500/40">
-            {step === 1 ? 'लॉगिन' : step === 2 ? 'स्थान' : step === 3 ? 'खेत' : 'फसल'}
+            {step === 1 ? (authSubView === 'signup' ? 'साइन-अप' : authSubView === 'login' ? 'लॉगिन' : 'रीसेट') : step === 2 ? 'स्थान' : step === 3 ? 'खेत' : 'फसल'}
           </span>
         </div>
 
@@ -238,139 +262,229 @@ export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnbo
         <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-5">
 
           {/* ================================================================= */}
-          {/* STEP 1: AUTHENTICATION (PHONE + PASSWORD OR GOOGLE SIGN-IN)       */}
+          {/* STEP 1: AUTHENTICATION (SIGN UP VS LOGIN TABS + GOOGLE SIGN-IN)   */}
           {/* ================================================================= */}
           {step === 1 && (
             <div className="space-y-4 animate-in fade-in duration-150">
               
-              {authSubView === 'login' ? (
-                <>
-                  <div className="text-center pb-2">
-                    <h3 className="font-black text-base text-gray-900">
-                      {lang === 'hi' ? 'अपने मोबाइल नंबर से लॉगिन करें' : 'Login with Mobile Number'}
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {lang === 'hi' ? 'आपका डेटा Supabase सुरक्षित डेटाबेस में सिंक रहेगा।' : 'Your data will sync securely with the Supabase database.'}
-                    </p>
-                  </div>
-
-                  {authError && (
-                    <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-                      <span>{authError}</span>
-                    </div>
-                  )}
-
-                  {resetSuccessMessage && (
-                    <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                      <span>{resetSuccessMessage}</span>
-                    </div>
-                  )}
-
-                  {/* Phone + Password Form */}
-                  <form onSubmit={handlePhoneAuth} className="space-y-3">
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                        {lang === 'hi' ? 'मोबाइल नंबर (10 अंक)' : 'Mobile Number (10 Digits)'}
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3.5 top-3 text-xs font-bold text-gray-400">+91</span>
-                        <input
-                          type="tel"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          placeholder="9876543210"
-                          maxLength={10}
-                          required
-                          className="w-full pl-12 pr-4 py-2.5 rounded-2xl border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm font-bold text-gray-900"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-[11px] font-bold text-gray-600 uppercase">
-                          {lang === 'hi' ? 'पासवर्ड' : 'Password'}
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAuthError(null);
-                            setAuthSubView('forgot_password');
-                          }}
-                          className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 underline"
-                        >
-                          {lang === 'hi' ? 'पासवर्ड भूल गए?' : 'Forgot Password?'}
-                        </button>
-                      </div>
-                      <div className="relative">
-                        <Lock className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
-                        <input
-                          type="password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          placeholder="••••••••"
-                          minLength={6}
-                          required
-                          className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm font-bold text-gray-900"
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={authLoading}
-                      className="w-full py-3.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 active:scale-98 text-white font-black text-sm flex items-center justify-center gap-2 shadow-md transition-all"
-                    >
-                      {authLoading ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <>
-                          <LogIn className="w-4 h-4" />
-                          <span>{lang === 'hi' ? 'लॉगिन / आगे बढ़ें' : 'Login / Continue'}</span>
-                        </>
-                      )}
-                    </button>
-                  </form>
-
-                  {/* Divider */}
-                  <div className="relative flex items-center justify-center my-3">
-                    <div className="border-t border-gray-200 w-full" />
-                    <span className="bg-white px-3 text-[11px] font-bold text-gray-400 uppercase">
-                      {lang === 'hi' ? 'या' : 'OR'}
-                    </span>
-                  </div>
-
-                  {/* Google Sign-In Button */}
+              {/* Tab Selector: Sign Up vs Login */}
+              {authSubView !== 'forgot_password' && (
+                <div className="grid grid-cols-2 p-1 rounded-2xl bg-stone-100 border border-stone-200 text-xs font-black mb-3">
                   <button
                     type="button"
-                    onClick={handleGoogleLogin}
+                    onClick={() => {
+                      setAuthError(null);
+                      setAuthSubView('signup');
+                    }}
+                    className={`py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                      authSubView === 'signup'
+                        ? 'bg-white text-emerald-900 shadow-sm border border-stone-200'
+                        : 'text-stone-600 hover:text-stone-900'
+                    }`}
+                  >
+                    <span>✍️</span>
+                    <span>{lang === 'hi' ? 'नया खाता बनाएं (Sign Up)' : 'Create Account'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthError(null);
+                      setAuthSubView('login');
+                    }}
+                    className={`py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                      authSubView === 'login'
+                        ? 'bg-white text-emerald-900 shadow-sm border border-stone-200'
+                        : 'text-stone-600 hover:text-stone-900'
+                    }`}
+                  >
+                    <span>🔑</span>
+                    <span>{lang === 'hi' ? 'लॉगिन करें (Login)' : 'Login'}</span>
+                  </button>
+                </div>
+              )}
+
+              {authError && (
+                <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                  <span>{authError}</span>
+                </div>
+              )}
+
+              {resetSuccessMessage && (
+                <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span>{resetSuccessMessage}</span>
+                </div>
+              )}
+
+              {/* ----------------------------------------------------------- */}
+              {/* VIEW A: SIGN UP FORM                                       */}
+              {/* ----------------------------------------------------------- */}
+              {authSubView === 'signup' && (
+                <form onSubmit={handleSignUp} className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                      {lang === 'hi' ? 'किसान का पूरा नाम' : 'Full Name'}
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder={lang === 'hi' ? 'जैसे: रमेश पाटिल' : 'e.g. Ramesh Patil'}
+                        required
+                        className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm font-bold text-gray-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                      {lang === 'hi' ? 'मोबाइल नंबर (10 अंक)' : 'Mobile Number (10 Digits)'}
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-3 text-xs font-bold text-gray-400">+91</span>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="9876543210"
+                        maxLength={10}
+                        required
+                        className="w-full pl-12 pr-4 py-2.5 rounded-2xl border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm font-bold text-gray-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                      {lang === 'hi' ? 'पासवर्ड (कम से कम 6 अक्षर)' : 'Password (min 6 characters)'}
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        minLength={6}
+                        required
+                        className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm font-bold text-gray-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                      {lang === 'hi' ? 'पासवर्ड की पुष्टि करें' : 'Confirm Password'}
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        minLength={6}
+                        required
+                        className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm font-bold text-gray-900"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
                     disabled={authLoading}
-                    className="w-full py-3 rounded-2xl bg-white hover:bg-gray-50 active:scale-98 border border-gray-300 text-gray-800 font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition-all"
+                    className="w-full py-3.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 active:scale-98 text-white font-black text-sm flex items-center justify-center gap-2 shadow-md transition-all mt-2"
                   >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                    </svg>
-                    <span>{lang === 'hi' ? 'Google से लॉगिन करें' : 'Continue with Google'}</span>
+                    {authLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        <User className="w-4 h-4" />
+                        <span>{lang === 'hi' ? 'खाता बनाएं एवं आगे बढ़ें' : 'Create Account & Continue'}</span>
+                      </>
+                    )}
                   </button>
+                </form>
+              )}
 
-                  {/* Guest / Direct Pass */}
+              {/* ----------------------------------------------------------- */}
+              {/* VIEW B: LOGIN FORM                                         */}
+              {/* ----------------------------------------------------------- */}
+              {authSubView === 'login' && (
+                <form onSubmit={handleLogin} className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                      {lang === 'hi' ? 'पंजीकृत मोबाइल नंबर (10 अंक)' : 'Registered Mobile Number'}
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-3 text-xs font-bold text-gray-400">+91</span>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="9876543210"
+                        maxLength={10}
+                        required
+                        className="w-full pl-12 pr-4 py-2.5 rounded-2xl border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm font-bold text-gray-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[11px] font-bold text-gray-600 uppercase">
+                        {lang === 'hi' ? 'पासवर्ड' : 'Password'}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthError(null);
+                          setAuthSubView('forgot_password');
+                        }}
+                        className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 underline"
+                      >
+                        {lang === 'hi' ? 'पासवर्ड भूल गए?' : 'Forgot Password?'}
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        minLength={6}
+                        required
+                        className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm font-bold text-gray-900"
+                      />
+                    </div>
+                  </div>
+
                   <button
-                    type="button"
-                    onClick={handleGuestAccess}
-                    className="w-full text-center py-2 text-xs font-bold text-gray-500 hover:text-emerald-700 transition-colors"
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full py-3.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 active:scale-98 text-white font-black text-sm flex items-center justify-center gap-2 shadow-md transition-all mt-2"
                   >
-                    {lang === 'hi' ? 'त्वरित अतिथि प्रवेश (Guest Direct Pass) →' : 'Direct Demo Access →'}
+                    {authLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        <LogIn className="w-4 h-4" />
+                        <span>{lang === 'hi' ? 'लॉगिन करें' : 'Login'}</span>
+                      </>
+                    )}
                   </button>
-                </>
-              ) : (
-                /* ========================================================= */
-                /* FORGOT PASSWORD FORM WITH MASTER KEY (SIH2026)           */
-                /* ========================================================= */
+                </form>
+              )}
+
+              {/* ----------------------------------------------------------- */}
+              {/* VIEW C: FORGOT PASSWORD WITH MASTER KEY (SIH2026)          */}
+              {/* ----------------------------------------------------------- */}
+              {authSubView === 'forgot_password' && (
                 <div className="space-y-3 animate-in fade-in duration-150">
                   <div className="text-center pb-1">
                     <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center mx-auto mb-2 border border-amber-200">
@@ -383,13 +497,6 @@ export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnbo
                       {lang === 'hi' ? 'मास्टर रिकवरी कुंजी "SIH2026" दर्ज करें।' : 'Enter the Master Recovery Key "SIH2026".'}
                     </p>
                   </div>
-
-                  {authError && (
-                    <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-                      <span>{authError}</span>
-                    </div>
-                  )}
 
                   <form onSubmit={handleResetPassword} className="space-y-3">
                     <div>
@@ -469,6 +576,45 @@ export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnbo
                     </button>
                   </form>
                 </div>
+              )}
+
+              {/* ----------------------------------------------------------- */}
+              {/* GOOGLE SIGN IN & GUEST PASS (AVAILABLE ON LOGIN/SIGNUP)     */}
+              {/* ----------------------------------------------------------- */}
+              {authSubView !== 'forgot_password' && (
+                <>
+                  <div className="relative flex items-center justify-center my-3">
+                    <div className="border-t border-gray-200 w-full" />
+                    <span className="bg-white px-3 text-[11px] font-bold text-gray-400 uppercase">
+                      {lang === 'hi' ? 'या' : 'OR'}
+                    </span>
+                  </div>
+
+                  {/* Google Sign-In Button */}
+                  <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    disabled={authLoading}
+                    className="w-full py-3 rounded-2xl bg-white hover:bg-gray-50 active:scale-98 border border-gray-300 text-gray-800 font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition-all"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                    </svg>
+                    <span>{lang === 'hi' ? 'Google से लॉगिन करें' : 'Continue with Google'}</span>
+                  </button>
+
+                  {/* Guest / Direct Pass */}
+                  <button
+                    type="button"
+                    onClick={handleGuestAccess}
+                    className="w-full text-center py-2 text-xs font-bold text-gray-500 hover:text-emerald-700 transition-colors"
+                  >
+                    {lang === 'hi' ? 'त्वरित अतिथि प्रवेश (Guest Direct Pass) →' : 'Direct Demo Access →'}
+                  </button>
+                </>
               )}
 
             </div>

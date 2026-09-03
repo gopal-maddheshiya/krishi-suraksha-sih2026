@@ -60,8 +60,71 @@ export class AuthService {
   }
 
   /**
-   * Phone Number + Password Signup / Login
-   * Normalizes Indian 10-digit mobile number to Supabase email/phone standard
+   * Dedicated Farmer Sign Up with Phone, Name and Password
+   */
+  public static async signUpWithPhone(fullName: string, phone: string, password: string): Promise<UserProfile> {
+    const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+    if (cleanPhone.length !== 10) {
+      throw new Error('कृपया मान्य 10-अंकीय मोबाइल नंबर दर्ज करें (Please enter a valid 10-digit phone number).');
+    }
+
+    if (password.length < 6) {
+      throw new Error('पासवर्ड कम से कम 6 अक्षरों का होना चाहिए (Password must be at least 6 characters).');
+    }
+
+    const emailFormatted = `${cleanPhone}@farmer.crophealth.in`;
+    const cleanName = fullName.trim() || `Farmer ${cleanPhone.slice(-4)}`;
+
+    // 1. Register user with Supabase
+    const { data, error } = await supabase.auth.signUp({
+      email: emailFormatted,
+      password,
+      options: {
+        data: {
+          phone: cleanPhone,
+          full_name: cleanName,
+          role: 'farmer',
+        },
+      },
+    });
+
+    if (error) {
+      if (error.message.toLowerCase().includes('already registered') || error.message.toLowerCase().includes('user already exists')) {
+        throw new Error('यह मोबाइल नंबर पहले से पंजीकृत है। कृपया लॉगिन करें (This phone number is already registered. Please login).');
+      }
+      throw error;
+    }
+
+    // 2. If user created without session (due to confirm settings), sign in immediately
+    let userId = data.user?.id;
+    if (!data.session && data.user) {
+      const { data: signInData } = await supabase.auth.signInWithPassword({
+        email: emailFormatted,
+        password,
+      });
+      if (signInData.user) userId = signInData.user.id;
+    }
+
+    if (!userId) {
+      throw new Error('खाता निर्माण में समस्या आई। कृपया पुनः प्रयास करें।');
+    }
+
+    const userProfile: UserProfile = {
+      id: userId,
+      fullName: cleanName,
+      phone: cleanPhone,
+      email: emailFormatted,
+      role: 'farmer',
+      preferredLanguage: 'hi',
+    };
+
+    // 3. Upsert Profile into profiles table
+    await this.syncProfile(userProfile);
+    return userProfile;
+  }
+
+  /**
+   * Dedicated Farmer Login with Phone Number + Password
    */
   public static async loginWithPhone(phone: string, password: string): Promise<UserProfile> {
     const cleanPhone = phone.replace(/\D/g, '').slice(-10);
@@ -71,51 +134,20 @@ export class AuthService {
 
     const emailFormatted = `${cleanPhone}@farmer.crophealth.in`;
 
-    // Attempt Sign In first
+    // Attempt Sign In
     const { data, error } = await supabase.auth.signInWithPassword({
       email: emailFormatted,
       password,
     });
 
     if (error) {
-      // If user does not exist, attempt registration
       if (error.message.toLowerCase().includes('invalid login credentials')) {
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: emailFormatted,
-          password,
-          options: {
-            data: {
-              phone: cleanPhone,
-              full_name: `Farmer ${cleanPhone.slice(-4)}`,
-              role: 'farmer',
-            },
-          },
-        });
-
-        if (signUpError) throw signUpError;
-        if (!signUpData.user) throw new Error('Registration failed.');
-
-        // Insert / Upsert Profile in profiles table
-        await this.syncProfile({
-          id: signUpData.user.id,
-          fullName: `Farmer ${cleanPhone.slice(-4)}`,
-          phone: cleanPhone,
-          role: 'farmer',
-          preferredLanguage: 'hi',
-        });
-
-        return {
-          id: signUpData.user.id,
-          fullName: `Farmer ${cleanPhone.slice(-4)}`,
-          phone: cleanPhone,
-          role: 'farmer',
-          preferredLanguage: 'hi',
-        };
+        throw new Error('मोबाइल नंबर या पासवर्ड गलत है। यदि नया खाता बनाना है तो "नया खाता बनाएं" चुनें।');
       }
       throw error;
     }
 
-    if (!data.user) throw new Error('Login failed.');
+    if (!data.user) throw new Error('लॉगिन विफल रहा। कृपया पुनः प्रयास करें।');
 
     const userProfile: UserProfile = {
       id: data.user.id,
