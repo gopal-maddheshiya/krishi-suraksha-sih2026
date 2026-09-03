@@ -10,7 +10,7 @@ import LatestCropCheckCard from '@/components/LatestCropCheckCard';
 import InteractiveFarmMap from '@/components/InteractiveFarmMap';
 import ImageUpload from '@/components/ImageUpload';
 import Footer from '@/components/Footer';
-import ChatBot from '@/components/ChatBot';
+import AICropDoctor from '@/components/AICropDoctor';
 import LanguageModal from '@/components/LanguageModal';
 import FarmerOnboardingModal from '@/components/FarmerOnboardingModal';
 import AccountProfileSection from '@/components/AccountProfileSection';
@@ -187,7 +187,7 @@ function AppContent() {
         onOpenAccount={() => handleNavigate('account')}
       />
 
-      <ChatBot />
+      <AICropDoctor />
     </div>
   );
 }
