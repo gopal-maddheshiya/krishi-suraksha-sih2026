@@ -16,6 +16,7 @@ import Footer from '@/components/Footer';
 import ChatBot from '@/components/ChatBot';
 import LanguageModal from '@/components/LanguageModal';
 import FarmerOnboardingModal from '@/components/FarmerOnboardingModal';
+import AccountProfileSection from '@/components/AccountProfileSection';
 import ActiveFarmBar from '@/components/ActiveFarmBar';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { WifiOff, ShieldCheck, UserCheck, MapPin } from 'lucide-react';
@@ -75,6 +76,7 @@ function AppContent() {
     if (section === 'home') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       setTimeout(() => {
         const el = document.getElementById(section);
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -84,7 +86,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-slate-100/80 pb-16 md:pb-0 font-sans selection:bg-emerald-500 selection:text-white flex flex-col justify-between">
-      {/* First-time Farmer Onboarding Modal */}
+      {/* First-time Farmer Onboarding / Farm Setup Modal */}
       <FarmerOnboardingModal
         isOpen={showOnboarding}
         onComplete={() => setShowOnboarding(false)}
@@ -94,7 +96,7 @@ function AppContent() {
       <Header 
         activeSection={activeSection} 
         onNavigate={handleNavigate} 
-        onOpenAccount={() => setShowOnboarding(true)}
+        onOpenAccount={() => handleNavigate('account')}
       />
       <OfflineBanner />
 
@@ -193,6 +195,12 @@ function AppContent() {
               {activeSection === 'hotspots' && <HotspotMap />}
               {activeSection === 'expert' && <ExpertValidationPanel />}
               {activeSection === 'dashboard' && <Dashboard />}
+              {activeSection === 'account' && (
+                <AccountProfileSection
+                  onNavigateHome={() => handleNavigate('home')}
+                  onOpenFarmEditor={() => setShowOnboarding(true)}
+                />
+              )}
             </Suspense>
           </div>
         )}
@@ -201,12 +209,12 @@ function AppContent() {
       {/* Persistent Responsive Footer */}
       <Footer 
         onNavigate={handleNavigate} 
-        onOpenAccount={() => setShowOnboarding(true)}
+        onOpenAccount={() => handleNavigate('account')}
       />
       <MobileBottomNav 
         activeSection={activeSection} 
         onNavigate={handleNavigate} 
-        onOpenAccount={() => setShowOnboarding(true)}
+        onOpenAccount={() => handleNavigate('account')}
       />
       <ChatBot />
     </div>

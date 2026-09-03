@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   Sprout, Globe, MapPin, Navigation, Check, ChevronRight, 
   ArrowLeft, Sparkles, Loader2, Leaf, ShieldCheck, Sun,
-  Phone, Lock, User, KeyRound, LogIn, AlertCircle
+  Phone, Lock, User, KeyRound, LogIn, AlertCircle, UserPlus
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { languages, type LanguageCode } from '@/lib/i18n';
@@ -57,7 +57,7 @@ export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnbo
   const [sowingDate, setSowingDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [cropStage, setCropStage] = useState('Flowering Stage');
 
-  // Check if user already logged in
+  // Check if user already logged in -> Skip Step 1 directly to Step 2/Farm config
   useEffect(() => {
     AuthService.getCurrentUser().then((user) => {
       if (user) {
@@ -65,6 +65,7 @@ export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnbo
         setGlobalCurrentUser(user);
         setFullName(user.fullName || '');
         if (user.phone) setPhone(user.phone);
+        setStep(2);
       }
     });
   }, [isOpen, setGlobalCurrentUser]);
@@ -158,6 +159,7 @@ export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnbo
       preferredLanguage: lang,
     };
     setCurrentUser(guestUser);
+    setGlobalCurrentUser(guestUser);
     setStep(2);
   };
 
@@ -277,21 +279,21 @@ export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnbo
               
               {/* Tab Selector: Sign Up vs Login */}
               {authSubView !== 'forgot_password' && (
-                <div className="grid grid-cols-2 p-1 rounded-2xl bg-stone-100 border border-stone-200 text-xs font-black mb-3">
+                <div className="grid grid-cols-2 p-1 rounded-2xl bg-stone-100 border border-stone-200 text-xs font-bold mb-3">
                   <button
                     type="button"
                     onClick={() => {
                       setAuthError(null);
                       setAuthSubView('signup');
                     }}
-                    className={`py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                    className={`py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 ${
                       authSubView === 'signup'
                         ? 'bg-white text-emerald-900 shadow-sm border border-stone-200'
                         : 'text-stone-600 hover:text-stone-900'
                     }`}
                   >
-                    <span>✍️</span>
-                    <span>{lang === 'hi' ? 'नया खाता बनाएं (Sign Up)' : 'Create Account'}</span>
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>{lang === 'hi' ? 'नया खाता बनाएं' : 'Create Account'}</span>
                   </button>
 
                   <button
@@ -300,14 +302,14 @@ export default function FarmerOnboardingModal({ isOpen, onComplete }: FarmerOnbo
                       setAuthError(null);
                       setAuthSubView('login');
                     }}
-                    className={`py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                    className={`py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 ${
                       authSubView === 'login'
                         ? 'bg-white text-emerald-900 shadow-sm border border-stone-200'
                         : 'text-stone-600 hover:text-stone-900'
                     }`}
                   >
-                    <span>🔑</span>
-                    <span>{lang === 'hi' ? 'लॉगिन करें (Login)' : 'Login'}</span>
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span>{lang === 'hi' ? 'लॉगिन करें' : 'Login'}</span>
                   </button>
                 </div>
               )}
