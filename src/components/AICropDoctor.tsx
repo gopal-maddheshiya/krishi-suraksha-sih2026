@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { 
   MessageCircle, X, Send, Loader2, ImagePlus, 
-  XCircle, Sparkles, Leaf, Bot, Trash2, Volume2, 
-  VolumeX, ShieldCheck, CheckCircle2, FlaskConical,
-  Sprout, HelpCircle, KeyRound, Check, AlertCircle, ExternalLink
+  XCircle, Sparkles, Leaf, Bot, Trash2, 
+  ShieldCheck, CheckCircle2, FlaskConical, Sprout
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 
@@ -12,12 +11,11 @@ type Message = {
   content: string; 
   image?: string;
   timestamp?: string;
-  isError?: boolean;
 };
 
 type GeminiPart = { text?: string; inline_data?: { mime_type: string; data: string } };
 
-const GEMINI_MODEL_CANDIDATES = [
+const GEMINI_MODELS = [
   'gemini-3.5-flash',
   'gemini-3.6-flash',
   'gemini-3.7-flash',
@@ -48,7 +46,7 @@ function extractGeminiReply(data: unknown): string | null {
 }
 
 /**
- * Intelligent Dynamic ICAR Senior Agronomist Knowledge Engine (Offline/Fallback)
+ * Intelligent Dynamic ICAR Senior Agronomist Knowledge Engine (Offline Fallback)
  */
 function getNaturalAgriculturalAdvice(query: string, lang: string): string {
   const q = query.toLowerCase().trim();
@@ -112,9 +110,9 @@ function getNaturalAgriculturalAdvice(query: string, lang: string): string {
     return '🧪 **Fertilizer & Nutrition Schedule (ICAR):**\n\n1. **Vegetative Stage:** Spray NPK 19:19:19 @ 5g/L.\n2. **Flowering Stage:** Spray NPK 12:61:00 @ 5g/L + Boron 20% @ 1g/L.\n3. **Fruit/Grain Filling:** Spray NPK 00:00:50 (Potassium Sulfate) @ 5g/L for grain luster.\n\n⚠️ Always apply nitrogenous fertilizers in the evening followed by light irrigation.';
   }
 
-  // 8. Conversational Fallback with dynamic intelligent advice
+  // 8. General Conversational Fallback
   if (lang === 'hi') {
-    return `🌾 **किसान सलाहकार उत्तर:** आपके प्रश्न "${query}" के संदर्भ में:\n\n1. **प्राथमिक सलाह:** सबसे पहले खेत के 10-12 पौधों का बारीकी से निरीक्षण करें।\n2. **सुरक्षात्मक उपाय:** संतुलित पोषण (NPK 19:19:19 @ 5g/L) और सुरक्षात्मक नीम तेल (1500 ppm @ 5 ml/L) का छिड़काव करें।\n3. **सटीक जांच:** सटीक रोग निदान के लिए नीचे कैमरा 📷 आइकन पर टैप करके प्रभावित पत्ते की फोटो भेजें, मैं तुरंत सही दवा और मात्रा बता दूंगा।`;
+    return `🌾 **किसान सलाहकार उत्तर:** आपके प्रश्न "${query}" के संदर्भ में:\n\n1. **प्राथमिक सलाह:** खेत के 10-12 पौधों का बारीकी से निरीक्षण करें।\n2. **सुरक्षात्मक उपाय:** संतुलित पोषण (NPK 19:19:19 @ 5g/L) और सुरक्षात्मक नीम तेल (1500 ppm @ 5 ml/L) का छिड़काव करें।\n3. **सटीक जांच:** सटीक रोग निदान के लिए नीचे कैमरा 📷 आइकन पर टैप करके प्रभावित पत्ते की फोटो भेजें, मैं तुरंत सही दवा और मात्रा बता दूंगा।`;
   }
   if (lang === 'mr') {
     return `🌾 **शेतकरी सल्लागार:** आपल्या "${query}" या प्रश्नासाठी:\n\n1. **प्राथमिक सल्ला:** पिकातील पानांचे आणि मुळांचे व्यवस्थित निरीक्षण करा.\n2. **उपाय:** १९:१९:१९ विद्राव्य खत (५ ग्रॅम/लिटर) आणि निंबोळी तेल (५ मिली/लिटर) फवारा.\n3. **अचूक तपासणी:** अचूक रोग ओळखीसाठी खालील कॅमेरा 📷 आयकॉनवरून पानाचा फोटो पाठवा.`;
@@ -122,38 +120,7 @@ function getNaturalAgriculturalAdvice(query: string, lang: string): string {
   return `🌾 **Agri Doctor Advice:** Regarding your question "${query}":\n\n1. **Inspection:** Carefully check both upper and lower leaf surfaces for spots or pests.\n2. **Preventive Action:** Apply NPK 19:19:19 @ 5g/L along with Neem Oil 1500 ppm @ 5 ml/L.\n3. **Accurate Diagnosis:** Upload a leaf photo using the camera icon 📷 below for instant AI vision diagnosis and ICAR dosage!`;
 }
 
-async function callGeminiWithFallback(apiKey: string, payload: unknown) {
-  if (!apiKey || apiKey.trim().length < 5) {
-    throw new Error('API Key missing or too short.');
-  }
-
-  let lastError: string | null = null;
-  for (const model of GEMINI_MODEL_CANDIDATES) {
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey.trim())}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        },
-      );
-      if (!response.ok) {
-        const errJson = await response.json().catch(() => null);
-        lastError = errJson?.error?.message || `HTTP ${response.status} from ${model}`;
-        continue;
-      }
-      const data = await response.json();
-      const reply = extractGeminiReply(data);
-      if (reply) return data;
-    } catch (error) {
-      lastError = error instanceof Error ? error.message : 'Network connection error';
-    }
-  }
-  throw new Error(lastError || 'All Gemini model candidates failed');
-}
-
-function buildGeminiRequest(messages: Message[], language: string) {
+async function callDirectGemini(apiKey: string, messages: Message[], language: string) {
   const languageName = getLanguageName(language);
   const systemPrompt = `You are CropHealth AI, an empathetic, highly knowledgeable Senior Agricultural Scientist and Crop Doctor assisting Indian farmers.
 Language: Respond naturally and fluently in ${languageName} (use clean markdown formatting with bullet points and bold text).
@@ -170,20 +137,36 @@ Guidelines:
       const match = m.image.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
       if (match) parts.push({ inline_data: { mime_type: match[1], data: match[2] } });
     }
-    if (m.content) {
-      parts.push({ text: m.content });
-    }
+    if (m.content) parts.push({ text: m.content });
     return { role, parts };
   });
 
-  return {
+  const payload = {
     contents,
     system_instruction: { parts: [{ text: systemPrompt }] },
-    generationConfig: {
-      temperature: 0.4,
-      maxOutputTokens: 800,
-    },
+    generationConfig: { temperature: 0.4, maxOutputTokens: 800 },
   };
+
+  let lastError: string | null = null;
+  for (const model of GEMINI_MODELS) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey.trim())}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!response.ok) continue;
+      const data = await response.json();
+      const reply = extractGeminiReply(data);
+      if (reply) return reply;
+    } catch (err: any) {
+      lastError = err?.message;
+    }
+  }
+  throw new Error(lastError || 'All models exhausted');
 }
 
 export default function AICropDoctor() {
@@ -194,18 +177,8 @@ export default function AICropDoctor() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [welcomeMsg, setWelcomeMsg] = useState('');
-  const [showKeyModal, setShowKeyModal] = useState(false);
-  const [apiKeyInput, setApiKeyInput] = useState(() => localStorage.getItem('crophealth_gemini_key') || '');
-  const [keySaved, setKeySaved] = useState(false);
-  const [apiErrorStatus, setApiErrorStatus] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const activeKey = (
-    localStorage.getItem('crophealth_gemini_key') || 
-    import.meta.env.VITE_GEMINI_API_KEY || 
-    ''
-  ).trim();
 
   const quickPills = [
     { label: lang === 'hi' ? '🌿 पत्तों पर पीले धब्बे' : 'Yellow Leaves', query: 'फसल की पत्तियों पर पीले धब्बे आ रहे हैं, क्या उपाय करें?' },
@@ -267,27 +240,36 @@ export default function AICropDoctor() {
     const currentAttachment = attachedImage;
     setAttachedImage(null);
     setLoading(true);
-    setApiErrorStatus(null);
 
     try {
       let reply: string | null = null;
 
-      // 1. Direct call to Google Gemini LLM API
-      if (activeKey) {
-        try {
-          const directBody = buildGeminiRequest(newMessages, lang);
-          const directData = await callGeminiWithFallback(activeKey, directBody);
-          reply = extractGeminiReply(directData);
-        } catch (apiErr) {
-          const errMsg = apiErr instanceof Error ? apiErr.message : 'Google API Connection failed';
-          console.warn('Gemini API call failed:', errMsg);
-          setApiErrorStatus(errMsg);
+      // 1. Try Vercel Serverless Function `/api/chat` (Reads Vercel Environment Variables)
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: newMessages, language: lang }),
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.reply) reply = json.reply;
         }
-      } else {
-        setApiErrorStatus('Gemini API Key is not configured.');
+      } catch (err) {
+        console.warn('Vercel /api/chat endpoint not reachable, trying client env fallback:', err);
       }
 
-      // 2. Fallback to Dynamic Agricultural Expert Knowledge Engine if API is unavailable
+      // 2. If /api/chat is not available (local Vite dev), try client env key
+      if (!reply && import.meta.env.VITE_GEMINI_API_KEY) {
+        try {
+          reply = await callDirectGemini(import.meta.env.VITE_GEMINI_API_KEY, newMessages, lang);
+        } catch (clientErr) {
+          console.warn('Direct client Gemini call failed:', clientErr);
+        }
+      }
+
+      // 3. Fallback to Dynamic ICAR Agronomist Knowledge Engine
       if (!reply) {
         reply = getNaturalAgriculturalAdvice(userContent, lang);
       }
@@ -373,9 +355,7 @@ export default function AICropDoctor() {
 
   return (
     <>
-      {/* ============================================================= */}
-      {/* FLOATING TRIGGER BUTTON (PROMINENT & ELEGANT)                 */}
-      {/* ============================================================= */}
+      {/* Floating Trigger Button */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
@@ -392,9 +372,7 @@ export default function AICropDoctor() {
         </button>
       )}
 
-      {/* ============================================================= */}
-      {/* HIGH-AESTHETIC CHAT WINDOW                                    */}
-      {/* ============================================================= */}
+      {/* Chat Window */}
       {open && (
         <div className="fixed inset-x-3 bottom-20 sm:bottom-6 sm:right-6 sm:left-auto sm:w-[420px] h-[540px] max-h-[85vh] bg-white rounded-3xl shadow-2xl border border-stone-200 z-50 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
           
@@ -407,12 +385,8 @@ export default function AICropDoctor() {
               <div>
                 <div className="font-black text-sm text-white flex items-center gap-1.5">
                   <span>AI Crop Doctor</span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                    activeKey 
-                      ? 'bg-emerald-400/30 text-emerald-300 border-emerald-400/40' 
-                      : 'bg-amber-400/30 text-amber-300 border-amber-400/40'
-                  }`}>
-                    {activeKey ? '🟢 Gemini AI' : '🟡 ICAR Mode'}
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-400/30 text-emerald-300 text-[10px] font-bold border border-emerald-400/40">
+                    ICAR Verified
                   </span>
                 </div>
                 <div className="text-[11px] text-emerald-200/90 font-medium">
@@ -422,15 +396,6 @@ export default function AICropDoctor() {
             </div>
 
             <div className="flex items-center gap-1">
-              <button
-                onClick={() => setShowKeyModal(!showKeyModal)}
-                className={`p-2 rounded-xl transition-colors ${
-                  showKeyModal ? 'bg-emerald-600 text-white' : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white'
-                }`}
-                title="Gemini API Key सेटिंग्स"
-              >
-                <KeyRound className="w-4 h-4" />
-              </button>
               <button
                 onClick={handleClearChat}
                 className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors"
@@ -447,55 +412,6 @@ export default function AICropDoctor() {
               </button>
             </div>
           </div>
-
-          {/* Gemini API Key Settings Dropdown */}
-          {showKeyModal && (
-            <div className="p-3 bg-emerald-950 text-white border-b border-emerald-800 text-xs space-y-2 animate-in slide-in-from-top-2">
-              <div className="flex items-center justify-between font-black">
-                <span className="flex items-center gap-1.5 text-emerald-300">
-                  <KeyRound className="w-3.5 h-3.5" />
-                  <span>Google Gemini API Key</span>
-                </span>
-                <a 
-                  href="https://aistudio.google.com/app/apikey" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium underline flex items-center gap-1"
-                >
-                  <span>Get Free Key</span>
-                  <ExternalLink className="w-2.5 h-2.5" />
-                </a>
-              </div>
-              <p className="text-[11px] text-emerald-200/80">
-                यदि AI कनेक्ट नहीं हो रहा है, तो यहाँ अपनी Google AI Studio Key (AIzaSy...) डालें:
-              </p>
-              <div className="flex items-center gap-2">
-                <input
-                  type="password"
-                  value={apiKeyInput}
-                  onChange={(e) => setApiKeyInput(e.target.value)}
-                  placeholder="AIzaSy... यहाँ पेस्ट करें"
-                  className="flex-1 px-3 py-1.5 rounded-lg bg-emerald-900/60 border border-emerald-700 text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-400"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    localStorage.setItem('crophealth_gemini_key', apiKeyInput.trim());
-                    setKeySaved(true);
-                    setApiErrorStatus(null);
-                    setTimeout(() => {
-                      setKeySaved(false);
-                      setShowKeyModal(false);
-                    }, 1200);
-                  }}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold text-xs flex items-center gap-1"
-                >
-                  {keySaved ? <Check className="w-3.5 h-3.5" /> : null}
-                  <span>{keySaved ? 'Saved!' : 'Save'}</span>
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Quick Tap Question Pills */}
           <div className="px-3 py-2 bg-stone-100/90 border-b border-stone-200 flex items-center gap-1.5 overflow-x-auto text-[11px]">
@@ -549,19 +465,7 @@ export default function AICropDoctor() {
             {loading && (
               <div className="flex items-center gap-2 text-stone-600 text-xs p-3 bg-white rounded-2xl border border-stone-200 w-fit shadow-2xs">
                 <Loader2 className="w-4 h-4 animate-spin text-emerald-700" />
-                <span className="font-bold">{lang === 'hi' ? 'Google Gemini AI उत्तर तैयार कर रहा है...' : 'Google Gemini AI Generating Response...'}</span>
-              </div>
-            )}
-
-            {apiErrorStatus && !loading && (
-              <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <span className="font-bold">Gemini API सूचना:</span>
-                  <p className="text-[11px] text-amber-800 leading-snug">
-                    {apiErrorStatus}. ऊपर दिए गए <strong>🔑 Key बटन</strong> पर टैप करके अपनी Google AI Studio Key सेव कर सकते हैं।
-                  </p>
-                </div>
+                <span className="font-bold">{lang === 'hi' ? 'Google Gemini AI उत्तर तैयार कर रहा है...' : 'AI Doctor Generating Response...'}</span>
               </div>
             )}
           </div>
