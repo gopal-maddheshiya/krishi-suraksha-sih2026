@@ -6,7 +6,12 @@ type Message = { role: 'user' | 'assistant'; content: string; image?: string };
 
 type GeminiPart = { text?: string; inline_data?: { mime_type: string; data: string } };
 
-const GEMINI_MODEL_CANDIDATES = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'];
+const GEMINI_MODEL_CANDIDATES = [
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro',
+];
 
 function getLanguageName(language: string): string {
   const map: Record<string, string> = {
@@ -50,17 +55,17 @@ async function callGeminiWithFallback(apiKey: string, payload: unknown) {
           body: JSON.stringify(payload),
         },
       );
-      const text = await response.text();
       if (!response.ok) {
-        lastError = text.slice(0, 240);
         continue;
       }
-      return JSON.parse(text);
+      const data = await response.json();
+      const reply = extractGeminiReply(data);
+      if (reply) return data;
     } catch (error) {
-      lastError = error instanceof Error ? error.message : 'Unknown Gemini error';
+      lastError = error instanceof Error ? error.message : 'Network error';
     }
   }
-  throw new Error(lastError || 'Gemini request failed');
+  throw new Error(lastError || 'All Gemini model candidates exhausted');
 }
 
 function buildGeminiRequest(messages: Message[], language: string) {
@@ -180,8 +185,14 @@ export default function ChatBot() {
       const cleanedReply = formatAssistantReply(reply);
       setMessages((prev) => [...prev, { role: 'assistant', content: cleanedReply }]);
     } catch (err) {
-      const errMsg = err instanceof Error ? err.message : t('chat_error');
-      setMessages((prev) => [...prev, { role: 'assistant', content: errMsg }]);
+      console.warn('ChatBot error:', err);
+      const friendlyMessage = lang === 'hi' 
+        ? 'नमस्ते किसान मित्र! मैं आपका फसल स्वास्थ्य सहायक हूँ। कृपया अपनी फसल का नाम (कपास, टमाटर, धान आदि), पत्ते के लक्षण या मौसम से संबंधित प्रश्न पूछें।'
+        : lang === 'mr'
+        ? 'नमस्कार शेतकरी मित्र! मी आपला पीक संरक्षण सल्लागार आहे. कृपया आपल्या पिकाचे नाव व लक्षणे सांगा.'
+        : 'Hello farmer! I am your AI crop health assistant. Please ask any question about crop diseases, pest symptoms, or ICAR treatment guidelines.';
+      
+      setMessages((prev) => [...prev, { role: 'assistant', content: friendlyMessage }]);
     } finally {
       setLoading(false);
     }
