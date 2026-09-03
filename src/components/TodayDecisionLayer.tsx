@@ -1,6 +1,5 @@
-import { 
-  AlertTriangle, CheckCircle2, UserCheck, 
-  Camera, CloudRain, ShieldCheck, ArrowRight, Sparkles 
+import {
+  AlertTriangle, CheckCircle2, UserCheck, ArrowRight, Sparkles, ShieldCheck
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { useFarmContext } from '@/contexts/FarmContext';
@@ -16,111 +15,106 @@ export default function TodayDecisionLayer({
   onCheckCrop,
   onViewAdvisory,
   onViewExpertReview,
-  onViewWeather,
 }: TodayDecisionLayerProps) {
-  const { lang } = useLang();
-  const { activeFarm, weather, risk, latestObservation, isLoading } = useFarmContext();
+  const { t } = useLang();
+  const { activeFarm, risk, latestObservation, isLoading } = useFarmContext();
 
   if (isLoading) {
-    return (
-      <div className="p-6 rounded-3xl bg-white border border-gray-200/90 shadow-sm animate-pulse mb-6">
-        <div className="h-4 bg-gray-200 rounded w-1/4 mb-3" />
-        <div className="h-6 bg-gray-200 rounded w-2/3 mb-2" />
-        <div className="h-4 bg-gray-100 rounded w-1/2" />
-      </div>
-    );
+    return <div className="h-16 bg-stone-50/50 rounded-2xl animate-pulse my-3" />;
   }
 
-  // 1. Dynamic Priority Evaluation from real data
   let priorityLevel: 'urgent' | 'high' | 'moderate' | 'normal' = 'normal';
-  let title = lang === 'hi' ? 'आज कोई आपातकालीन कार्रवाई आवश्यक नहीं है' : 'No urgent action needed today';
-  let message = lang === 'hi' ? 'मौसम अनुकूल है। नियमित फसल निरीक्षण जारी रखें।' : 'Conditions are normal. Continue routine crop monitoring.';
-  let ctaText = lang === 'hi' ? 'सलाह देखें' : 'View Advisory';
-  let onCtaClick = onViewAdvisory;
-  let bgGradient = 'from-emerald-50 via-white to-teal-50/40 border-emerald-200 text-emerald-950';
-  let badgeTone = 'bg-emerald-100 text-emerald-800 border-emerald-200';
   let Icon = CheckCircle2;
+  let iconBg = 'bg-emerald-100/80 text-emerald-800 border-emerald-200';
+  let badgeTone = 'bg-emerald-100/70 text-emerald-900 border-emerald-300';
+  let priorityKey = 'home_priority_normal';
 
-  // Check 1: Expert review status
   if (latestObservation?.status === 'pending_expert' || latestObservation?.status === 'processing') {
     priorityLevel = 'high';
-    title = lang === 'hi' ? 'विशेषज्ञ समीक्षा प्रक्रियाधीन है' : 'Crop Case Under Expert Review';
-    message = lang === 'hi' ? 'कृषि वैज्ञानिक द्वारा आपके खेत की फोटो की समीक्षा की जा रही है।' : 'An agronomist is reviewing your submitted leaf photo.';
-    ctaText = lang === 'hi' ? 'स्थिति देखें' : 'View Status';
-    onCtaClick = onViewExpertReview;
-    bgGradient = 'from-blue-50 via-white to-indigo-50/40 border-blue-200 text-blue-950';
-    badgeTone = 'bg-blue-100 text-blue-800 border-blue-200';
     Icon = UserCheck;
-  }
-  // Check 2: High or critical disease risk from weather & crop stage
-  else if (risk?.riskLevel === 'high' || risk?.riskLevel === 'critical') {
+    priorityKey = 'home_priority_reviewing';
+    iconBg = 'bg-blue-100/80 text-blue-800 border-blue-200';
+    badgeTone = 'bg-blue-100/70 text-blue-900 border-blue-300';
+  } else if (risk?.riskLevel === 'high' || risk?.riskLevel === 'critical') {
     priorityLevel = 'urgent';
-    title = lang === 'hi' ? 'आज फसल की जांच अवश्य करें' : 'Inspect Your Crop Today';
-    message = lang === 'hi' 
-      ? `उच्च आर्द्रता (${weather?.current.relativeHumidityPct || 80}%) और ${activeFarm?.crop?.stage || 'फूल आने की अवस्था'} में रोग का जोखिम अधिक है।`
-      : `High humidity (${weather?.current.relativeHumidityPct || 80}%) and ${activeFarm?.crop?.stage || 'sensitive stage'} favor disease development.`;
-    ctaText = lang === 'hi' ? '📷 फोटो लें' : '📷 Take Crop Photo';
-    onCtaClick = onCheckCrop;
-    bgGradient = 'from-rose-50 via-white to-orange-50/40 border-rose-200 text-rose-950';
-    badgeTone = 'bg-rose-100 text-rose-800 border-rose-200';
     Icon = AlertTriangle;
-  }
-  // Check 3: Moderate disease risk
-  else if (risk?.riskLevel === 'moderate') {
+    priorityKey = 'home_priority_action';
+    iconBg = 'bg-rose-100/80 text-rose-800 border-rose-200';
+    badgeTone = 'bg-rose-100/70 text-rose-900 border-rose-300';
+  } else if (risk?.riskLevel === 'moderate') {
     priorityLevel = 'moderate';
-    title = lang === 'hi' ? 'खेत में पत्तियों की जांच करें' : 'Scout Lower Leaves Today';
-    message = lang === 'hi'
-      ? 'वर्तमान मौसम में फंगल धब्बों की संभावना है। निचली पत्तियों पर जलभराव या धब्बे देखें।'
-      : 'Current microclimate favors mild fungal pressure. Inspect lower leaf undersides for initial spots.';
-    ctaText = lang === 'hi' ? 'निरीक्षण गाइड' : 'Inspection Steps';
-    onCtaClick = onViewAdvisory;
-    bgGradient = 'from-amber-50 via-white to-orange-50/40 border-amber-200 text-amber-950';
-    badgeTone = 'bg-amber-100 text-amber-800 border-amber-200';
     Icon = AlertTriangle;
+    priorityKey = 'home_priority_attention';
+    iconBg = 'bg-amber-100/80 text-amber-800 border-amber-200';
+    badgeTone = 'bg-amber-100/70 text-amber-900 border-amber-300';
+  }
+
+  let title = t('home_no_action');
+  let message = t('home_no_action_msg');
+  let ctaText = t('home_view_advisory');
+  let onCtaClick = onViewAdvisory;
+
+  if (priorityLevel === 'high') {
+    title = t('home_status_review');
+    message = t('home_review_msg');
+    ctaText = t('home_view_status');
+    onCtaClick = onViewExpertReview;
+  } else if (priorityLevel === 'urgent') {
+    title = t('home_take_photo');
+    const stage = activeFarm?.crop?.stage || 'sensitive stage';
+    message = t('home_high_risk_msg').replace('{stage}', stage);
+    ctaText = t('home_take_photo');
+    onCtaClick = onCheckCrop;
+  } else if (priorityLevel === 'moderate') {
+    title = t('home_today_action');
+    message = t('home_scout_msg');
+    ctaText = t('home_inspection_steps');
+    onCtaClick = onViewAdvisory;
   }
 
   return (
-    <div className={`p-6 sm:p-7 rounded-3xl bg-gradient-to-br ${bgGradient} border shadow-sm mb-8 transition-all`}>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+    <section
+      aria-label="Today decision layer"
+      className="my-3.5 bg-white rounded-3xl border border-stone-200/90 shadow-xs overflow-hidden"
+    >
+      <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         
-        {/* Left: Dynamic Decision Content */}
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-white/80 border border-current/20 flex items-center justify-center flex-shrink-0 shadow-sm">
-            <Icon className="w-6 h-6 stroke-[2.2]" />
+        <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+          <div className={`w-11 h-11 rounded-2xl ${iconBg} border flex items-center justify-center flex-shrink-0 shadow-2xs`}>
+            <Icon className="w-5 h-5 stroke-[2.4]" />
           </div>
 
-          <div>
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="text-[11px] font-black uppercase tracking-wider">
-                {lang === 'hi' ? 'आज आपके खेत में क्या करना है?' : 'What to do today on your farm'}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-stone-500">
+                {t('home_today_heading')}
               </span>
-              <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${badgeTone}`}>
-                {priorityLevel === 'urgent' ? 'Action Required' : priorityLevel === 'high' ? 'Reviewing' : priorityLevel === 'moderate' ? 'Attention' : 'Normal'}
+              <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${badgeTone}`}>
+                {t(priorityKey)}
               </span>
             </div>
-
-            <h3 className="text-lg sm:text-xl font-black tracking-tight mt-0.5">
-              {title}
-            </h3>
             
-            <p className="text-xs sm:text-sm font-medium mt-1 leading-relaxed opacity-90 max-w-xl">
+            <div className="text-sm sm:text-base font-black text-stone-900 leading-snug">
+              {title}
+            </div>
+            <div className="text-xs font-medium text-stone-600 leading-relaxed mt-0.5 line-clamp-2">
               {message}
-            </p>
+            </div>
           </div>
         </div>
 
-        {/* Right: Dynamic CTA Button */}
-        <div className="self-start sm:self-center flex-shrink-0">
+        <div className="flex items-center justify-end flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-stone-100">
           <button
+            type="button"
             onClick={onCtaClick}
-            className="px-5 py-3.5 rounded-2xl bg-gray-900 hover:bg-black text-white font-bold text-xs sm:text-sm shadow-md active:scale-95 transition-all flex items-center gap-2"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-xs transition-all active:scale-[0.98] shadow-2xs min-h-[42px]"
           >
             <span>{ctaText}</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
       </div>
-    </div>
+    </section>
   );
 }

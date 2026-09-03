@@ -311,12 +311,22 @@ export default function ExpertValidationPanel() {
                 {/* Evidence Image with Zoom controls */}
                 <div className="relative rounded-2xl overflow-hidden bg-gray-950 border border-gray-200">
                   <div className="w-full h-64 sm:h-72 overflow-hidden flex items-center justify-center">
-                    <img
-                      src={selectedObs.images?.[0]?.storage_path ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/crop-observations/${selectedObs.images[0].storage_path}` : 'https://images.unsplash.com/photo-1592417817098-8f3d6eb2251e?w=800'}
-                      alt="Evidence Leaf"
-                      style={{ transform: `scale(${zoomLevel})`, transition: 'transform 0.2s ease-out' }}
-                      className="max-h-full max-w-full object-contain"
-                    />
+                    {(() => {
+                      const p = selectedObs.images?.[0]?.storage_path;
+                      const imgSrc = !p
+                        ? '/images/sample-cotton.jpg'
+                        : p.startsWith('/') || p.startsWith('http') || p.startsWith('data:')
+                        ? p
+                        : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/crop-observations/${p}`;
+                      return (
+                        <img
+                          src={imgSrc}
+                          alt="Evidence Leaf"
+                          style={{ transform: `scale(${zoomLevel})`, transition: 'transform 0.2s ease-out' }}
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      );
+                    })()}
                   </div>
 
                   {/* Zoom Pan Floating Toolbar */}

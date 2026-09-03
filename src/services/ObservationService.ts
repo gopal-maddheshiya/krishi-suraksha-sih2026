@@ -247,13 +247,28 @@ export class ObservationService {
       }
 
       const { data, error } = await query;
-      if (error) {
-        console.warn('getExpertReviewQueue error:', error.message);
+      if (error || !data || data.length === 0) {
+        const cached = localStorage.getItem('crophealth_observations_cache');
+        if (cached) {
+          try {
+            const parsed: CropObservationEntity[] = JSON.parse(cached);
+            if (statusFilter && statusFilter !== 'all') {
+              return parsed.filter((p) => p.status === statusFilter);
+            }
+            return parsed;
+          } catch {}
+        }
         return [];
       }
       return data || [];
     } catch (e) {
       console.warn('getExpertReviewQueue exception:', e);
+      const cached = localStorage.getItem('crophealth_observations_cache');
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch {}
+      }
       return [];
     }
   }

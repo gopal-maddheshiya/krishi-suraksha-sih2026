@@ -4,7 +4,7 @@ import {
   Cloud, MapPin, Bug, ShieldCheck, BarChart3, 
   Sparkles, Check, Home, Users, Bell, AlertTriangle, 
   Leaf, Phone, User, BookOpen, Compass, ChevronRight,
-  ExternalLink, LogOut, LogIn, History
+  ExternalLink, LogOut, LogIn, History, MoreHorizontal
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { languages, type LanguageCode } from '@/lib/i18n';
@@ -24,6 +24,7 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
   const { activeFarm, activeLocation, currentUser, logout } = useFarmContext();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [alerts, setAlerts] = useState<InAppAlertEntity[]>([]);
 
   useEffect(() => {
@@ -39,14 +40,19 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
     loadAlerts();
   }, []);
 
-  const mainNav = [
-    { key: 'nav_home', section: 'home', label: lang === 'hi' ? 'होम' : lang === 'mr' ? 'मुख्य' : 'Home', icon: Home },
-    { key: 'nav_report', section: 'report', label: lang === 'hi' ? 'फसल जांच' : lang === 'mr' ? 'पीक तपासणी' : 'Check Crop', icon: Camera },
-    { key: 'nav_history', section: 'history', label: lang === 'hi' ? 'जांच इतिहास' : lang === 'mr' ? 'तपासणी इतिहास' : 'My History', icon: History },
-    { key: 'nav_weather', section: 'weather', label: lang === 'hi' ? 'मौसम व जोखिम' : lang === 'mr' ? 'हवामान जोखीम' : 'Weather & Risk', icon: Cloud },
-    { key: 'nav_advisory', section: 'advisory', label: lang === 'hi' ? 'कृषि सलाह' : lang === 'mr' ? 'कृषी सल्ला' : 'Advisory', icon: BookOpen },
-    { key: 'nav_hotspots', section: 'hotspots', label: lang === 'hi' ? 'क्षेत्रीय निगरानी' : lang === 'mr' ? 'क्षेत्रीय पाहणी' : 'Surveillance', icon: Compass },
-    { key: 'nav_expert', section: 'expert', label: lang === 'hi' ? 'विशेषज्ञ कक्ष' : lang === 'mr' ? 'तज्ज्ञ कक्ष' : 'Expert Portal', icon: Users },
+  const primaryNav = [
+    { section: 'home', label: lang === 'hi' ? 'होम' : lang === 'mr' ? 'मुख्य' : 'Home', icon: Home },
+    { section: 'report', label: lang === 'hi' ? 'फसल जांच' : lang === 'mr' ? 'पीक तपासणी' : 'Check Crop', icon: Camera },
+    { section: 'weather', label: lang === 'hi' ? 'मौसम' : lang === 'mr' ? 'हवामान' : 'Weather', icon: Cloud },
+    { section: 'advisory', label: lang === 'hi' ? 'कृषि सलाह' : lang === 'mr' ? 'कृषी सल्ला' : 'Advisory', icon: BookOpen },
+    { section: 'hotspots', label: lang === 'hi' ? 'निगरानी' : lang === 'mr' ? 'पाहणी' : 'Surveillance', icon: Compass },
+  ];
+
+  const secondaryNav = [
+    { section: 'history', label: lang === 'hi' ? 'जांच इतिहास' : lang === 'mr' ? 'तपासणी इतिहास' : 'Scan History', icon: History },
+    { section: 'expert', label: lang === 'hi' ? 'विशेषज्ञ सत्यापन' : lang === 'mr' ? 'तज्ज्ञ कक्ष' : 'Expert Portal', icon: Users },
+    { section: 'pest', label: lang === 'hi' ? 'स्मार्ट कीट ट्रैप' : lang === 'mr' ? 'कीड ट्रॅप' : 'Pest Traps', icon: Bug },
+    { section: 'dashboard', label: lang === 'hi' ? 'एनालिटिक्स' : lang === 'mr' ? 'डॅशबोर्ड' : 'Analytics', icon: BarChart3 },
   ];
 
   const handleNav = (section: string) => {
@@ -54,89 +60,141 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
     setMenuOpen(false);
   };
 
+  const currentLangObj = languages.find((l) => l.code === lang) || languages[0];
+
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-stone-200/80 transition-all duration-200 shadow-xs">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-stone-200/90 transition-all duration-200 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-[68px]">
+          <div className="flex items-center justify-between h-16 sm:h-[68px] gap-2 md:gap-4">
             
-            {/* Premium Logo / Brand Emblem */}
+            {/* ========================================================= */}
+            {/* 1. BRAND LOGO (CLEAN & NON-CROWDED)                       */}
+            {/* ========================================================= */}
             <div 
               className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group select-none flex-shrink-0" 
               onClick={() => handleNav('home')}
             >
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-700 via-emerald-600 to-teal-500 flex items-center justify-center shadow-md shadow-emerald-700/20 group-hover:scale-105 transition-all duration-200 border border-emerald-400/30">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-800 via-emerald-700 to-teal-600 flex items-center justify-center shadow-md shadow-emerald-800/15 group-hover:scale-105 transition-all duration-200 border border-emerald-400/20">
                 <Leaf className="w-5 h-5 text-white stroke-[2.4]" />
               </div>
               <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-black text-lg sm:text-xl tracking-tight text-gray-900 group-hover:text-emerald-700 transition-colors">
+                <div className="flex items-center gap-1.5 leading-none">
+                  <span className="font-black text-lg sm:text-xl tracking-tight text-stone-900 group-hover:text-emerald-800 transition-colors">
                     CropHealth
                   </span>
-                  <span className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[10px] font-black uppercase px-1.5 py-0.5 rounded-md shadow-2xs tracking-wider">
+                  <span className="bg-emerald-800 text-emerald-100 text-[10px] font-black uppercase px-1.5 py-0.5 rounded-md tracking-wider">
                     AI
                   </span>
                 </div>
-                <div className="text-[10px] text-emerald-700 font-bold tracking-wide -mt-0.5 hidden sm:block">
-                  {lang === 'hi' ? 'कृषि स्वास्थ्य एवं सुरक्षा' : lang === 'mr' ? 'पीक आरोग्य व संरक्षण' : 'Agri-Decision Support'}
+                <div className="text-[10px] text-emerald-700 font-bold tracking-wide mt-1 hidden sm:block">
+                  {lang === 'hi' ? 'भारतीय कृषि सुरक्षा' : lang === 'mr' ? 'पीक संरक्षण प्रणाली' : 'Indian Agri-Shield'}
                 </div>
               </div>
             </div>
 
-            {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-1 bg-stone-100/80 p-1 rounded-2xl border border-stone-200/80">
-              {mainNav.slice(0, 6).map((item) => {
+            {/* ========================================================= */}
+            {/* 2. LAPTOP / DESKTOP CLEAN NAVIGATION PILL TABS            */}
+            {/* ========================================================= */}
+            <nav className="hidden lg:flex items-center gap-1 bg-stone-100/90 p-1.5 rounded-2xl border border-stone-200/90 flex-shrink-0">
+              {primaryNav.map((item) => {
                 const isActive = activeSection === item.section;
+                const Icon = item.icon;
                 return (
                   <button
                     key={item.section}
                     onClick={() => handleNav(item.section)}
-                    className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center ${
+                    className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 flex items-center gap-1.5 whitespace-nowrap ${
                       isActive
-                        ? 'bg-white text-emerald-900 shadow-sm border border-stone-200/90'
-                        : 'text-stone-600 hover:text-stone-900 hover:bg-white/60'
+                        ? 'bg-white text-emerald-950 shadow-xs border border-stone-200/80 font-black'
+                        : 'text-stone-600 hover:text-stone-900 hover:bg-white/50'
                     }`}
                   >
-                    {item.label}
+                    <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-emerald-700' : 'text-stone-400'}`} />
+                    <span>{item.label}</span>
                   </button>
                 );
               })}
             </nav>
 
-            {/* Right Controls: User Profile Pill, Location, Bell & Hamburger Menu */}
-            <div className="flex items-center gap-2 sm:gap-2.5">
+            {/* ========================================================= */}
+            {/* 3. RIGHT CONTROLS: LANGUAGE, LOCATION, PROFILE, MENU      */}
+            {/* ========================================================= */}
+            <div className="flex items-center gap-2 flex-shrink-0">
               
+              {/* Quick Language Selector (Desktop / Laptop) */}
+              <div className="relative hidden md:block">
+                <button
+                  type="button"
+                  onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200/90 text-stone-700 font-bold text-xs transition-colors shadow-2xs"
+                  aria-label="Change Language"
+                >
+                  <Globe className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>{currentLangObj.nativeName}</span>
+                  <ChevronDown className={`w-3 h-3 text-stone-400 transition-transform ${langDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {langDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setLangDropdownOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-stone-200 p-1.5 z-50 animate-in zoom-in-95 duration-150 space-y-0.5">
+                      <div className="text-[10px] font-black text-stone-400 uppercase tracking-wider px-2.5 py-1">
+                        भाषा चुनें (Select Language)
+                      </div>
+                      {languages.map((l) => (
+                        <button
+                          key={l.code}
+                          onClick={() => {
+                            setLang(l.code);
+                            setLangDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between transition-colors ${
+                            lang === l.code
+                              ? 'bg-emerald-50 text-emerald-950 font-black'
+                              : 'text-stone-700 hover:bg-stone-50 font-bold'
+                          }`}
+                        >
+                          <span>{l.nativeName} ({l.name})</span>
+                          {lang === l.code && <Check className="w-3.5 h-3.5 text-emerald-700" />}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
               {/* Location Pill (Desktop) */}
-              <div className="hidden md:block">
+              <div className="hidden xl:block">
                 <LocationBar />
               </div>
 
-              {/* Logged in User Pill / Login Trigger */}
+              {/* User Profile / Login Pill */}
               {currentUser ? (
                 <button
                   onClick={onOpenAccount}
-                  className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300/80 text-emerald-950 text-xs font-black transition-all active:scale-95 shadow-2xs"
+                  className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300/80 text-emerald-950 text-xs font-black transition-all active:scale-95 shadow-2xs"
                   title="Farmer Account"
                 >
                   <div className="w-5 h-5 rounded-full bg-emerald-700 text-white flex items-center justify-center text-[10px] font-bold">
                     {currentUser.fullName ? currentUser.fullName.charAt(0).toUpperCase() : '👨‍🌾'}
                   </div>
-                  <span className="truncate max-w-[100px]">{currentUser.fullName}</span>
+                  <span className="truncate max-w-[90px]">{currentUser.fullName}</span>
                 </button>
               ) : (
                 <button
                   onClick={onOpenAccount}
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black transition-all active:scale-95 shadow-xs"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold transition-all active:scale-95 shadow-2xs"
                 >
                   <LogIn className="w-3.5 h-3.5" />
                   <span>{lang === 'hi' ? 'लॉगिन' : 'Login'}</span>
                 </button>
               )}
 
-              {/* Notification Bell */}
+              {/* Notifications Trigger */}
               <button
                 onClick={() => setNotifOpen(!notifOpen)}
-                className="w-10 h-10 rounded-2xl bg-stone-50 hover:bg-stone-100 border border-stone-200/80 flex items-center justify-center text-stone-700 relative transition-all active:scale-95 shadow-2xs"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200/90 flex items-center justify-center text-stone-700 relative transition-all active:scale-95 shadow-2xs"
                 aria-label="Notifications"
               >
                 <Bell className="w-4 h-4 stroke-[2]" />
@@ -147,11 +205,11 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
                 )}
               </button>
 
-              {/* Hamburger Sidebar Trigger Button */}
+              {/* Sidebar Menu Trigger (Hamburger) */}
               <button
                 onClick={() => setMenuOpen(true)}
-                className="w-10 h-10 rounded-2xl bg-stone-50 hover:bg-stone-100 border border-stone-200/80 flex items-center justify-center text-stone-800 transition-all active:scale-95 shadow-2xs"
-                aria-label="Open Sidebar Menu"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200/90 flex items-center justify-center text-stone-800 transition-all active:scale-95 shadow-2xs"
+                aria-label="Open Navigation Menu"
               >
                 <Menu className="w-5 h-5" />
               </button>
@@ -166,23 +224,23 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
       {/* 1. NOTIFICATIONS MODAL / POPOVER                                          */}
       {/* ========================================================================= */}
       {notifOpen && (
-        <div className="fixed inset-0 z-50 flex items-start sm:items-start justify-center sm:justify-end p-4 sm:p-6 sm:pt-20">
+        <div className="fixed inset-0 z-50 flex items-start justify-center sm:justify-end p-4 sm:p-6 sm:pt-20">
           <div 
             className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in" 
             onClick={() => setNotifOpen(false)} 
           />
 
-          <div className="relative w-full max-w-sm sm:w-88 bg-white rounded-3xl shadow-2xl border border-gray-200/90 p-4 sm:p-5 z-50 animate-in zoom-in-95 fade-in duration-150 max-h-[80vh] flex flex-col mt-12 sm:mt-0">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+          <div className="relative w-full max-w-sm sm:w-88 bg-white rounded-3xl shadow-2xl border border-stone-200 p-4 sm:p-5 z-50 animate-in zoom-in-95 fade-in duration-150 max-h-[80vh] flex flex-col mt-12 sm:mt-0">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
                   <Bell className="w-4 h-4 stroke-[2.2]" />
                 </div>
                 <div>
-                  <div className="font-extrabold text-sm text-gray-900 leading-tight">
+                  <div className="font-extrabold text-sm text-stone-900 leading-tight">
                     {lang === 'hi' ? 'सूचना केंद्र' : lang === 'mr' ? 'सूचना कक्ष' : 'Notifications'}
                   </div>
-                  <div className="text-[11px] text-gray-400 font-medium">
+                  <div className="text-[11px] text-stone-400 font-medium">
                     {alerts.length > 0 
                       ? `${alerts.length} ${lang === 'hi' ? 'सक्रिय अलर्ट' : 'Active Alerts'}`
                       : (lang === 'hi' ? 'सभी फसलें सुरक्षित हैं' : 'All crops normal')}
@@ -192,7 +250,7 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
 
               <button
                 onClick={() => setNotifOpen(false)}
-                className="w-8 h-8 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-700 flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-xl bg-stone-50 hover:bg-stone-100 text-stone-400 hover:text-stone-700 flex items-center justify-center transition-colors"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
@@ -205,10 +263,10 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
                   <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 mx-auto mb-2 shadow-2xs">
                     <Check className="w-6 h-6 stroke-[2.4]" />
                   </div>
-                  <div className="font-bold text-xs text-gray-800">
+                  <div className="font-bold text-xs text-stone-800">
                     {lang === 'hi' ? 'कोई नया अलर्ट नहीं है' : lang === 'mr' ? 'नवीन सूचना नाही' : 'No New Alerts'}
                   </div>
-                  <p className="text-[11px] text-gray-500 mt-1 leading-relaxed max-w-xs mx-auto">
+                  <p className="text-[11px] text-stone-500 mt-1 leading-relaxed max-w-xs mx-auto">
                     {lang === 'hi'
                       ? 'वर्तमान में आपके खेत का मौसम और फसल स्थिति सामान्य है। नियमित जांच जारी रखें।'
                       : 'Microclimate and disease risk indicators are normal for your active crop.'}
@@ -227,8 +285,8 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
               )}
             </div>
 
-            <div className="pt-2.5 border-t border-gray-100 flex items-center justify-between text-[11px]">
-              <span className="text-gray-400 font-medium">CropHealth Alerts</span>
+            <div className="pt-2.5 border-t border-stone-100 flex items-center justify-between text-[11px]">
+              <span className="text-stone-400 font-medium">CropHealth Alerts</span>
               <button
                 onClick={() => setNotifOpen(false)}
                 className="font-bold text-emerald-700 hover:text-emerald-800"
@@ -251,7 +309,7 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
             onClick={() => setMenuOpen(false)} 
           />
 
-          <div className="relative w-full max-w-md bg-white h-full shadow-2xl border-l border-gray-200 z-50 flex flex-col overflow-hidden animate-in slide-in-from-right duration-200">
+          <div className="relative w-full max-w-md bg-white h-full shadow-2xl border-l border-stone-200 z-50 flex flex-col overflow-hidden animate-in slide-in-from-right duration-200">
             
             {/* Sidebar Top Header */}
             <div className="p-5 bg-gradient-to-r from-emerald-900 via-teal-900 to-emerald-950 text-white flex items-center justify-between">
@@ -260,165 +318,139 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
                   <Leaf className="w-5 h-5 stroke-[2.2]" />
                 </div>
                 <div>
-                  <div className="font-black text-base text-white tracking-tight">CropHealth AI</div>
+                  <div className="font-black text-base">CropHealth AI</div>
                   <div className="text-[11px] text-emerald-200 font-medium">
-                    {lang === 'hi' ? 'किसान सुविधा केंद्र' : lang === 'mr' ? 'शेतकरी सुविधा केंद्र' : 'Farmer Command Center'}
+                    {lang === 'hi' ? 'राष्ट्रीय डिजिटल कृषि मंच' : 'National Digital Agri Platform'}
                   </div>
                 </div>
               </div>
 
               <button
                 onClick={() => setMenuOpen(false)}
-                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
                 aria-label="Close Sidebar"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Sidebar Scrollable Body */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-6">
+            {/* Sidebar Navigation Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5">
               
-              {/* 1. Farmer Account Profile Snapshot */}
-              <div className="p-4 rounded-3xl bg-emerald-50/80 border border-emerald-200/90 shadow-2xs space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-700 text-white flex items-center justify-center font-black text-lg shadow-xs">
-                      {currentUser ? currentUser.fullName.charAt(0).toUpperCase() : <User className="w-6 h-6" />}
-                    </div>
-                    <div>
-                      <div className="font-black text-sm text-gray-900">
-                        {currentUser ? currentUser.fullName : (lang === 'hi' ? 'अतिथि किसान' : 'Guest Farmer')}
-                      </div>
-                      <div className="text-[11px] font-bold text-emerald-800">
-                        {currentUser ? (
-                          <span className="flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span>{currentUser.phone ? `+91 ${currentUser.phone}` : 'Verified Farmer'}</span>
-                          </span>
-                        ) : (
-                          <span>{activeFarm?.farm_name || 'My Farm'}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {onOpenAccount && (
-                    <button
-                      onClick={() => {
-                        setMenuOpen(false);
-                        onOpenAccount();
-                      }}
-                      className="px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-300 shadow-2xs transition-colors"
-                    >
-                      {currentUser ? (lang === 'hi' ? 'खाता बदलें' : 'Profile') : (lang === 'hi' ? 'लॉगिन' : 'Login')}
-                    </button>
-                  )}
-                </div>
-
-                {currentUser && (
-                  <div className="pt-2 border-t border-emerald-200/70 flex items-center justify-between text-xs">
-                    <span className="text-[11px] text-gray-500 font-medium">Active Farm: {activeFarm?.farm_name}</span>
-                    <button
-                      onClick={async () => {
-                        await logout();
-                        setMenuOpen(false);
-                      }}
-                      className="font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1 text-[11px]"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                      <span>{lang === 'hi' ? 'लॉगआउट' : 'Logout'}</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* 2. Language Selection Grid (13 Languages) */}
+              {/* Primary Views */}
               <div>
-                <div className="flex items-center gap-1.5 mb-2.5">
-                  <Globe className="w-4 h-4 text-emerald-700 stroke-[2.2]" />
-                  <span className="text-xs font-black uppercase tracking-wider text-gray-700">
-                    {lang === 'hi' ? 'भाषा का चयन करें (13 भाषाएं)' : 'Select Language (13 Languages)'}
-                  </span>
+                <div className="text-[11px] font-black uppercase tracking-wider text-stone-400 mb-2 px-1">
+                  {lang === 'hi' ? 'मुख्य सुविधाएं' : 'Primary Features'}
                 </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  {languages.map((l) => (
-                    <button
-                      key={l.code}
-                      onClick={() => setLang(l.code as LanguageCode)}
-                      className={`flex items-center justify-between p-2.5 rounded-xl text-xs font-bold transition-all ${
-                        lang === l.code
-                          ? 'bg-emerald-800 text-white shadow-xs'
-                          : 'bg-stone-50 hover:bg-stone-100 text-stone-800 border border-stone-200/80'
-                      }`}
-                    >
-                      <span>{l.nativeName}</span>
-                      {lang === l.code && <Check className="w-4 h-4 text-emerald-300 stroke-[3]" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 3. Location Bar */}
-              <div>
-                <div className="text-xs font-black uppercase tracking-wider text-gray-700 mb-2">
-                  {lang === 'hi' ? 'वर्तमान स्थान' : 'Current Location'}
-                </div>
-                <LocationBar />
-              </div>
-
-              {/* 4. Complete Application Navigation */}
-              <div>
-                <div className="text-xs font-black uppercase tracking-wider text-gray-700 mb-2">
-                  {lang === 'hi' ? 'मुख्य नेविगेशन' : 'Navigation Menu'}
-                </div>
-                <div className="space-y-1.5">
-                  {mainNav.map((item) => {
-                    const isActive = activeSection === item.section;
+                <div className="space-y-1">
+                  {[...primaryNav, ...secondaryNav].map((item) => {
                     const Icon = item.icon;
+                    const isActive = activeSection === item.section;
                     return (
                       <button
                         key={item.section}
                         onClick={() => handleNav(item.section)}
                         className={`w-full flex items-center justify-between p-3 rounded-2xl text-xs sm:text-sm font-bold transition-all ${
                           isActive
-                            ? 'bg-emerald-50 text-emerald-900 border border-emerald-200 shadow-2xs'
-                            : 'text-gray-700 hover:bg-gray-50'
+                            ? 'bg-emerald-50 text-emerald-950 font-black border border-emerald-200'
+                            : 'text-stone-700 hover:bg-stone-50 hover:text-stone-900'
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`p-1.5 rounded-xl ${isActive ? 'bg-emerald-700 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                            <Icon className="w-4 h-4" />
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                            isActive ? 'bg-emerald-700 text-white' : 'bg-stone-100 text-stone-600'
+                          }`}>
+                            <Icon className="w-4 h-4 stroke-[2.2]" />
                           </div>
                           <span>{item.label}</span>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                        <ChevronRight className="w-4 h-4 text-stone-300" />
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* 5. Farmer Support Helpline */}
-              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-xs text-stone-700 space-y-2">
-                <div className="font-extrabold text-stone-900 flex items-center gap-1.5">
-                  <Phone className="w-4 h-4 text-emerald-600" />
-                  <span>{lang === 'hi' ? 'किसान कॉल सेंटर (निःशुल्क सहायता)' : 'Kisan Call Centre (Toll-Free)'}</span>
+              {/* Language Switcher in Drawer */}
+              <div className="pt-3 border-t border-stone-100">
+                <div className="text-[11px] font-black uppercase tracking-wider text-stone-400 mb-2.5 px-1 flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>भाषा (Language)</span>
                 </div>
-                <a href="tel:18001801551" className="block text-emerald-700 font-black text-sm hover:underline">
-                  📞 1800-180-1551
-                </a>
-                <div className="text-[11px] text-stone-500">
-                  Government of Maharashtra • MSInS
+                <div className="grid grid-cols-2 gap-2">
+                  {languages.map((l) => (
+                    <button
+                      key={l.code}
+                      onClick={() => setLang(l.code)}
+                      className={`p-2.5 rounded-xl text-xs font-bold text-left transition-all border ${
+                        lang === l.code
+                          ? 'bg-emerald-800 text-white border-emerald-800 shadow-xs'
+                          : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border-stone-200/80'
+                      }`}
+                    >
+                      <div className="truncate">{l.nativeName}</div>
+                      <div className={`text-[10px] ${lang === l.code ? 'text-emerald-200' : 'text-stone-400'}`}>
+                        {l.name}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Official ICAR Helpline Contact Card */}
+              <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 space-y-2 text-xs text-emerald-950">
+                <div className="font-black flex items-center gap-1.5 text-emerald-900">
+                  <Phone className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>{lang === 'hi' ? 'ICAR किसान हेल्पलाइन' : 'ICAR Farmer Helpline'}</span>
+                </div>
+                <p className="text-[11px] text-emerald-900/80 leading-relaxed font-medium">
+                  {lang === 'hi' 
+                    ? 'रोग या कीटनाशक संबंधी आपातकालीन सलाह के लिए संपर्क करें:' 
+                    : 'Toll-free advisory support by Senior Agronomists:'}
+                </p>
+                <div className="text-sm font-black text-emerald-800">
+                  📞 1800-180-1551 (टोल-फ्री)
                 </div>
               </div>
 
             </div>
 
-            {/* Sidebar Bottom Footer */}
-            <div className="p-4 bg-stone-50 border-t border-stone-200 text-center text-[11px] text-stone-500">
-              CropHealth AI • SIH 2026 Problem 26131
+            {/* Sidebar Bottom Account / Logout */}
+            <div className="p-4 border-t border-stone-100 bg-stone-50">
+              {currentUser ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center text-xs font-bold">
+                      {currentUser.fullName ? currentUser.fullName.charAt(0).toUpperCase() : '👨‍🌾'}
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-stone-900">{currentUser.fullName}</div>
+                      <div className="text-[10px] text-stone-500 font-medium">{currentUser.phoneNumber}</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setMenuOpen(false);
+                    }}
+                    className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 transition-colors"
+                    title="Logout"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    if (onOpenAccount) onOpenAccount();
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>{lang === 'hi' ? 'किसान लॉगिन / खाता' : 'Farmer Login / Account'}</span>
+                </button>
+              )}
             </div>
 
           </div>

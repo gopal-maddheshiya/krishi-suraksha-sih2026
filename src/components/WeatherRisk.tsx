@@ -14,7 +14,7 @@ import LocationBar from './LocationBar';
 import RiskAssessmentCard from './RiskAssessmentCard';
 
 export default function WeatherRisk() {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   const { activeFarm } = useFarmContext();
   const [location, setLocation] = useState<GeoLocation>(() => LocationService.getSavedLocation());
   const [weatherData, setWeatherData] = useState<WeatherDataBundle | null>(null);
@@ -71,21 +71,22 @@ export default function WeatherRisk() {
       {/* ============================================================= */}
       {/* 1. TOP HEADER & LOCATION SWITCHER                             */}
       {/* ============================================================= */}
-      <div className="bg-gradient-to-r from-sky-950 via-blue-950 to-slate-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-sky-800/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-2xl bg-sky-500/20 text-sky-300 border border-sky-400/30 flex items-center justify-center">
-              <CloudRain className="w-5 h-5 stroke-[2.2]" />
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-white">
-              {lang === 'hi' ? 'मौसम व कृषि सुरक्षा रिपोर्ट' : lang === 'mr' ? 'हवामान व कृषी सुरक्षा' : 'Weather & Crop Risk Radar'}
-            </h1>
+      <div className="bg-white border border-stone-200/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center flex-shrink-0">
+            <CloudRain className="w-5 h-5 stroke-[2.2]" />
           </div>
-          <p className="text-xs text-sky-200/90 mt-1.5 font-medium">
-            {lang === 'hi' 
-              ? 'लाइव तापमान, वर्षा अनुमान, कीटनाशक छिड़काव का सही समय और मौसम अनुसार रोग रोकथाम'
-              : 'Live temperature, rain probabilities, safe spray windows & microclimate pest risk alerts'}
-          </p>
+          <div className="min-w-0">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+              {t('home_weather_today')}
+            </div>
+            <h1 className="text-lg sm:text-xl font-extrabold text-stone-900 leading-snug">
+              {t('weather_title')}
+            </h1>
+            <p className="text-xs text-stone-600 mt-0.5 line-clamp-2">
+              {t('weather_subtitle')}
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -94,10 +95,10 @@ export default function WeatherRisk() {
             onClick={handleRefresh}
             disabled={refreshing || loading}
             aria-label="Refresh weather data"
-            className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all shadow-xs disabled:opacity-50"
+            className="p-2 rounded-lg bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 transition-colors disabled:opacity-50"
             title="Refresh"
           >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-sky-300' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-sky-600' : ''}`} />
           </button>
         </div>
       </div>
@@ -135,27 +136,29 @@ export default function WeatherRisk() {
           {/* ============================================================= */}
           {/* 2. BIG TODAY'S SPRAYING DECISION CARD (KISAN KE LIYE SARAL)    */}
           {/* ============================================================= */}
-          <div className={`rounded-3xl p-6 sm:p-7 border shadow-lg transition-all ${
+          <div className={`rounded-2xl p-5 sm:p-6 border ${
             safeSpray
-              ? 'bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-900 text-white border-emerald-700/50'
-              : 'bg-gradient-to-br from-rose-950 via-red-950 to-slate-950 text-white border-rose-700/50'
+              ? 'bg-emerald-50/70 border-emerald-200'
+              : 'bg-rose-50/70 border-rose-200'
           }`}>
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5 pb-5 border-b border-white/15">
-              <div className="flex items-center gap-3.5">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-md ${
-                  safeSpray ? 'bg-emerald-500 text-emerald-950' : 'bg-rose-500 text-white'
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-stone-200/60">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  safeSpray ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
                 }`}>
-                  {safeSpray ? <Check className="w-8 h-8 stroke-[3]" /> : <X className="w-8 h-8 stroke-[3]" />}
+                  {safeSpray ? <Check className="w-5 h-5 stroke-[2.6]" /> : <X className="w-5 h-5 stroke-[2.6]" />}
                 </div>
 
-                <div>
-                  <span className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full border ${
-                    safeSpray ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30' : 'bg-rose-500/20 text-rose-300 border-rose-400/30'
+                <div className="min-w-0">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                    safeSpray ? 'bg-white text-emerald-800 border-emerald-200' : 'bg-white text-rose-800 border-rose-200'
                   }`}>
                     {lang === 'hi' ? 'आज का छिड़काव निर्णय' : 'Today\'s Spray Decision'}
                   </span>
                   
-                  <h2 className="text-lg sm:text-2xl font-black text-white mt-1">
+                  <h2 className={`text-base sm:text-lg font-extrabold mt-1 leading-snug ${
+                    safeSpray ? 'text-emerald-950' : 'text-rose-950'
+                  }`}>
                     {safeSpray 
                       ? (lang === 'hi' ? '✓ हाँ, आज खेत में दवा छिड़कना सुरक्षित है' : '✓ Safe to Spray Today')
                       : (lang === 'hi' ? '⚠️ आज छिड़काव टालें (बारिश या तेज हवा का खतरा)' : '⚠️ Postpone Spraying (Rain or Wind Risk)')
@@ -165,12 +168,12 @@ export default function WeatherRisk() {
               </div>
 
               {/* Best Spraying Window Pill */}
-              <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/15 text-xs text-emerald-200">
-                <div className="text-[10px] uppercase font-bold text-white/70 flex items-center gap-1 mb-0.5">
-                  <Clock className="w-3.5 h-3.5" />
+              <div className="bg-white px-3.5 py-2 rounded-xl border border-stone-200 text-xs text-stone-700">
+                <div className="text-[10px] uppercase font-bold text-stone-500 flex items-center gap-1 mb-0.5">
+                  <Clock className="w-3 h-3" />
                   <span>{lang === 'hi' ? 'सर्वोत्तम छिड़काव समय' : 'Best Spray Window'}</span>
                 </div>
-                <div className="font-extrabold text-white text-sm">
+                <div className="font-extrabold text-stone-900 text-sm">
                   {lang === 'hi' ? 'सुबह 6:30 से 10:30 बजे' : '6:30 AM to 10:30 AM'}
                 </div>
               </div>
@@ -178,7 +181,7 @@ export default function WeatherRisk() {
 
             {/* Why is it safe / unsafe? (Farmer-Friendly Reason) */}
             <div className="pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-              <p className="text-emerald-100/90 leading-relaxed max-w-2xl font-medium">
+              <p className={`leading-relaxed max-w-2xl font-medium ${safeSpray ? 'text-emerald-900/90' : 'text-rose-900/90'}`}>
                 {safeSpray
                   ? (lang === 'hi' 
                       ? 'हवा की गति सामान्य (8-12 km/h) है और बारिश की कोई संभावना नहीं है। दवा पत्तों पर अच्छे से चिपकेगी और बहेगी नहीं।'
@@ -189,8 +192,9 @@ export default function WeatherRisk() {
                 }
               </p>
 
-              <span className="text-[11px] font-bold text-white/60">
-                📍 {weatherData.location.district}, {weatherData.location.state}
+              <span className="text-[11px] font-bold text-stone-500 flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
+                {weatherData.location.district}, {weatherData.location.state}
               </span>
             </div>
           </div>

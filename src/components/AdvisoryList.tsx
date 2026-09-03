@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
-import { 
-  Leaf, Search, Volume2, VolumeX, ShieldCheck, 
-  CheckCircle2, AlertTriangle, UserCheck, BookOpen, 
-  Sparkles, Sprout, Info, ChevronRight, X, Phone,
-  Filter, Award, FlaskConical, Clock, Layers
+import {
+  Leaf, Search, Volume2, VolumeX, ShieldCheck,
+  CheckCircle2, AlertTriangle, Sprout, Info, ChevronRight, X, Phone,
+  Filter, Award, FlaskConical, Clock, BookOpen, Mic,
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
-import { 
-  AdvisoryService, 
-  VERIFIED_AGRI_KNOWLEDGE_BASE, 
-  type StructuredAdvisory 
+import {
+  AdvisoryService,
+  VERIFIED_AGRI_KNOWLEDGE_BASE,
+  type StructuredAdvisory
 } from '@/services/AdvisoryService';
 
 interface ExtendedAdvisory extends StructuredAdvisory {
@@ -24,31 +23,31 @@ const EXTENDED_ICAR_ADVISORIES: ExtendedAdvisory[] = [
   {
     cropName: 'Cotton',
     cropHi: 'कपास',
-    issueName: 'Pink Bollworm (गुलाबी सुंडी / बोंडअळी)',
-    issueHi: 'गुलाबी सुंडी (पिंक बॉलवर्म)',
+    issueName: 'Pink Bollworm (गुलाबी सुंडी / ব।ंडअळी)',
+    issueHi: 'गुलाबी सुंडी (पिंক বॉলवर्म)',
     category: 'pest',
     affectedPart: 'Flower buds, Squares, and Bolls',
     fieldInspectionSteps: [
-      'गुलाब जैसे विकृत फूल (Rosette Flowers) दिखाई दें तो तुरंत खोलकर अंदर छोटी गुलाबी इल्ली देखें।',
-      'हरे बोंडों पर बारीक छिद्र और अंदर की ओर भूरे धब्बे जांचें।',
-      'प्रति एकड़ 5 फेरोमोन ट्रैप लगाकर प्रति ट्रैप 8-10 पतंगे आने पर तत्काल कदम उठाएं।',
+      'গুলাব जैसे वিকृत फूल (Rosette Flowers) दिखाई दें তো তुरंত খোলकर अंদর ছোटी গুলাবী इল्ली देखें।',
+      'हरे ब।ंडোং पर বारीক ছिद্র और অন্দर की ओर भूरे ধब্বে जাঁचें।',
+      'প্রতি একড़ 5 ফেরোমোন ট্রैপ লগाकর প্রতি ট্রैপ 8-10 পতঙে আने पर তৎকাল कদম উठाएँ।',
     ],
     immediateNonChemicalActions: [
-      'खेत में प्रति एकड़ 5-8 गॉसीप्लूर फेरोमोन ट्रैप (Pheromone Traps) लगाएं।',
-      'ट्राइकोग्रामा परजीवी (Trichogramma wasps) 1.5 लाख अंडे/एकड़ 3 बार छोड़ें।',
-      'नीम का तेल (1500 ppm) 5 ml प्रति लीटर पानी में मिलाकर प्रारंभिक छिड़काव करें।',
+      'खेत में প্রতি एकड़ 5-8 ফেরোমোন ट्रैप লगাএँ।',
+      'ট্রাইকোগ্রামা পরজीवী 1.5 লাখ अंडে/एकड़ 3 बार छोड़ें।',
+      'नीম का तेल (1500 ppm) 5 ml प्रति लीटर पानी में मिलाकर প্রारंभिक छिड়काव करें।',
     ],
     preventiveActions: [
-      'खेत में बोंडअळी के अवशेष और गिरे हुए फूलों को एकत्र कर नष्ट करें।',
-      'फसल की कटाई के बाद खेत की गहरी जुताई करें ताकि प्यूपा नष्ट हो जाएं।',
+      'खेत में ब।ंडअळी के अ�वशेष और गिरे हुए फूलওं को একত্র কর नষ্ট কর कर।.',
+      'फসল की কটाई के बाद खेत की गहरी जुতाई करें ताकि পিউপা नষ্ট হো জাএँ।',
     ],
     escalationTriggers: [
-      'यदि 10% से अधिक बोंडों में इल्ली का प्रवेश दिखाई दे (ETL पार हो)।',
+      'यদि 10% সে অধিক ব।ंडোং में ইল्ली का प्रবেশ দिखাঈ দें (ETL পার হো)।',
     ],
-    chemicalDosage: 'इमामेक्टिन बेंजोएट 5% SG @ 0.4 ग्राम/लीटर या प्रोफेनोफॉस 50% EC @ 2.0 ml/लीटर',
-    organicRemedy: 'नीम का तेल 1500 ppm @ 5 ml/L + बवेरिया बेसियाना @ 5 gm/L',
+    chemicalDosage: 'ইমামেক্টিন বেঁজোএট 5% SG @ 0.4 গ্রাম/লীটর या প্রোফেনোফোস 50% EC @ 2.0 ml/লীটর',
+    organicRemedy: 'নীম का তেল 1500 ppm @ 5 ml/L + বাভেরিয়া বেসিয়ানা @ 5 gm/L',
     phiDays: 14,
-    sourceOrganization: 'ICAR-CICR (केंद्रीय कपास अनुसंधान संस्थान, नागपुर)',
+    sourceOrganization: 'ICAR-CICR (केन्द্রीय कपास অनुसंধান संস্থান, নাগপুর)',
     sourceDocument: 'ICAR-CICR Cotton IPM Package 2024-26',
     sourceDate: '2024',
     knowledgeVersion: 'icar-cicr-v2.4',
@@ -56,32 +55,32 @@ const EXTENDED_ICAR_ADVISORIES: ExtendedAdvisory[] = [
   },
   {
     cropName: 'Tomato',
-    cropHi: 'टमाटर',
-    issueName: 'Early Blight (टमाटर अगेती झुलसा)',
-    issueHi: 'अगेती झुलसा (अर्ली ब्लाइट)',
+    cropHi: 'टমাটার',
+    issueName: 'Early Blight (টমাটার আগেতী ঝুলসা)',
+    issueHi: 'আগেতী ঝুলসা (আর্লী ব্লাইট)',
     category: 'disease',
     affectedPart: 'Older Lower Leaves & Stems',
     fieldInspectionSteps: [
-      'निचली पुरानी पत्तियों पर गहरे भूरे रंग के छल्लेदार (Target Rings) धब्बे देखें।',
-      'धब्बों के चारों ओर हल्का पीला घेरा (Yellow Halo) दिखाई देगा।',
-      'गंभीर स्थिति में पत्तियां सूखकर नीचे गिर जाती हैं।',
+      'नিচली पुरানी पत्तियোং पर গহरे भूरे রং के छल्लেদার (Target Rings) ধব্বে देखें।',
+      'ধব্বোং के চারোং ओর হল्का पीलা ঘেরা (Yellow Halo) দিখাঈ দেগা।',
+      'গম্ভীর স্থিতি में पत्तियाँ सूखकर नीচে গिर जाती हैं।',
     ],
     immediateNonChemicalActions: [
-      'संक्रमित निचली पत्तियों को तोड़कर खेत से दूर जमीन में गाड़ दें।',
-      'पौधों के नीचे ड्रिप या थाला विधि से पानी दें, पत्तियों पर पानी न छिड़कें।',
-      'खेत में वायु संचार बढ़ाने के लिए खरपतवार साफ करें।',
+      'संक्रमিত नিচली पत्तियोং को তোड़कर खेत से দूर जमीন में গाड़ দें।',
+      'পৌধোং के নীচে ড্রিপ या थाला বিধि से পानी दें, পत्तियোং पर पानी ন ছিড়कें।',
+      'खेत में বায়ु সঞ্চার বড়ানे के लिए খরপতবার সাফ करें।',
     ],
     preventiveActions: [
-      'बुवाई से पहले ट्राइकोडर्मा विरिडी (5-10 ग्राम/किग्रा बीज) से बीज उपचार करें।',
-      'फसल चक्र अपनाएं, सोलेनेसी कुल (आलू, बैंगन) के बाद तुरंत टमाटर न लगाएं।',
+      'बুবাঈ से পহলে ট্রাইকোডার্মা বিরিদী (5-10 গ্রাম/কিগ্রা বীজ) से বীজ উচ্চার করেন।',
+      'फসল চক্র অপনাএँ, সোলানেসী কুল (आलू, बैंगন) के बाद तुरंत टমাটার ন লগাএँ।',
     ],
     escalationTriggers: [
-      'यदि लक्षण मुख्य तने या फलों के डंठल तक फैलने लगें।',
+      'यদि লক্ষ্ণ মুখ্য तने या ফলোং के ডंঠল तক ফैलने লगें।.',
     ],
-    chemicalDosage: 'कॉपर ऑक्सीक्लोराइड 50% WP @ 2.5 ग्राम/लीटर या मैंकोजेब 75% WP @ 2.5 ग्राम/लीटर',
-    organicRemedy: 'ट्राइकोडर्मा विरिडी 1% WP @ 5 ग्राम/लीटर + स्यूडोमोनास 5 ग्राम/लीटर',
+    chemicalDosage: 'কোপার অক্সিকক্লোরাই ড 50% WP @ 2.5 গ্রাম/লীটর या ম্যাঙ্কোজেব 75% WP @ 2.5 গ্রাম/লীটর',
+    organicRemedy: 'ট্রাইকোডার্মা বিরিদী 1% WP @ 5 গ্রাম/লীটর + সিউডোমোনাস 5 গ্রাম/লীটর',
     phiDays: 7,
-    sourceOrganization: 'ICAR-IIVR (भारतीय सब्जी अनुसंधान संस्थान, वाराणसी)',
+    sourceOrganization: 'ICAR-IIVR (ভারতীয় সব्जী অनुसंধান संস্থान, বারানসী)',
     sourceDocument: 'Vegetable Pathology Bulletin 2024',
     sourceDate: '2024',
     knowledgeVersion: 'icar-iivr-v3.1',
@@ -89,32 +88,32 @@ const EXTENDED_ICAR_ADVISORIES: ExtendedAdvisory[] = [
   },
   {
     cropName: 'Rice',
-    cropHi: 'धान (चावल)',
-    issueName: 'Rice Blast (धान का झोंका / ब्लास्ट रोग)',
-    issueHi: 'झोंका रोग (ब्लास्ट)',
+    cropHi: 'ধান (চাবল)',
+    issueName: 'Rice Blast (ধান का ঝোঁকা / ব্লাস্ট রোগ)',
+    issueHi: 'ঝোঁকা রোগ (ব্লাস্ট)',
     category: 'disease',
     affectedPart: 'Leaves, Nodes & Neck',
     fieldInspectionSteps: [
-      'पत्तियों पर आंख या नाव के आकार के (Spindle Shaped) धब्बे देखें जिनका केंद्र सफेद और किनारे भूरे हों।',
-      'बाली के गर्दन वाले हिस्से (Neck) पर काला धब्बा जांचें जिससे बाली टूटकर लटक जाती है।',
-      'अत्यधिक नाइट्रोजन खाद वाले खेतों में विशेष रूप से निरीक्षण करें।',
+      'পত্তিয়োং पर आঁখ या নাব के আকার के (Spindle Shaped) ধব্বে देखें যিঁহঁকা केन्द্র সফেদ और কিনারে ভূরে হোঁ।',
+      'বালী के গর্দন বালে হিসসে (Neck) पर কালা ধব্বা জাঁচें যিসসে বালী টুটকর লটক জাতী है।',
+      'অত্যধিক নাইট্রোজেন খাড বালে খেতোং में বিশেষ রূপ से নিরীক্ষণ করেন।',
     ],
     immediateNonChemicalActions: [
-      'यूरिया (नाइट्रोजन) खाद का प्रयोग तुरंत रोकें।',
-      'खेत में पानी का स्तर संतुलित रखें, खेत को सूखने न दें।',
-      'स्यूडोमोनास फ्लोरोसेंस @ 5 ग्राम/लीटर का छिड़काव करें।',
+      'যুরিয়া (নাইট্রোজেন) খাড का প্রয়োগ তुरঁত রোকें।',
+      'খেতে में পানী का স্তর সন্তুলিত রাখেন, খেতে কো সूখने ন দें।',
+      'সিউডোমোনাস ফ্লোরোসঁস @ 5 গ্রাম/লীটর का ছিড়কাব করেন।',
     ],
     preventiveActions: [
-      'प्रमाणित ब्लास्ट-प्रतिरोधी किस्मों (जैसे पूसा 44, MTU 1010) का चयन करें।',
-      'कार्बेंडाजिम 2 ग्राम/किग्रा से बीज शोधन करें।',
+      'প্রমাণিত ব্লাস্ট-প্রতিরোধী কিস্মোং (যেসে পুসা 44, MTU 1010) का চযন করেন।',
+      'কার্বেনডাজিম 2 গ্রাম/কিগ্রা से বীজ শোধন করেন।',
     ],
     escalationTriggers: [
-      'बाली निकलते समय गर्दन पर कालापन आने पर (Neck Blast)।',
+      'বালী নিকলতে সময গर्दন पर কালাপন আনে पर (Neck Blast)।',
     ],
-    chemicalDosage: 'ट्राइसाइक्लाजोल 75% WP @ 0.6 ग्राम/लीटर या आइसोप्रोथियोलेन 40% EC @ 1.5 ml/लीटर',
-    organicRemedy: 'स्यूडोमोनास फ्लोरोसेंस @ 5 ग्राम/लीटर पानी',
+    chemicalDosage: 'ট্রাইসাইক্লাজোল 75% WP @ 0.6 গ্রাম/লীটর या আইসোপ্রোথিওলেন 40% EC @ 1.5 ml/লীটর',
+    organicRemedy: 'সিউডোমোনাস ফ্লোরোসঁস @ 5 গ্রাম/লীটর পানী',
     phiDays: 21,
-    sourceOrganization: 'ICAR-NRRI (राष्ट्रीय चावल अनुसंधान संस्थान, कटक)',
+    sourceOrganization: 'ICAR-NRRI (রাষ্ট্রীয চাবল অनुसंধান संস্থान, কটক)',
     sourceDocument: 'Rice Blast Management Protocol',
     sourceDate: '2024',
     knowledgeVersion: 'icar-nrri-v4.0',
@@ -122,32 +121,32 @@ const EXTENDED_ICAR_ADVISORIES: ExtendedAdvisory[] = [
   },
   {
     cropName: 'Soybean',
-    cropHi: 'सोयाबीन',
-    issueName: 'Soybean Rust & Pod Borer (सोयाबीन रस्ट व इल्ली)',
-    issueHi: 'सोयाबीन रस्ट एवं फली छेदक',
+    cropHi: 'সোযাবীন',
+    issueName: 'Soybean Rust & Pod Borer (সোযাবীন রাস্ট ভ ইল्ली)',
+    issueHi: 'সোযাবীন রাস্ট এবং ফলী ছেদক',
     category: 'disease',
     affectedPart: 'Foliage & Developing Pods',
     fieldInspectionSteps: [
-      'निचली पत्तियों की निचली सतह पर बारीक भूरे रंग के उभार (Pustules) देखें।',
-      'पत्तियों का समय से पहले पीला पड़कर गिरना जांचें।',
-      'फूल और फलियों में छेद करने वाली हरी इल्लियों का निरीक्षण करें।',
+      'নিচলী পত্তিয়োং কী নিচলী সতহ पर বারীক ভূরে রঙ কে উভার (Pustules) দেখে্ং।',
+      'পত্তিয়োং का সময সে পহলে পীলা পড়কর গিরনা জাঁচেন্ং।',
+      'ফূল এবং ফলিযোং মেঁ ছেদ করনে বালী হরী ইল্লিযোং কা নিরীক্ষণ করেন্ং।',
     ],
     immediateNonChemicalActions: [
-      'खेत के चारों ओर हवा का प्रवाह बनाए रखने के लिए मेड़ों की घास काटें।',
-      'शाम के समय स्प्रिंकलर से पानी देने से बचें।',
-      'नीम अर्क 5% का पहला सुरक्षात्मक छिड़काव करें।',
+      'খেতে কে চারোং ওর হবা কা প্রবাহ বনাএ রাখনে কে লিএ মেড়োং কী ঘাস কাটেন্ং।',
+      'শাম কে সময স্প্রিঙ্কলর সে পানী দেনে সে বচেন্ং।',
+      'নীম অর্ক 5% কা পহলা সুরক্ষাত্মক ছিড়কাব করেন্ং।',
     ],
     preventiveActions: [
-      'उचित कतार दूरी (45x5 सेमी) पर बुवाई करें।',
-      'सोयाबीन के साथ मक्का या ज्वार की अंतरवर्तीय फसल लगाएं।',
+      'উচিত কতার দূরী (45x5 সেমী) पर বুবাঈ করেন্ং।',
+      'সোযাবীন কে সাথ মক্কা या জ্বার কী অন্তর্বর্তীয ফসল লগাএঁ।',
     ],
     escalationTriggers: [
-      'फूल आने की अवस्था में रस्ट का पत्तियों से ऊपर की ओर बढ़ना।',
+      'ফূল আনে কী অবস্থা মে রাস্ট কা পত্তিযোং সে ঊপর কী ওর বড়না।',
     ],
-    chemicalDosage: 'हेक्साकोनाजोल 5% EC @ 2.0 ml/लीटर या टेबुकोनाजोल 25.9% EC @ 1.5 ml/लीटर',
-    organicRemedy: 'नीम तेल 1500 ppm @ 5 ml/L + ट्राइकोडर्मा 5 gm/L',
+    chemicalDosage: 'হেক্সাকোনাজোল 5% EC @ 2.0 ml/লীটর या টেবুকোনাজোল 25.9% EC @ 1.5 ml/লীটর',
+    organicRemedy: 'নীম তেল 1500 ppm @ 5 ml/L + ট্রাইকোডার্মা 5 gm/L',
     phiDays: 15,
-    sourceOrganization: 'ICAR-IISR (भारतीय सोयाबीन अनुसंधान संस्थान, इंदौर)',
+    sourceOrganization: 'ICAR-IISR (ভারতীয সোযাবীন অनुसंধান संস্থান, ইন্দোর)',
     sourceDocument: 'Soybean Health Advisory Package',
     sourceDate: '2024',
     knowledgeVersion: 'icar-iisr-v2.8',
@@ -155,32 +154,32 @@ const EXTENDED_ICAR_ADVISORIES: ExtendedAdvisory[] = [
   },
   {
     cropName: 'Chilli',
-    cropHi: 'मिर्च',
-    issueName: 'Chilli Leaf Curl & Thrips (मिर्च का मरोड़िया रोग व थ्रिप्स)',
-    issueHi: 'मरोड़िया रोग एवं थ्रिप्स',
+    cropHi: 'মির্চ',
+    issueName: 'Chilli Leaf Curl & Thrips (মির্চ কা মরোড়িযা রোগ ভ থ্রিপ্স)',
+    issueHi: 'মরোড়িযা রোগ এবং থ্রিপ্স',
     category: 'pest',
     affectedPart: 'Top Tender Leaves & Shoots',
     fieldInspectionSteps: [
-      'पत्तियां ऊपर की ओर नाव जैसी मुड़ी हुई (Upward Cupping) दिखें तो थ्रिप्स की जांच करें।',
-      'पत्तियां नीचे की ओर मुड़ी हुई (Downward Cupping) हों तो माइट्स (Mites) का प्रकोप है।',
-      'पौधों की नई बढ़वार रुक जाना और पत्तियां छोटी रह जाना।',
+      'পত্তিযাঁ ঊপর কী ওর নাব জেসী মুড়ী হুঈ (Upward Cupping) দিখেন টো থ্রিপ্স কী জাঁচ করেন্ং।',
+      'পত্তিযাঁ নীচে কী ওর মুড়ী হুঈ (Downward Cupping) হোঁ টো মাইট্স (Mites) কা প্রকোপ হৈ।',
+      'পৌধোং কী নঈ বড়বার রুক জানা এবং পত্তিযাঁ ছোটী রহ জানা।',
     ],
     immediateNonChemicalActions: [
-      'खेत में प्रति एकड़ 20 नीले एवं पीले चिपचिपे जाल (Sticky Traps) लगाएं।',
-      'खेत के चारों ओर मक्का या ज्वार की 2 लाइनें बॉर्डर क्रॉप के रूप में लगाएं।',
-      'संक्रमित पौधों को उखाड़कर नष्ट करें।',
+      'খেতে মে প্রতি একড় 20 নীলে এবং পীলে চিপচিপে জাল (Sticky Traps) লগাএঁ।',
+      'খেতে কে চারোং ওর মক্কা या জ্বার কী 2 লাইনেন্ং বোর্ডার ক্রোপ কে রূপ মে লগাএঁ।',
+      'সংক্রমিত পৌধোং কো উখাড়কর নষ্ট করেন্ং।',
     ],
     preventiveActions: [
-      'सफेद मक्खी और थ्रिप्स कीटों का समय पर नियंत्रण करें जो वायरस फैलाते हैं।',
-      'संतुलित पोषण दें, अधिक यूरिया के प्रयोग से बचें।',
+      'সফেদ মক্খী এবং থ্রিপ্স কীটোং কা সময পর নিয়ন্ত্রণ করেন যো ব াইরাস ফেলাতে হেন্ং।',
+      'সন্তুলিত পোষণ দেন্ং, অধিক যুরিয়া কে প্রযোগ সে বচেন্ং।',
     ],
     escalationTriggers: [
-      'यदि 15% से अधिक पौधों में पत्तियों का गुच्छा बनने लगे।',
+      'যদি 15% সে অধিক পৌধোং মে পত্তিযোং কা গুচ্ছা বননে লগে।',
     ],
-    chemicalDosage: 'एसिटामिप्रिड 20% SP @ 0.3 ग्राम/लीटर या फिप्रोनिल 5% SC @ 2.0 ml/लीटर',
-    organicRemedy: 'नीम तेल 10,000 ppm @ 2 ml/L + वर्टिसिलियम लेकानी @ 5 gm/L',
+    chemicalDosage: 'এসিটামিপ্রিড 20% SP @ 0.3 গ্রাম/লীটর या ফিপ্রোনিল 5% SC @ 2.0 ml/লীটর',
+    organicRemedy: 'নীম তেল 10,000 ppm @ 2 ml/L + ভের্টিসিলিয লেকানী @ 5 gm/L',
     phiDays: 7,
-    sourceOrganization: 'ICAR-IIHR (भारतीय बागवानी अनुसंधान संस्थान, बेंगलुरु)',
+    sourceOrganization: 'ICAR-IIHR (ভারতীয বাগবানী অनुसंধান संস্থান, বেঙ্গালুরু)',
     sourceDocument: 'Integrated Pest & Disease Management for Solanaceous Crops',
     sourceDate: '2024',
     knowledgeVersion: 'icar-iihr-v3.0',
@@ -189,7 +188,7 @@ const EXTENDED_ICAR_ADVISORIES: ExtendedAdvisory[] = [
 ];
 
 export default function AdvisoryList() {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCrop, setSelectedCrop] = useState<string>('all');
   const [selectedAdvisory, setSelectedAdvisory] = useState<ExtendedAdvisory | null>(null);
@@ -198,7 +197,7 @@ export default function AdvisoryList() {
   const filteredAdvisories = EXTENDED_ICAR_ADVISORIES.filter((item) => {
     const matchesCrop = selectedCrop === 'all' || item.cropName.toLowerCase() === selectedCrop.toLowerCase();
     const query = searchQuery.toLowerCase();
-    const matchesQuery = 
+    const matchesQuery =
       item.cropName.toLowerCase().includes(query) ||
       (item.cropHi && item.cropHi.includes(query)) ||
       item.issueName.toLowerCase().includes(query) ||
@@ -219,46 +218,38 @@ export default function AdvisoryList() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200 max-w-6xl mx-auto py-2">
-      
-      {/* ============================================================= */}
-      {/* 1. TOP HERO BANNER (ICAR VERIFIED)                            */}
-      {/* ============================================================= */}
-      <div className="bg-gradient-to-r from-teal-950 via-emerald-950 to-slate-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-teal-800/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-2xl bg-teal-500/20 text-teal-300 border border-teal-400/30 flex items-center justify-center">
-              <Award className="w-5 h-5 stroke-[2.2]" />
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-white">
-              {lang === 'hi' ? 'ICAR सरकारी कृषि सलाह एवं उपचार गाइड' : 'ICAR Government Crop Advisory & Action Guide'}
-            </h1>
+    <div className="space-y-5 animate-in fade-in duration-200 max-w-6xl mx-auto py-2">
+
+      {/* Header (light) */}
+      <div className="bg-white border border-stone-200/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center flex-shrink-0">
+            <BookOpen className="w-5 h-5 stroke-[2.2]" />
           </div>
-          <p className="text-xs text-teal-200/90 mt-1.5 font-medium max-w-2xl leading-relaxed">
-            {lang === 'hi' 
-              ? 'भारतीय कृषि अनुसंधान परिषद (ICAR) एवं कृषि विज्ञान केंद्र (KVK) द्वारा प्रमाणित रोग लक्षण, जैविक उपाय और कीटनाशकों की सटीक खुराक।'
-              : 'Official ICAR & KVK certified agricultural package of practices, biological remedies & dosage recommendations.'}
-          </p>
+          <div className="min-w-0">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+              {t('home_kvk_bulletins')}
+            </div>
+            <h1 className="text-lg sm:text-xl font-extrabold text-stone-900">
+              {t('advisory_title')}
+            </h1>
+            <p className="text-xs text-stone-600 mt-0.5 line-clamp-2">
+              {t('advisory_subtitle')}
+            </p>
+          </div>
         </div>
 
-        {/* Toll-Free Kisan Helpline Badge */}
-        <div className="bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/15 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-emerald-500 text-emerald-950 flex items-center justify-center font-bold">
-            <Phone className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="text-[10px] text-teal-200 font-bold uppercase">{lang === 'hi' ? 'किसान कॉल सेंटर (मुफ्त)' : 'Kisan Call Center (Toll Free)'}</div>
-            <a href="tel:18001801551" className="text-sm font-black text-white hover:text-emerald-300">1800-180-1551</a>
-          </div>
-        </div>
+        <a
+          href="tel:18001801551"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200"
+        >
+          <Phone className="w-3.5 h-3.5" />
+          <span>1800-180-1551</span>
+        </a>
       </div>
 
-      {/* ============================================================= */}
-      {/* 2. SEARCH & CROP SELECTOR TABS                                */}
-      {/* ============================================================= */}
+      {/* Search + crop filters */}
       <div className="space-y-3">
-        
-        {/* Search Input */}
         <div className="relative">
           <Search className="w-5 h-5 text-stone-400 absolute left-4 top-3.5" />
           <input
@@ -266,11 +257,10 @@ export default function AdvisoryList() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={lang === 'hi' ? 'फसल या बीमारी खोजें (उदा. कपास सुंडी, टमाटर झुलसा, ब्लास्ट)...' : 'Search crop or disease (e.g. Cotton Bollworm, Tomato Blight, Blast)...'}
-            className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-white border border-stone-200 shadow-sm text-xs sm:text-sm font-bold text-stone-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+            className="w-full pl-12 pr-4 py-3 rounded-xl bg-white border border-stone-200 shadow-sm text-xs sm:text-sm font-bold text-stone-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
           />
         </div>
 
-        {/* Filter Pills */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
           <span className="text-stone-500 font-bold flex items-center gap-1 pl-1">
             <Filter className="w-3.5 h-3.5" />
@@ -289,7 +279,7 @@ export default function AdvisoryList() {
               onClick={() => setSelectedCrop(c.id)}
               className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all ${
                 selectedCrop === c.id
-                  ? 'bg-teal-800 text-white shadow-xs'
+                  ? 'bg-teal-700 text-white shadow-xs'
                   : 'bg-white border border-stone-200 text-stone-700 hover:bg-stone-50'
               }`}
             >
@@ -297,122 +287,105 @@ export default function AdvisoryList() {
             </button>
           ))}
         </div>
-
       </div>
 
-      {/* ============================================================= */}
-      {/* 3. ADVISORY CARDS GRID                                        */}
-      {/* ============================================================= */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      {/* Advisory list (compact rows) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         {filteredAdvisories.map((advisory, idx) => (
           <div
             key={idx}
-            className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200 shadow-sm hover:shadow-lg hover:border-teal-500/80 transition-all flex flex-col justify-between space-y-4 group"
+            className="bg-white rounded-2xl border border-stone-200 hover:border-teal-300 shadow-sm hover:shadow-md transition-all flex flex-col"
           >
-            <div>
-              {/* Header tags & Audio Button */}
-              <div className="flex items-center justify-between mb-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-1 rounded-xl bg-teal-50 text-teal-800 border border-teal-200 font-black text-xs">
+            <div className="p-4 flex-1 space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                  <span className="px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-200 font-bold text-[11px]">
                     {advisory.cropHi || advisory.cropName}
                   </span>
-                  <span className="px-2.5 py-1 rounded-xl bg-stone-100 text-stone-600 font-bold text-[11px]">
-                    {advisory.category === 'pest' ? (lang === 'hi' ? 'कीट प्रकोप' : 'Pest') : (lang === 'hi' ? 'फफूंद रोग' : 'Disease')}
+                  <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 font-bold text-[11px]">
+                    {advisory.category === 'pest' ? (lang === 'hi' ? 'कीट' : 'Pest') : (lang === 'hi' ? 'रोग' : 'Disease')}
                   </span>
                 </div>
-
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleSpeak(advisory);
                   }}
-                  className="p-2 rounded-xl bg-stone-100 hover:bg-teal-50 text-stone-600 hover:text-teal-700 transition-colors"
-                  title="बोलकर सुनें (Voice)"
+                  className="p-1.5 rounded-lg bg-stone-100 hover:bg-teal-50 text-stone-600 hover:text-teal-700"
+                  title="Listen"
                 >
-                  <Volume2 className="w-4 h-4" />
+                  <Volume2 className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              {/* Title */}
-              <h3 className="font-black text-base sm:text-lg text-stone-900 group-hover:text-teal-800 transition-colors">
+              <h3 className="font-extrabold text-sm text-stone-900 leading-snug">
                 {advisory.issueHi || advisory.issueName}
               </h3>
 
-              {/* Symptoms snippet */}
-              <p className="text-xs text-stone-600 mt-1.5 line-clamp-2 leading-relaxed font-medium">
+              <p className="text-xs text-stone-600 line-clamp-2 leading-snug">
                 {advisory.fieldInspectionSteps[0]}
               </p>
 
-              {/* Dosage Prescriptions Box */}
-              <div className="mt-3.5 p-3 rounded-2xl bg-teal-50/70 border border-teal-100 space-y-1.5 text-xs">
-                <div className="flex items-start gap-1.5 text-stone-900">
-                  <FlaskConical className="w-3.5 h-3.5 text-teal-700 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold text-teal-950">{lang === 'hi' ? 'रासायनिक दवा मात्रा:' : 'Chemical Dosage:'} </span>
-                    <span className="font-extrabold text-teal-900">{advisory.chemicalDosage}</span>
+              <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                <div className="p-2 bg-teal-50/60 border border-teal-100 rounded-lg">
+                  <div className="text-stone-500 font-bold text-[10px] uppercase tracking-wider mb-0.5">
+                    {lang === 'hi' ? 'दवा मात्रा' : 'Chemical'}
                   </div>
+                  <div className="font-extrabold text-teal-900 line-clamp-2">{advisory.chemicalDosage}</div>
                 </div>
-
-                <div className="flex items-start gap-1.5 text-stone-800">
-                  <Sprout className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold text-emerald-950">{lang === 'hi' ? 'जैविक उपाय:' : 'Biological Remedy:'} </span>
-                    <span className="font-medium text-emerald-900">{advisory.organicRemedy}</span>
+                <div className="p-2 bg-emerald-50/60 border border-emerald-100 rounded-lg">
+                  <div className="text-stone-500 font-bold text-[10px] uppercase tracking-wider mb-0.5">
+                    {lang === 'hi' ? 'जैविक' : 'Organic'}
                   </div>
+                  <div className="font-bold text-emerald-900 line-clamp-2">{advisory.organicRemedy}</div>
                 </div>
               </div>
             </div>
 
-            {/* Card Footer Button */}
-            <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1 text-[11px] text-stone-500 font-bold">
-                <Clock className="w-3.5 h-3.5 text-stone-400" />
+            <div className="px-4 py-2.5 border-t border-stone-100 flex items-center justify-between text-[11px]">
+              <div className="flex items-center gap-1 text-stone-500 font-bold">
+                <Clock className="w-3 h-3" />
                 <span>PHI: {advisory.phiDays} {lang === 'hi' ? 'दिन' : 'Days'}</span>
               </div>
-
               <button
                 onClick={() => setSelectedAdvisory(advisory)}
-                className="px-4 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all active:scale-95"
+                className="px-3 py-1.5 rounded-lg bg-teal-700 hover:bg-teal-800 text-white font-bold text-[11px] flex items-center gap-1"
               >
-                <span>{lang === 'hi' ? 'पूरा कार्ययोजना देखें' : 'View Full Action Plan'}</span>
-                <ChevronRight className="w-3.5 h-3.5" />
+                <span>{lang === 'hi' ? 'पूरी सलाह' : 'Full Plan'}</span>
+                <ChevronRight className="w-3 h-3" />
               </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* ============================================================= */}
-      {/* 4. COMPREHENSIVE ACTION PLAN MODAL                            */}
-      {/* ============================================================= */}
+      {/* Modal */}
       {selectedAdvisory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-gray-950/80 backdrop-blur-md animate-in fade-in duration-150">
-          <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-stone-200 overflow-hidden flex flex-col max-h-[92vh]">
-            
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-teal-950 via-emerald-950 to-slate-950 text-white p-5 flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[11px] font-black uppercase px-2.5 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full border border-emerald-400/30">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-stone-200 overflow-hidden flex flex-col max-h-[92vh]">
+            <div className="p-4 border-b border-stone-100 flex items-center justify-between">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-teal-100 text-teal-800 rounded-md">
                     {selectedAdvisory.cropHi || selectedAdvisory.cropName}
                   </span>
-                  <span className="text-xs text-teal-200 font-medium">
-                    {lang === 'hi' ? 'प्रभावित भाग:' : 'Part:'} {selectedAdvisory.affectedPart}
+                  <span className="text-[11px] text-stone-500 font-medium">
+                    {lang === 'hi' ? 'भाग:' : 'Part:'} {selectedAdvisory.affectedPart}
                   </span>
                 </div>
-                <h3 className="font-black text-base sm:text-lg text-white">
+                <h3 className="font-extrabold text-base text-stone-900 leading-snug">
                   {selectedAdvisory.issueHi || selectedAdvisory.issueName}
                 </h3>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => handleSpeak(selectedAdvisory)}
-                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
-                  title="बोलकर सुनें (Voice)"
+                  className="p-2 rounded-lg bg-stone-100 hover:bg-teal-50 text-stone-600 hover:text-teal-700"
+                  title="Listen"
                 >
-                  {isSpeaking ? <VolumeX className="w-4 h-4 text-rose-300" /> : <Volume2 className="w-4 h-4" />}
+                  {isSpeaking ? <VolumeX className="w-4 h-4 text-rose-600" /> : <Volume2 className="w-4 h-4" />}
                 </button>
                 <button
                   onClick={() => {
@@ -420,88 +393,81 @@ export default function AdvisoryList() {
                     AdvisoryService.stopSpeaking();
                     setIsSpeaking(false);
                   }}
-                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+                  className="p-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
-              
-              {/* 1. Field Inspection Steps */}
-              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-2">
-                <div className="text-xs font-bold text-stone-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <Search className="w-4 h-4 text-teal-700" />
-                  <span>{lang === 'hi' ? '1. खेत में क्या और कैसे जांचें (लक्षण):' : '1. What to check in field:'}</span>
+            <div className="p-4 sm:p-5 space-y-3 overflow-y-auto flex-1">
+
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 space-y-1.5">
+                <div className="text-[11px] font-bold text-stone-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Search className="w-3.5 h-3.5 text-teal-700" />
+                  <span>{lang === 'hi' ? '1. खेत में जांचें' : '1. Field inspection'}</span>
                 </div>
-                <ul className="text-xs text-stone-800 space-y-1.5 list-disc list-inside font-medium leading-relaxed">
+                <ul className="text-xs text-stone-800 space-y-1 list-disc list-inside leading-snug">
                   {selectedAdvisory.fieldInspectionSteps.map((step, i) => (
                     <li key={i}>{step}</li>
                   ))}
                 </ul>
               </div>
 
-              {/* 2. Immediate Safe Non-Chemical Actions */}
-              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-2">
-                <div className="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                  <span>{lang === 'hi' ? '2. तुरंत क्या देसी / जैविक कदम उठाएं:' : '2. Immediate Non-Chemical Actions:'}</span>
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-1.5">
+                <div className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>{lang === 'hi' ? '2. तुरंत जैविक कदम' : '2. Immediate non-chemical'}</span>
                 </div>
-                <ul className="text-xs text-emerald-950 space-y-1.5 list-disc list-inside font-medium leading-relaxed">
+                <ul className="text-xs text-emerald-950 space-y-1 list-disc list-inside leading-snug">
                   {selectedAdvisory.immediateNonChemicalActions.map((act, i) => (
                     <li key={i}>{act}</li>
                   ))}
                 </ul>
               </div>
 
-              {/* 3. Official Chemical Prescription */}
-              <div className="p-4 rounded-2xl bg-teal-50 border border-teal-200 space-y-2">
-                <div className="text-xs font-bold text-teal-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <FlaskConical className="w-4 h-4 text-teal-700" />
-                  <span>{lang === 'hi' ? '3. ICAR अनुमोदित दवा एवं छिड़काव मात्रा:' : '3. Certified Chemical Dosage:'}</span>
+              <div className="p-3 rounded-xl bg-teal-50 border border-teal-200 space-y-1.5">
+                <div className="text-[11px] font-bold text-teal-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <FlaskConical className="w-3.5 h-3.5 text-teal-700" />
+                  <span>{lang === 'hi' ? '3. दवा एवं मात्रा' : '3. Chemical dosage'}</span>
                 </div>
-                <div className="p-3 bg-white rounded-xl border border-teal-200/80 text-xs">
-                  <div className="font-extrabold text-teal-950 text-sm mb-1">{selectedAdvisory.chemicalDosage}</div>
+                <div className="p-2.5 bg-white rounded-lg border border-teal-200 text-xs">
+                  <div className="font-extrabold text-teal-950 text-sm mb-0.5">{selectedAdvisory.chemicalDosage}</div>
                   <div className="text-[11px] text-stone-600">
-                    ⏰ <strong>छिड़काव समय:</strong> सुबह 10 बजे से पहले या शाम को करें। कटाई पूर्व प्रतीक्षा अवधि (PHI): <strong>{selectedAdvisory.phiDays} दिन</strong>।
+                    {lang === 'hi' ? `सुबह 10 बजे से पहले या शाम को करें। PHI: ${selectedAdvisory.phiDays} दिन।` : `Spray before 10 AM or after 4 PM. PHI: ${selectedAdvisory.phiDays} days.`}
                   </div>
                 </div>
               </div>
 
-              {/* 4. Prevention */}
-              <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 space-y-2">
-                <div className="text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-blue-700" />
-                  <span>{lang === 'hi' ? '4. आगे के लिए बचाव के उपाय (Prevention):' : '4. Long-term Prevention:'}</span>
+              <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-200 space-y-1.5">
+                <div className="text-[11px] font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
+                  <span>{lang === 'hi' ? '4. बचाव (Prevention)' : '4. Long-term prevention'}</span>
                 </div>
-                <ul className="text-xs text-blue-950 space-y-1.5 list-disc list-inside font-medium leading-relaxed">
+                <ul className="text-xs text-blue-950 space-y-1 list-disc list-inside leading-snug">
                   {selectedAdvisory.preventiveActions.map((prev, i) => (
                     <li key={i}>{prev}</li>
                   ))}
                 </ul>
               </div>
 
-              {/* Verified Source Attribution Footer */}
-              <div className="pt-3 border-t border-stone-200 text-[11px] text-stone-500 flex items-center justify-between flex-wrap gap-2">
+              <div className="pt-2 border-t border-stone-200 text-[11px] text-stone-500 flex items-center justify-between flex-wrap gap-1.5">
                 <span className="flex items-center gap-1">
-                  <Info className="w-3.5 h-3.5 text-teal-700" />
+                  <Info className="w-3 h-3 text-teal-700" />
                   {selectedAdvisory.sourceOrganization} ({selectedAdvisory.sourceDocument})
                 </span>
-                <span className="font-mono text-[10px] bg-stone-100 px-2 py-0.5 rounded">{selectedAdvisory.knowledgeVersion}</span>
+                <span className="font-mono text-[10px] bg-stone-100 px-1.5 py-0.5 rounded">{selectedAdvisory.knowledgeVersion}</span>
               </div>
 
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-4 bg-stone-50 border-t border-stone-200 flex items-center justify-between">
-              <a 
-                href="tel:18001801551" 
-                className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1.5"
+            <div className="p-3 bg-stone-50 border-t border-stone-200 flex items-center justify-between">
+              <a
+                href="tel:18001801551"
+                className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1.5"
               >
-                <Phone className="w-3.5 h-3.5" />
-                <span>{lang === 'hi' ? 'KVK वैज्ञानिक से बात करें (Toll Free)' : 'Call KVK Scientist'}</span>
+                <Phone className="w-3 h-3" />
+                <span>{lang === 'hi' ? 'KVK वैज्ञानिक' : 'Call KVK Scientist'}</span>
               </a>
 
               <button
@@ -510,12 +476,11 @@ export default function AdvisoryList() {
                   AdvisoryService.stopSpeaking();
                   setIsSpeaking(false);
                 }}
-                className="px-5 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs shadow-xs"
+                className="px-3 py-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-white font-bold text-[11px]"
               >
-                {lang === 'hi' ? 'बंद करें' : 'Close'}
+                {lang === 'hi' ? 'बंद' : 'Close'}
               </button>
             </div>
-
           </div>
         </div>
       )}

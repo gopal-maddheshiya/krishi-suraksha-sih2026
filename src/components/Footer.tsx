@@ -1,4 +1,4 @@
-import { Sprout, Mail, Phone, MapPin, Globe, ShieldCheck, Heart, Info, User } from 'lucide-react';
+import { Sprout, Mail, Phone, Globe, Info, User } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { languages, type LanguageCode } from '@/lib/i18n';
 
@@ -11,56 +11,44 @@ export default function Footer({ onNavigate, onOpenAccount }: FooterProps) {
   const { lang, setLang, t } = useLang();
 
   const navigationLinks = [
-    { key: 'nav_home', section: 'home', label: lang === 'hi' ? 'होम' : lang === 'mr' ? 'मुख्यपृष्ठ' : 'Home' },
-    { key: 'nav_report', section: 'report', label: lang === 'hi' ? 'AI फसल जांच' : lang === 'mr' ? 'AI पीक तपासणी' : 'AI Crop Scanner' },
-    { key: 'nav_weather', section: 'weather', label: lang === 'hi' ? 'मौसम व जोखिम' : lang === 'mr' ? 'हवामान व जोखीम' : 'Weather & Risk Engine' },
-    { key: 'nav_advisory', section: 'advisory', label: lang === 'hi' ? 'कृषि सलाह' : lang === 'mr' ? 'कृषी सल्ला' : 'Farmer Advisories' },
-    { key: 'nav_hotspots', section: 'hotspots', label: lang === 'hi' ? 'क्षेत्रीय निगरानी' : lang === 'mr' ? 'क्षेत्रीय देखरेख' : 'Surveillance Matrix' },
-    { key: 'nav_expert', section: 'expert', label: lang === 'hi' ? 'विशेषज्ञ पोर्टल' : lang === 'mr' ? 'तज्ज्ञ पोर्टल' : 'Expert Review Portal' },
-    { key: 'nav_dashboard', section: 'dashboard', label: lang === 'hi' ? 'डैशबोर्ड' : lang === 'mr' ? 'डॅशबोर्ड' : 'Analytics Dashboard' },
+    { key: 'nav_home', section: 'home', label: t('nav_home') },
+    { key: 'nav_report', section: 'report', label: t('nav_report') },
+    { key: 'nav_weather', section: 'weather', label: t('nav_weather') },
+    { key: 'nav_advisory', section: 'advisory', label: t('nav_advisory') },
+    { key: 'nav_hotspots', section: 'hotspots', label: t('nav_hotspots') },
   ];
 
   return (
-    <footer className="bg-stone-950 text-stone-300 border-t border-stone-800 mt-16 pb-20 lg:pb-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-        
-        {/* Top 4-Column Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          
-          {/* Col 1: Brand & Problem Statement Context */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white">
-                <Sprout className="w-5 h-5 stroke-[2.2]" />
+    <footer className="bg-white border-t border-stone-200 mt-12 pb-24 lg:pb-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          {/* Brand */}
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-emerald-700 flex items-center justify-center text-white">
+                <Sprout className="w-4 h-4 stroke-[2.2]" />
               </div>
-              <span className="font-black text-xl text-white tracking-tight">CropHealth AI</span>
+              <span className="font-extrabold text-base text-stone-900">CropHealth AI</span>
             </div>
-
-            <p className="text-xs text-stone-400 leading-relaxed">
-              {lang === 'hi'
-                ? 'भारतीय कृषि-जलवायु क्षेत्रों में फसल रोगों और कीटों का प्रारंभिक पता लगाने और प्रबंधन की प्रणाली।'
-                : 'Early detection and integrated management of crop diseases and pest infestations across Indian agro-climatic zones.'}
+            <p className="text-xs text-stone-500 leading-relaxed">
+              {t('footer_about_text')}
             </p>
-
-            <div className="pt-2">
-              <div className="inline-block p-2.5 rounded-xl bg-stone-900 border border-stone-800 text-[11px] text-stone-400 space-y-0.5">
-                <div className="font-bold text-emerald-400">SIH 2026 • Problem ID: 26131</div>
-                <div>Govt of Maharashtra • MSInS</div>
-              </div>
+            <div className="inline-block px-2 py-1 rounded-md bg-stone-50 border border-stone-200 text-[10px] text-stone-500">
+              <span className="font-bold text-emerald-700">SIH 2026</span> · Problem 26131
             </div>
           </div>
 
-          {/* Col 2: Quick Navigation */}
+          {/* Links */}
           <div>
-            <h3 className="font-bold text-sm text-white uppercase tracking-wider mb-4">
-              {lang === 'hi' ? 'त्वरित नेविगेशन' : lang === 'mr' ? 'नेव्हिगेशन' : 'Quick Navigation'}
+            <h3 className="font-bold text-xs text-stone-900 uppercase tracking-wider mb-2.5">
+              {t('footer_quick_links')}
             </h3>
-            <ul className="space-y-2 text-xs">
+            <ul className="space-y-1.5 text-xs">
               {navigationLinks.map((item) => (
                 <li key={item.key}>
                   <button
                     onClick={() => onNavigate?.(item.section)}
-                    className="text-stone-400 hover:text-emerald-400 transition-colors"
+                    className="text-stone-600 hover:text-emerald-700 transition-colors"
                   >
                     {item.label}
                   </button>
@@ -69,21 +57,21 @@ export default function Footer({ onNavigate, onOpenAccount }: FooterProps) {
             </ul>
           </div>
 
-          {/* Col 3: Multilingual Access */}
+          {/* Languages */}
           <div>
-            <h3 className="font-bold text-sm text-white uppercase tracking-wider mb-4 flex items-center gap-1.5">
-              <Globe className="w-4 h-4 text-emerald-400" />
-              <span>{lang === 'hi' ? 'भाषा विकल्प' : 'Language Support'}</span>
+            <h3 className="font-bold text-xs text-stone-900 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5 text-emerald-700" />
+              <span>{t('footer_quick_links') === 'त्वरित लिंक' ? 'भाषा' : 'Language'}</span>
             </h3>
-            <div className="grid grid-cols-2 gap-1.5 text-xs">
+            <div className="grid grid-cols-2 gap-1 text-xs">
               {languages.map((l) => (
                 <button
                   key={l.code}
                   onClick={() => setLang(l.code as LanguageCode)}
-                  className={`text-left p-1.5 rounded-lg transition-colors text-[11px] ${
+                  className={`text-left px-2 py-1 rounded-md transition-colors text-[11px] ${
                     lang === l.code
-                      ? 'text-emerald-400 font-bold bg-emerald-950/60'
-                      : 'text-stone-400 hover:text-stone-200'
+                      ? 'text-emerald-700 font-bold bg-emerald-50'
+                      : 'text-stone-600 hover:text-stone-900'
                   }`}
                 >
                   {l.nativeName}
@@ -92,54 +80,40 @@ export default function Footer({ onNavigate, onOpenAccount }: FooterProps) {
             </div>
           </div>
 
-          {/* Col 4: Agricultural Helpline & Farmer Profile Corner */}
+          {/* Support & Account (far-right corner) */}
           <div>
-            <h3 className="font-bold text-sm text-white uppercase tracking-wider mb-4">
-              {lang === 'hi' ? 'किसान सहायता एवं खाता' : 'Farmer Support & Account'}
+            <h3 className="font-bold text-xs text-stone-900 uppercase tracking-wider mb-2.5">
+              {lang === 'hi' ? 'सहायता व खाता' : 'Support & Account'}
             </h3>
-            <div className="space-y-3 text-xs text-stone-400">
+            <div className="space-y-1.5 text-xs text-stone-600">
               <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                <span>Kisan Call Centre: 1800-180-1551</span>
+                <Phone className="w-3.5 h-3.5 text-emerald-700 flex-shrink-0" />
+                <span>1800-180-1551</span>
               </div>
               <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <Mail className="w-3.5 h-3.5 text-emerald-700 flex-shrink-0" />
                 <span>support@crophealth.gov.in</span>
               </div>
-              
-              {/* Secondary Farmer Profile / Account Action */}
               {onOpenAccount && (
-                <div className="pt-2">
-                  <button
-                    onClick={onOpenAccount}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 hover:text-white border border-stone-800 text-xs font-bold transition-colors"
-                  >
-                    <User className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{lang === 'hi' ? 'मेरा खाता / प्रोफाइल' : lang === 'mr' ? 'माझे खाते / प्रोफाइल' : 'My Account / Profile'}</span>
-                  </button>
-                </div>
+                <button
+                  onClick={onOpenAccount}
+                  className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-[11px] border border-stone-200 transition-colors"
+                >
+                  <User className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>{t('common_view_all').startsWith('View') ? 'My Account' : 'मेरा खाता'}</span>
+                </button>
               )}
             </div>
           </div>
-
         </div>
 
-        {/* Bottom Bar: Copyright & Safety Disclaimer */}
-        <div className="pt-8 border-t border-stone-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-stone-500">
-          <div>
-            &copy; 2026 CropHealth AI Platform. Smart India Hackathon 2026.
-          </div>
-
-          <div className="flex items-center gap-1 text-center sm:text-right">
-            <Info className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" />
-            <span>
-              {lang === 'hi'
-                ? 'स्वचालित जांच प्रारंभिक है। रासायनिक उपचार के लिए कृषि विज्ञान केंद्र (KVK) विशेषज्ञों से परामर्श लें।'
-                : 'Automated screening is preliminary. Consult certified KVK agricultural officers for chemical treatments.'}
-            </span>
+        <div className="pt-5 border-t border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-stone-500">
+          <div>© 2026 CropHealth AI · Smart India Hackathon 2026</div>
+          <div className="flex items-center gap-1">
+            <Info className="w-3 h-3 text-stone-400 flex-shrink-0" />
+            <span>{t('common_offline').startsWith('You are offline') ? 'AI screening is preliminary. Consult KVK experts for chemical treatments.' : 'AI जांच प्रारंभिक है। रासायनिक उपचार के लिए KVK विशेषज्ञों से परामर्श लें।'}</span>
           </div>
         </div>
-
       </div>
     </footer>
   );

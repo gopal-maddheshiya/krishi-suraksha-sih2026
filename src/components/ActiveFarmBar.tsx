@@ -1,8 +1,5 @@
-import { useState, useEffect } from 'react';
-import { 
-  Tractor, Sprout, MapPin, ChevronDown, Plus, 
-  Check, Calendar, Droplets, RefreshCw
-} from 'lucide-react';
+import { useState } from 'react';
+import { Tractor, Sprout, MapPin, ChevronDown, Plus, Check } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { LocationService } from '@/services/LocationService';
 import type { GeoLocation } from '@/services/types';
@@ -33,7 +30,7 @@ interface ActiveFarmBarProps {
 }
 
 export default function ActiveFarmBar({ onFarmChange, onAddNewFarm }: ActiveFarmBarProps) {
-  const { lang } = useLang();
+  const { t } = useLang();
   const [activeFarm, setActiveFarm] = useState<ActiveFarmData>(() => {
     try {
       const stored = localStorage.getItem('crophealth_active_farm');
@@ -66,7 +63,6 @@ export default function ActiveFarmBar({ onFarmChange, onAddNewFarm }: ActiveFarm
   const handleSelectFarm = (f: ActiveFarmData) => {
     setActiveFarm(f);
     localStorage.setItem('crophealth_active_farm', JSON.stringify(f));
-    
     const loc: GeoLocation = {
       latitude: f.latitude,
       longitude: f.longitude,
@@ -79,87 +75,77 @@ export default function ActiveFarmBar({ onFarmChange, onAddNewFarm }: ActiveFarm
       source: 'Selected Farm Location',
     };
     LocationService.saveLocation(loc);
-
     setIsOpen(false);
     if (onFarmChange) onFarmChange(f);
   };
 
   return (
-    <div className="bg-white rounded-2xl p-3.5 sm:p-4 shadow-sm border border-gray-200/80 mb-5 transition-all">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        
-        {/* Farm Name & Crop Dominance */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0 text-emerald-700">
-            <Tractor className="w-5 h-5 stroke-[2.2]" />
-          </div>
+    <div className="bg-white border border-stone-200/90 rounded-2xl p-3.5 flex items-center gap-3">
+      <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0 text-emerald-700">
+        <Tractor className="w-5 h-5 stroke-[2.2]" />
+      </div>
 
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-black text-gray-900 text-sm sm:text-base tracking-tight">
-                {activeFarm.farm_name}
-              </span>
-              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                {activeFarm.crop.name}
-              </span>
-              <span className="text-xs text-gray-500 font-medium hidden md:inline">
-                • {activeFarm.crop.stage} ({activeFarm.area_acres} Acres)
-              </span>
-            </div>
-
-            <div className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
-              <MapPin className="w-3 h-3 text-gray-400" />
-              <span>{activeFarm.district}, {activeFarm.state}</span>
-            </div>
-          </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+          {t('home_my_farm')}
         </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-extrabold text-stone-900 truncate">{activeFarm.farm_name}</span>
+          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+            <Sprout className="w-3 h-3 inline -mt-0.5 mr-0.5" />
+            {activeFarm.crop.name}
+          </span>
+          <span className="text-[11px] text-stone-500 hidden md:inline">
+            · {activeFarm.crop.stage} · {activeFarm.area_acres} {t('home_acres')}
+          </span>
+        </div>
+        <div className="text-[11px] text-stone-500 flex items-center gap-1 mt-0.5">
+          <MapPin className="w-3 h-3 text-stone-400" />
+          <span>{activeFarm.district}, {activeFarm.state}</span>
+        </div>
+      </div>
 
-        {/* Switch Farm Dropdown Action */}
-        <div className="relative self-end sm:self-center">
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-gray-100 active:bg-gray-200 text-gray-700 font-bold text-xs border border-gray-200 transition-colors"
-          >
-            <span>{lang === 'hi' ? 'खेत बदलें' : lang === 'mr' ? 'शेत बदला' : 'Switch Farm'}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-          </button>
+      <div className="relative flex-shrink-0">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-50 hover:bg-stone-100 text-stone-700 font-bold text-[11px] border border-stone-200 transition-colors"
+        >
+          <span>{t('home_select_farm')}</span>
+          <ChevronDown className={`w-3.5 h-3.5 text-stone-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
 
-          {isOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-              <div className="absolute right-0 mt-2 w-72 bg-white text-gray-900 rounded-2xl shadow-2xl border border-gray-100 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="px-3 py-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                  {lang === 'hi' ? 'पंजीकृत खेत' : 'Registered Farms'}
-                </div>
-                
-                <button
-                  onClick={() => handleSelectFarm(activeFarm)}
-                  className="w-full text-left p-2.5 rounded-xl bg-emerald-50 text-emerald-900 font-bold text-xs sm:text-sm flex items-center justify-between"
-                >
-                  <div>
-                    <div>{activeFarm.farm_name} ({activeFarm.area_acres} Acres)</div>
-                    <div className="text-[11px] font-normal text-emerald-700">{activeFarm.crop.name} • {activeFarm.district}</div>
-                  </div>
-                  <Check className="w-4 h-4 text-emerald-600" />
-                </button>
-
-                {onAddNewFarm && (
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      onAddNewFarm();
-                    }}
-                    className="w-full mt-2 p-2 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
-                  >
-                    <Plus className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>{lang === 'hi' ? '+ नया खेत जोड़ें' : '+ Add New Farm'}</span>
-                  </button>
-                )}
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+            <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-stone-200 p-2 z-50">
+              <div className="px-3 py-1.5 text-[11px] font-bold text-stone-500 uppercase tracking-wider border-b border-stone-100">
+                {t('home_select_farm')}
               </div>
-            </>
-          )}
-        </div>
-
+              <button
+                onClick={() => handleSelectFarm(activeFarm)}
+                className="w-full text-left p-2.5 rounded-xl bg-emerald-50 text-emerald-900 font-bold text-xs flex items-center justify-between"
+              >
+                <div>
+                  <div>{activeFarm.farm_name} ({activeFarm.area_acres} {t('home_acres')})</div>
+                  <div className="text-[11px] font-normal text-emerald-700">{activeFarm.crop.name} · {activeFarm.district}</div>
+                </div>
+                <Check className="w-4 h-4 text-emerald-600" />
+              </button>
+              {onAddNewFarm && (
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    onAddNewFarm();
+                  }}
+                  className="w-full mt-2 p-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{t('home_add_farm')}</span>
+                </button>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -28,7 +28,7 @@ export default async function handler(req: Request) {
 
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: 'VITE_GEMINI_API_KEY is not configured in Vercel Environment Variables.' }),
+        JSON.stringify({ error: 'CropHealth AI service key is not configured.' }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -39,13 +39,14 @@ export default async function handler(req: Request) {
     };
     const languageName = languageMap[language] || 'Hindi';
 
-    const systemPrompt = `You are CropHealth AI, an empathetic, highly knowledgeable Senior Agricultural Scientist and Crop Doctor assisting Indian farmers.
+    const systemPrompt = `You are CropHealth AI (कृषि-रक्षा AI), the official Senior Agricultural Scientist and Digital Crop Doctor for the CropHealth Indian Farming Platform.
 Language: Respond naturally and fluently in ${languageName} (use clean markdown formatting with bullet points and bold text).
-Guidelines:
-1. Always address the farmer warmly (e.g. "नमस्ते किसान भाई! 🙏").
-2. Provide exact ICAR-approved chemical dosages (in ml/L or grams/L), commercial product names (e.g. Emamectin, Mancozeb, Coragen), and biological remedies (Neem oil, Trichoderma).
-3. Mention safe spray timing (morning/evening) and Pre-Harvest Interval (PHI) in days.
-4. Keep answers crisp, actionable, structured, and easy to read.`;
+Core Mission:
+1. Always address the farmer with warmth and respect (e.g. "नमस्ते किसान भाई! 🙏" or "राम-राम किसान भाई! 🙏").
+2. Provide exact ICAR and KVK recommended dosages (in ml/L or grams/L), commercial active ingredients, and biological remedies (Neem oil, Beauveria, Trichoderma).
+3. Always include safe spraying guidelines (afternoon 4 PM+ or morning, wind & rain considerations) and Pre-Harvest Interval (PHI) where applicable.
+4. Keep answers crisp, highly actionable, well-spaced, and easy to read on a mobile phone screen.
+5. You represent the CropHealth AI platform directly—never mention third-party AI models or external search engines.`;
 
     const contents = (messages || []).map((m: any) => {
       const role = m.role === 'assistant' ? 'model' : 'user';
@@ -64,7 +65,7 @@ Guidelines:
       contents,
       system_instruction: { parts: [{ text: systemPrompt }] },
       generationConfig: {
-        temperature: 0.4,
+        temperature: 0.35,
         maxOutputTokens: 800,
       },
     };
@@ -103,7 +104,7 @@ Guidelines:
     }
 
     return new Response(
-      JSON.stringify({ error: lastError || 'All Gemini models failed' }),
+      JSON.stringify({ error: lastError || 'AI Service unavailable' }),
       { status: 502, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err: any) {

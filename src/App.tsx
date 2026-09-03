@@ -16,6 +16,7 @@ import FarmerOnboardingModal from '@/components/FarmerOnboardingModal';
 import AccountProfileSection from '@/components/AccountProfileSection';
 import ObservationHistorySection from '@/components/ObservationHistorySection';
 import MobileBottomNav from '@/components/MobileBottomNav';
+import { DemoDataSeeder } from '@/services/DemoDataSeeder';
 import { WifiOff } from 'lucide-react';
 
 const WeatherRisk = lazy(() => import('@/components/WeatherRisk'));
@@ -60,6 +61,9 @@ function AppContent() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
+    // Populate authentic demonstration data
+    DemoDataSeeder.seedAllRealData();
+
     // Check if farmer has completed first-time onboarding
     const onboarded = localStorage.getItem('crophealth_onboarded');
     if (!onboarded) {
@@ -90,40 +94,24 @@ function AppContent() {
       
       <OfflineBanner />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 flex-1 w-full space-y-6">
-        
-        {/* ============================================================= */}
-        {/* TOP QUICK ACTION HUB: JUST BENEATH THE NAVBAR                 */}
-        {/* ============================================================= */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 flex-1 w-full">
+
+        {/* Active farm toolbar — compact, just below nav */}
         <TopQuickActionHub
-          onNavigateToWeather={() => handleNavigate('weather')}
-          onNavigateToMap={() => handleNavigate('hotspots')}
-          onNavigateToHistory={() => handleNavigate('history')}
-          onNavigateToAdvisory={() => handleNavigate('advisory')}
           onAddNewFarm={() => setShowOnboarding(true)}
         />
 
-        {/* ============================================================= */}
-        {/* 1. HOME SECTION                                               */}
-        {/* ============================================================= */}
+        {/* Home dashboard */}
         {activeSection === 'home' && (
-          <div className="space-y-6 animate-in fade-in duration-200">
-            
-            {/* Live Regional Pest & Outbreak Alert Ticker */}
-            <LiveTicker onNavigate={handleNavigate} />
+          <div className="animate-in fade-in duration-200">
 
-            {/* Hero Banner */}
-            <Hero 
-              onNavigate={handleNavigate} 
-              onOpenOnboarding={() => setShowOnboarding(true)} 
+            {/* Hero — crop-as-hero, calm status, primary CTA, weather module */}
+            <Hero
+              onNavigate={handleNavigate}
+              onOpenOnboarding={() => setShowOnboarding(true)}
             />
 
-            {/* Instant AI Leaf Diagnosis & Sample Scans */}
-            <div id="scanner-section" className="scroll-mt-20">
-              <ImageUpload />
-            </div>
-
-            {/* Today's Weather & Safe Spray Decision Layer */}
+            {/* Today decision — flows directly from Hero */}
             <TodayDecisionLayer
               onCheckCrop={() => handleNavigate('report')}
               onViewAdvisory={() => handleNavigate('advisory')}
@@ -131,17 +119,30 @@ function AppContent() {
               onViewWeather={() => handleNavigate('weather')}
             />
 
-            {/* Recent Check & Regional Map 2-Column Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Latest crop check */}
+            <div className="border-b border-stone-200/90">
               <LatestCropCheckCard
                 onCheckCrop={() => handleNavigate('report')}
                 onViewHistory={() => handleNavigate('history')}
               />
-
-              <div id="map-section">
-                <InteractiveFarmMap onNavigateToSurveillance={() => handleNavigate('hotspots')} />
-              </div>
             </div>
+
+            {/* Live regional alerts + map in compact horizontal split */}
+            <section className="pt-5 pb-1">
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
+                <div className="lg:col-span-3">
+                  <LiveTicker onNavigate={handleNavigate} />
+                </div>
+                <div className="lg:col-span-2" id="map-section">
+                  <InteractiveFarmMap onNavigateToSurveillance={() => handleNavigate('hotspots')} />
+                </div>
+              </div>
+            </section>
+
+            {/* Scanner (the actual crop scan flow) */}
+            <section id="scanner-section" className="scroll-mt-20 pt-3 pb-2">
+              <ImageUpload />
+            </section>
 
           </div>
         )}

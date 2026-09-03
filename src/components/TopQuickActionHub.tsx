@@ -1,101 +1,105 @@
 import { useState } from 'react';
-import { 
-  Tractor, CloudSun, ClipboardList, 
-  BookOpen, ChevronDown, MapPin, Plus,
-  Check, Sparkles, ArrowUpRight
+import {
+  Tractor, ChevronDown, Plus, Check, MapPin, Sparkles
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { useFarmContext } from '@/contexts/FarmContext';
-import { LocationService } from '@/services/LocationService';
-import type { GeoLocation } from '@/services/types';
 
 interface TopQuickActionHubProps {
-  onNavigateToWeather: () => void;
-  onNavigateToMap: () => void;
-  onNavigateToHistory: () => void;
-  onNavigateToAdvisory: () => void;
   onAddNewFarm?: () => void;
 }
 
 export default function TopQuickActionHub({
-  onNavigateToWeather,
-  onNavigateToMap,
-  onNavigateToHistory,
-  onNavigateToAdvisory,
   onAddNewFarm,
 }: TopQuickActionHubProps) {
-  const { lang } = useLang();
-  const { activeFarm, setActiveFarm, weather, risk, activeLocation } = useFarmContext();
+  const { t, lang } = useLang();
+  const { activeFarm, setActiveFarm } = useFarmContext();
   const [farmDropdownOpen, setFarmDropdownOpen] = useState(false);
 
-  const temp = weather?.current?.temperatureC ? `${weather.current.temperatureC}°C` : '28°C';
-  const district = activeFarm?.district || activeLocation?.district || 'Pune';
-  const farmName = activeFarm?.farm_name || 'Main Field';
-  const cropName = activeFarm?.crop?.name || 'Cotton';
+  const farmName = activeFarm?.farm_name || (lang === 'hi' ? 'मुख्य खेत (प्लॉट 1)' : 'Main Field (Plot 1)');
+  const cropName = activeFarm?.crop?.name || (lang === 'hi' ? 'कपास' : 'Cotton');
+  const cropStage = activeFarm?.crop?.stage || (lang === 'hi' ? 'फूल आने की अवस्था' : 'Flowering Stage');
   const areaAcres = activeFarm?.area_acres || 2.5;
+  const district = activeFarm?.district || (lang === 'hi' ? 'पुणे, महाराष्ट्र' : 'Pune, MH');
 
   const sampleFarms = [
     {
       id: 'default_farm',
-      farm_name: 'Main Field',
-      district: 'Pune',
+      farm_name: lang === 'hi' ? 'मुख्य खेत (प्लॉट 1)' : 'Main Field (Plot 1)',
+      district: lang === 'hi' ? 'पुणे, महाराष्ट्र' : 'Pune, MH',
       state: 'Maharashtra',
       latitude: 18.5204,
       longitude: 73.8567,
       area_acres: 2.5,
-      crop: { name: 'Cotton', stage: 'Flowering Stage', variety: 'Bt Cotton', sowing_date: '2026-06-15' },
+      crop: { 
+        name: lang === 'hi' ? 'कपास' : 'Cotton', 
+        stage: lang === 'hi' ? 'फूल आने की अवस्था' : 'Flowering Stage', 
+        variety: 'Bt Cotton II', 
+        sowing_date: '2026-06-15' 
+      },
     },
     {
       id: 'farm_2',
-      farm_name: 'North Plot (Tomato)',
-      district: 'Nashik',
+      farm_name: lang === 'hi' ? 'उत्तर प्लॉट (टमाटर)' : 'North Plot (Tomato)',
+      district: lang === 'hi' ? 'नासिक, महाराष्ट्र' : 'Nashik, MH',
       state: 'Maharashtra',
       latitude: 19.9975,
       longitude: 73.7898,
       area_acres: 1.5,
-      crop: { name: 'Tomato', stage: 'Fruiting Stage', variety: 'Abhinav', sowing_date: '2026-07-01' },
+      crop: { 
+        name: lang === 'hi' ? 'टमाटर' : 'Tomato', 
+        stage: lang === 'hi' ? 'फल लगने की अवस्था' : 'Fruiting Stage', 
+        variety: 'Abhinav Hybrid', 
+        sowing_date: '2026-07-01' 
+      },
     },
   ];
 
   return (
-    <div className="w-full bg-white rounded-3xl p-3 sm:p-4 border border-stone-200 shadow-sm relative z-30">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
-        
-        {/* ============================================================= */}
-        {/* 1. MY FARM & CROP (WITH DROPDOWN)                             */}
-        {/* ============================================================= */}
-        <div className="relative">
-          <button
-            onClick={() => setFarmDropdownOpen(!farmDropdownOpen)}
-            className="w-full h-full text-left p-3 rounded-2xl bg-emerald-50/70 hover:bg-emerald-100/70 border border-emerald-200/80 transition-all flex items-center justify-between group active:scale-98"
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
-                <Tractor className="w-5 h-5 stroke-[2.2]" />
-              </div>
-              <div className="truncate">
-                <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
-                  {lang === 'hi' ? 'मेरा खेत व फसल' : 'My Farm & Crop'}
-                </span>
-                <span className="text-xs sm:text-sm font-black text-stone-900 block truncate">
-                  {farmName}
-                </span>
-                <span className="text-[11px] text-emerald-700 font-bold block truncate">
-                  {cropName} • {areaAcres} {lang === 'hi' ? 'एकड़' : 'Ac'}
-                </span>
-              </div>
+    <div className="w-full py-2.5">
+      <div className="relative">
+        <button
+          onClick={() => setFarmDropdownOpen(!farmDropdownOpen)}
+          className="w-full text-left py-2 px-3 sm:px-4 rounded-2xl bg-white/90 hover:bg-white border border-stone-200/90 shadow-2xs hover:shadow-xs transition-all flex items-center justify-between gap-3 group min-h-[46px] backdrop-blur-xs"
+          aria-haspopup="menu"
+          aria-expanded={farmDropdownOpen}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-700 to-teal-800 text-white flex items-center justify-center flex-shrink-0 shadow-2xs">
+              <Tractor className="w-4 h-4 stroke-[2.2]" />
             </div>
-            <ChevronDown className="w-4 h-4 text-emerald-700 flex-shrink-0 ml-1 group-hover:translate-y-0.5 transition-transform" />
-          </button>
+            
+            <div className="min-w-0 flex items-center gap-2 flex-wrap">
+              <span className="text-xs sm:text-sm font-black text-stone-900 truncate">
+                {farmName}
+              </span>
+              <span className="hidden sm:inline-block text-stone-300">·</span>
+              <span className="text-[11px] sm:text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60 truncate">
+                {cropName} ({areaAcres} {t('home_acres')})
+              </span>
+              <span className="hidden md:inline-flex items-center gap-1 text-xs text-stone-500 font-medium">
+                <MapPin className="w-3 h-3 text-stone-400" />
+                <span className="truncate">{district}</span>
+              </span>
+            </div>
+          </div>
 
-          {/* Farm Switcher Dropdown */}
-          {farmDropdownOpen && (
-            <div className="absolute top-full left-0 mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-2xl border border-stone-200 p-2 z-50 animate-in fade-in zoom-in-95">
-              <div className="text-[11px] font-black text-stone-500 uppercase px-3 py-1.5 border-b border-stone-100">
-                {lang === 'hi' ? 'खेत चुनें' : 'Select Farm'}
+          <div className="flex items-center gap-1 text-xs font-bold text-stone-500 group-hover:text-stone-900 transition-colors flex-shrink-0 bg-stone-100/80 px-2.5 py-1 rounded-xl">
+            <span>{t('home_select_farm')}</span>
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${farmDropdownOpen ? 'rotate-180' : ''}`} />
+          </div>
+        </button>
+
+        {farmDropdownOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setFarmDropdownOpen(false)} />
+            <div className="absolute top-full left-0 right-0 sm:left-auto sm:right-0 mt-2 w-full sm:w-88 bg-white rounded-3xl shadow-2xl border border-stone-200/90 p-2.5 z-50 animate-in zoom-in-95 duration-150">
+              <div className="text-[10px] font-black text-stone-400 uppercase tracking-wider px-3 py-1.5 border-b border-stone-100 flex items-center justify-between">
+                <span>{t('home_select_farm')}</span>
+                <Sparkles className="w-3 h-3 text-emerald-600" />
               </div>
-              
-              <div className="space-y-1 py-1">
+
+              <div className="space-y-1.5 py-2">
                 {sampleFarms.map((f) => (
                   <button
                     key={f.id}
@@ -103,113 +107,48 @@ export default function TopQuickActionHub({
                       setActiveFarm(f as any);
                       setFarmDropdownOpen(false);
                     }}
-                    className={`w-full text-left p-2.5 rounded-xl text-xs transition-all flex items-center justify-between ${
-                      activeFarm?.id === f.id ? 'bg-emerald-50 font-black text-emerald-950' : 'hover:bg-stone-50 text-stone-700'
+                    className={`w-full text-left p-3 rounded-2xl flex items-center justify-between gap-2 transition-all ${
+                      activeFarm?.id === f.id
+                        ? 'bg-emerald-50/90 border border-emerald-200 text-emerald-950 font-black'
+                        : 'hover:bg-stone-50 text-stone-700 font-bold'
                     }`}
                   >
-                    <div>
-                      <div className="font-bold text-stone-900">{f.farm_name}</div>
-                      <div className="text-[10px] text-stone-500">{f.district}, {f.state} • {f.crop.name}</div>
+                    <div className="min-w-0">
+                      <div className="text-xs sm:text-sm truncate">{f.farm_name}</div>
+                      <div className="text-[11px] text-stone-500 font-medium mt-0.5 flex items-center gap-1">
+                        <span>{f.crop.name}</span>
+                        <span>•</span>
+                        <span>{f.area_acres} {t('home_acres')}</span>
+                        <span>•</span>
+                        <span>{f.district}</span>
+                      </div>
                     </div>
-                    {activeFarm?.id === f.id && <Check className="w-4 h-4 text-emerald-700" />}
+                    {activeFarm?.id === f.id && (
+                      <div className="w-5 h-5 rounded-full bg-emerald-700 text-white flex items-center justify-center flex-shrink-0">
+                        <Check className="w-3 h-3 stroke-[3]" />
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>
 
               {onAddNewFarm && (
-                <button
-                  onClick={() => {
-                    setFarmDropdownOpen(false);
-                    onAddNewFarm();
-                  }}
-                  className="w-full mt-1 p-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>{lang === 'hi' ? 'नया खेत जोड़ें' : 'Add New Farm'}</span>
-                </button>
+                <div className="pt-2 border-t border-stone-100">
+                  <button
+                    onClick={() => {
+                      setFarmDropdownOpen(false);
+                      onAddNewFarm();
+                    }}
+                    className="w-full py-2.5 px-3 rounded-2xl bg-stone-900 hover:bg-black text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>{t('home_add_farm')}</span>
+                  </button>
+                </div>
               )}
             </div>
-          )}
-        </div>
-
-        {/* ============================================================= */}
-        {/* 2. WEATHER & SPRAY DECISION                                   */}
-        {/* ============================================================= */}
-        <button
-          onClick={onNavigateToWeather}
-          className="text-left p-3 rounded-2xl bg-amber-50/70 hover:bg-amber-100/70 border border-amber-200/80 transition-all flex items-center justify-between group active:scale-98"
-        >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
-              <CloudSun className="w-5 h-5 stroke-[2.2]" />
-            </div>
-            <div className="truncate">
-              <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">
-                {lang === 'hi' ? 'मौसम व छिड़काव' : 'Weather & Spray'}
-              </span>
-              <span className="text-xs sm:text-sm font-black text-stone-900 block truncate">
-                {temp} • {district}
-              </span>
-              <span className="text-[11px] text-emerald-700 font-bold block truncate">
-                {lang === 'hi' ? '✓ आज स्प्रे सुरक्षित' : '✓ Safe to spray'}
-              </span>
-            </div>
-          </div>
-          <ArrowUpRight className="w-4 h-4 text-amber-700 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-        </button>
-
-        {/* ============================================================= */}
-        {/* 3. MY CHECKS & HISTORY                                        */}
-        {/* ============================================================= */}
-        <button
-          onClick={onNavigateToHistory}
-          className="text-left p-3 rounded-2xl bg-purple-50/70 hover:bg-purple-100/70 border border-purple-200/80 transition-all flex items-center justify-between group active:scale-98"
-        >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
-              <ClipboardList className="w-5 h-5 stroke-[2.2]" />
-            </div>
-            <div className="truncate">
-              <span className="text-[10px] font-bold text-purple-800 uppercase tracking-wider block">
-                {lang === 'hi' ? 'मेरी फसल जांच' : 'My Check History'}
-              </span>
-              <span className="text-xs sm:text-sm font-black text-stone-900 block truncate">
-                {lang === 'hi' ? 'जांच इतिहास' : 'Scan Records'}
-              </span>
-              <span className="text-[11px] text-purple-700 font-bold block truncate">
-                {lang === 'hi' ? 'दवाइयों के पर्चे →' : 'Prescriptions →'}
-              </span>
-            </div>
-          </div>
-          <ArrowUpRight className="w-4 h-4 text-purple-700 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-        </button>
-
-        {/* ============================================================= */}
-        {/* 4. GOVERNMENT & ICAR ADVISORIES                               */}
-        {/* ============================================================= */}
-        <button
-          onClick={onNavigateToAdvisory}
-          className="text-left p-3 rounded-2xl bg-teal-50/70 hover:bg-teal-100/70 border border-teal-200/80 transition-all flex items-center justify-between group active:scale-98"
-        >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-teal-700 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
-              <BookOpen className="w-5 h-5 stroke-[2.2]" />
-            </div>
-            <div className="truncate">
-              <span className="text-[10px] font-bold text-teal-800 uppercase tracking-wider block">
-                {lang === 'hi' ? 'सरकारी कृषि सलाह' : 'ICAR Advisories'}
-              </span>
-              <span className="text-xs sm:text-sm font-black text-stone-900 block truncate">
-                {lang === 'hi' ? 'ICAR गाइड' : 'KVK Bulletins'}
-              </span>
-              <span className="text-[11px] text-teal-700 font-bold block truncate">
-                {lang === 'hi' ? 'प्रमाणित सिफारिशें →' : 'Official Guides →'}
-              </span>
-            </div>
-          </div>
-          <ArrowUpRight className="w-4 h-4 text-teal-700 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-        </button>
-
+          </>
+        )}
       </div>
     </div>
   );

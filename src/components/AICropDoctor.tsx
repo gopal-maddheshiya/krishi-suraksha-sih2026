@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { 
-  MessageCircle, X, Send, Loader2, ImagePlus, 
-  XCircle, Sparkles, Leaf, Bot, Trash2, 
-  ShieldCheck, CheckCircle2, FlaskConical, Sprout
+  X, Send, Loader2, ImagePlus, XCircle, 
+  Sparkles, Leaf, Trash2, ShieldCheck, 
+  CheckCircle2, Sprout, Bot, ArrowRight
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 
@@ -11,6 +11,7 @@ type Message = {
   content: string; 
   image?: string;
   timestamp?: string;
+  isStreaming?: boolean;
 };
 
 type GeminiPart = { text?: string; inline_data?: { mime_type: string; data: string } };
@@ -46,7 +47,7 @@ function extractGeminiReply(data: unknown): string | null {
 }
 
 /**
- * Intelligent Dynamic ICAR Senior Agronomist Knowledge Engine (Offline Fallback)
+ * Intelligent In-House ICAR Senior Agronomist Knowledge Engine (Offline Fallback)
  */
 function getNaturalAgriculturalAdvice(query: string, lang: string): string {
   const q = query.toLowerCase().trim();
@@ -54,119 +55,62 @@ function getNaturalAgriculturalAdvice(query: string, lang: string): string {
   // 1. Greetings & Salutations
   if (q.match(/^(hi|hello|hey|namaste|ram ram|namaskar|kem cho|kisan bhai|kaise ho|bhai)/)) {
     if (lang === 'hi') {
-      return 'राम-राम किसान भाई! 🙏 मैं आपका AI फसल डॉक्टर हूँ।\n\nआपकी फसल में क्या समस्या आ रही है? जैसे:\n• पत्तियों का पीला पड़ना या काले-भूरे धब्बे\n• इल्ली, सुंडी या रस चूसक कीड़ों का प्रकोप\n• खाद (NPK/डीएपी/यूरिया) की सही मात्रा\n• आज के मौसम अनुसार छिड़काव की सलाह\n\nआप सीधे अपनी भाषा में पूछें या नीचे 📷 कैमरे से पत्ते की फोटो भेजें!';
+      return 'राम-राम किसान भाई! 🙏 मैं आपका कृषि-रक्षा AI सलाहकार हूँ।\n\nआपकी फसल में क्या समस्या आ रही है?\n• पत्तियों का पीला पड़ना या काले-भूरे धब्बे\n• इल्ली, सुंडी या रस चूसक कीड़ों का प्रकोप\n• खाद (NPK/डीएपी/यूरिया) की सही मात्रा\n• आज के मौसम अनुसार छिड़काव की सलाह\n\nआप सीधे अपना प्रश्न पूछें या नीचे 📷 कैमरे से पत्ते की फोटो भेजें!';
     }
     if (lang === 'mr') {
-      return 'राम-राम शेतकरी मित्र! 🙏 मी आपला AI पीक डॉक्टर आहे.\n\nआपल्या पिकात कोणती अडचण येत आहे? जसे की:\n• पाने पिवळी पडणे किंवा करपा/तांबेरा\n• बोंडअळी, मावा किंवा तुडतुडे नियंत्रण\n• खताचे योग्य प्रमाण\n• फवारणीची योग्य वेळ\n\nआपण थेट प्रश्न विचारा किंवा पानाचा फोटो पाठवा!';
+      return 'राम-राम शेतकरी मित्र! 🙏 मी आपला कृषी-रक्षा AI सल्लागार आहे.\n\nआपल्या पिकात कोणती अडचण येत आहे?\n• पाने पिवळी पडणे किंवा करपा/तांबेरा\n• बोंडअळी, मावा किंवा तुडतुडे नियंत्रण\n• खताचे योग्य प्रमाण\n• फवारणीची योग्य वेळ\n\nआपण थेट प्रश्न विचारा किंवा खालील 📷 आयकॉनवरून पानाचा फोटो पाठवा!';
     }
-    return 'Hello farmer friend! 🙏 I am your dedicated AI Crop Doctor.\n\nHow can I help you today?\n• Identify leaf diseases & yellowing\n• Recommend ICAR chemical & organic dosages\n• Provide weather-based spray timings & NPK guide\n\nFeel free to type your question or upload a leaf photo 📷!';
+    return 'Hello farmer friend! 🙏 I am your dedicated CropHealth AI Agronomist.\n\nHow can I assist your farm today?\n• Identify leaf diseases & chlorosis\n• Recommend ICAR chemical & bio-pesticide dosages\n• Weather-based safe spray planning & fertilizer guide\n\nFeel free to ask any question or attach a leaf photo 📷!';
   }
 
   // 2. Yellow Leaves / Chlorosis / Nutrient Deficiency
   if (q.includes('पीला') || q.includes('pila') || q.includes('yellow') || q.includes('पिवळे') || q.includes('chlorosis')) {
     if (lang === 'hi') {
-      return '🍂 **पत्तियों का पीला पड़ना - कारण एवं सटीक समाधान:**\n\n1. **नाइट्रोजन / जिंक की कमी:**\n• यदि पुरानी निचली पत्तियां पीली पड़ रही हैं, तो पानी में घुलनशील NPK 19:19:19 @ 5 ग्राम/लीटर + चिलेटेड जिंक (Zn EDTA) @ 1 ग्राम/लीटर का स्प्रे करें।\n\n2. **सफेद मक्खी / रस चूसक कीट:**\n• यदि नई पत्तियां मुड़कर पीली हो रही हैं, तो नीम तेल (1500 ppm) @ 5 ml/L या एसिटामिप्रिड 20% SP @ 0.5 ग्राम/लीटर का छिड़काव करें।\n\n3. **जड़ों में अधिक पानी (जलभराव):**\n• खेत की जल निकासी दुरुस्त करें और जड़ क्षेत्र में हवा का संचार होने दें।';
+      return '🍂 **पत्तियों का पीला पड़ना - ICAR प्रमाणित निदान व समाधान:**\n\n1. **नाइट्रोजन / जिंक की कमी (Nutrient Deficiency):**\n• यदि निचली पुरानी पत्तियां पीली पड़ रही हैं, तो पानी में घुलनशील NPK 19:19:19 @ 5 ग्राम/लीटर + चिलेटेड जिंक (Zn-EDTA 12%) @ 1 ग्राम/लीटर का स्प्रे करें।\n\n2. **सफेद मक्खी / रस चूसक कीट:**\n• यदि नई पत्तियां ऊपर से मुड़कर पीली हो रही हैं, तो नीम तेल (1500 ppm) @ 5 ml/L या एसिटामिप्रिड 20% SP @ 0.5 ग्राम/लीटर का छिड़काव करें।\n\n3. **जलभराव (Waterlogging):**\n• खेत की जल निकासी दुरुस्त करें ताकि जड़ों में हवा का संचार बना रहे।';
     }
-    return '🍂 **Leaf Yellowing Diagnosis & Treatment:**\n\n1. **Nutrient Deficiency (Nitrogen/Zinc):**\n• Foliar spray of NPK 19:19:19 @ 5g/L + Chelated Zinc (Zn-EDTA 12%) @ 1g/L.\n\n2. **Sucking Pest Infestation:**\n• Spray Neem Oil (1500 ppm) @ 5 ml/L or Acetamiprid 20% SP @ 0.5 g/L.\n\n3. **Waterlogging:**\n• Ensure proper field drainage to allow root aeration.';
+    return '🍂 **Leaf Yellowing Diagnosis & Treatment (ICAR):**\n\n1. **Nutrient Deficiency:** Foliar spray of NPK 19:19:19 @ 5g/L + Chelated Zinc (Zn-EDTA 12%) @ 1g/L.\n2. **Sucking Pests:** Spray Neem Oil (1500 ppm) @ 5 ml/L or Acetamiprid 20% SP @ 0.5g/L.\n3. **Aeration:** Ensure proper field drainage to avoid root hypoxia.';
   }
 
   // 3. Pink Bollworm / Caterpillars / Spodoptera (इल्ली / सुंडी)
   if (q.includes('इल्ली') || q.includes('सुंडी') || q.includes('illi') || q.includes('sundi') || q.includes('bollworm') || q.includes('caterpillar') || q.includes('बोंडअळी') || q.includes('कीड़ा') || q.includes('kida')) {
     if (lang === 'hi') {
-      return '🐛 **इल्ली एवं सुंडी (Caterpillar / Bollworm) नियंत्रण:**\n\n1. **जैविक एवं देसी उपाय:**\n• खेत में प्रति एकड़ 5-8 फेरोमोन ट्रैप (Pheromone Traps) लगाएं।\n• नीम तेल (10,000 ppm) @ 2 ml/लीटर या बवेरिया बेसियाना @ 5 ग्राम/लीटर का छिड़काव करें।\n\n2. **ICAR अनुमोदित रासायनिक स्प्रे:**\n• **प्रारंभिक अवस्था:** एमामेक्टिन बेंजोएट 5% SG @ 0.4 ग्राम/लीटर (यानि 4 ग्राम प्रति 10 लीटर पानी)।\n• **गंभीर प्रकोप:** प्रोफेनोफॉस 50% EC @ 2 ml/लीटर या क्लोरेंट्रानिलिप्रोल (कोराजन) @ 0.4 ml/लीटर।\n\n⏰ **छिड़काव समय:** शाम 4:00 बजे के बाद जब इल्लियां बाहर निकलती हैं।';
+      return '🐛 **इल्ली एवं सुंडी (Caterpillar / Bollworm) संपूर्ण नियंत्रण:**\n\n1. **जैविक नियंत्रण:**\n• खेत में 5-8 फेरोमोन ट्रैप (Pheromone Traps) प्रति एकड़ लगाएं।\n• नीम तेल (10,000 ppm) @ 2 ml/लीटर या बवेरिया बेसियाना @ 5 ग्राम/लीटर का छिड़काव करें।\n\n2. **ICAR अनुमोदित रासायनिक स्प्रे:**\n• **प्रारंभिक अवस्था:** एमामेक्टिन बेंजोएट 5% SG @ 0.4 ग्राम/लीटर (यानि 4 ग्राम प्रति 10 लीटर पानी)।\n• **तीव्र प्रकोप:** क्लोरेंट्रानिलिप्रोल (कोराजन 18.5% SC) @ 0.4 ml/लीटर।\n\n⏰ **छिड़काव समय:** शाम 4:00 बजे के बाद जब इल्लियां सक्रिय होती हैं।';
     }
-    return '🐛 **Caterpillar & Bollworm Management:**\n\n1. **Biological Control:**\n• Install 5-8 pheromone traps per acre.\n• Spray Beauveria bassiana @ 5g/L or Neem Oil (10,000 ppm) @ 2 ml/L.\n\n2. **ICAR Recommended Chemical Spray:**\n• Emamectin Benzoate 5% SG @ 0.4 g/L water (4g / 10L).\n• For severe outbreak: Chlorantraniliprole 18.5% SC @ 0.4 ml/L.\n\n⏰ **Best Time:** Spray during late afternoon (>4 PM).';
+    return '🐛 **Caterpillar & Bollworm IPM Protocol:**\n\n1. **Bio-Control:** Install 5-8 pheromone traps/acre; spray Beauveria bassiana @ 5g/L.\n2. **ICAR Chemical Dosage:** Emamectin Benzoate 5% SG @ 0.4 g/L water or Chlorantraniliprole 18.5% SC @ 0.4 ml/L.\n⏰ **Timing:** Best applied late afternoon (>4 PM).';
   }
 
   // 4. Tomato / Potato Blight (झुलसा / करपा)
   if (q.includes('टमाटर') || q.includes('tomato') || q.includes('potato') || q.includes('आलू') || q.includes('blight') || q.includes('झुलसा') || q.includes('करपा')) {
     if (lang === 'hi') {
-      return '🍅 **टमाटर एवं आलू का झुलसा (Early/Late Blight) समाधान:**\n\n• **लक्षण:** पत्तियों पर गहरे भूरे-काले छल्लेदार धब्बे और फलों का सड़ना।\n\n1. **जैविक उपाय:**\n• ट्राइकोडर्मा विरिडी 1% WP @ 5 ग्राम/लीटर का पर्णीय छिड़काव करें।\n• प्रभावित निचली पत्तियों को तोड़कर खेत से दूर नष्ट करें।\n\n2. **रासायनिक उपचार (ICAR):**\n• कॉपर ऑक्सीक्लोराइड 50% WP @ 2.5 ग्राम/लीटर + स्ट्रेप्टोसाइक्लिन 1 ग्राम/10 लीटर।\n• तीव्र अवस्था में: एजॉक्सीस्ट्रोबिन + डाइफेनोकोनाजोल (एमिस्टार टॉप) @ 1 ml/लीटर।\n\n⏰ **PHI सुरक्षा अवधि:** 7 दिन बाद ही फल तोड़ें।';
+      return '🍅 **टमाटर एवं आलू का झुलसा (Early/Late Blight) समाधान:**\n\n• **लक्षण:** पत्तियों पर गहरे भूरे छल्लेदार धब्बे और फलों का सड़ना।\n\n1. **रोकथाम:**\n• कॉपर ऑक्सीक्लोराइड 50% WP @ 2.5 ग्राम/लीटर + स्ट्रेप्टोसाइक्लिन 1 ग्राम/10 लीटर का छिड़काव करें।\n• तीव्र अवस्था में: एजॉक्सीस्ट्रोबिन + डाइफेनोकोनाजोल (एमिस्टार टॉप) @ 1 ml/लीटर।\n\n2. **जैविक उपचार:**\n• ट्राइकोडर्मा विरिडी 1% WP @ 5 ग्राम/लीटर का पर्णीय छिड़काव करें।';
     }
-    return '🍅 **Tomato/Potato Blight Management:**\n\n• **Treatment:** Spray Copper Oxychloride 50% WP @ 2.5 g/L + Streptocycline 1g/10L.\n• For advanced blight: Azoxystrobin + Difenoconazole @ 1 ml/L.\n• Prune lower infected leaves and avoid overhead wetting.';
+    return '🍅 **Tomato/Potato Blight Management:**\n\n• **Spray:** Copper Oxychloride 50% WP @ 2.5g/L + Streptocycline 1g/10L.\n• For advanced blight: Azoxystrobin + Difenoconazole @ 1 ml/L.\n• Prune lower infected foliage.';
   }
 
   // 5. Cotton Protection (कपास)
   if (q.includes('कपास') || q.includes('cotton') || q.includes('कापूस')) {
     if (lang === 'hi') {
-      return '🌾 **कपास (Cotton) संपूर्ण सुरक्षा गाइड:**\n\n1. **रस चूसक कीट (थ्रिप्स, हरा तेला, सफेद मक्खी):**\n• डायफेंथियूरॉन 50% WP @ 1.2 ग्राम/लीटर या फ्लोनिकामिड 50% WG @ 0.3 ग्राम/लीटर।\n\n2. **गुलाबी सुंडी (Pink Bollworm):**\n• फूल व बोंड अवस्था पर फेरोमोन ट्रैप लगाएं और एमामेक्टिन बेंजोएट (0.4 ग्राम/लीटर) का स्प्रे करें।\n\n3. **दहिया / फफूंद रोग:**\n• घुलनशील गंधक (Sulfur 80% WDG) @ 2 ग्राम/लीटर पानी में मिलाकर छिड़कें।';
+      return '🌾 **कपास (Cotton) संपूर्ण सुरक्षा सलाह:**\n\n1. **रस चूसक कीट (थ्रिप्स, हरा तेला, सफेद मक्खी):**\n• फ्लोनिकामिड 50% WG @ 0.3 ग्राम/लीटर या डायफेंथियूरॉन 50% WP @ 1.2 ग्राम/लीटर।\n\n2. **गुलाबी सुंडी (Pink Bollworm):**\n• फूल व बोंड अवस्था पर एमामेक्टिन बेंजोएट (0.4 ग्राम/लीटर) का स्प्रे करें।\n\n3. **पोषक तत्व स्प्रे:**\n• बोंड विकास के समय 13:00:45 (पोटेशियम नाइट्रेट) @ 10 ग्राम/लीटर का स्प्रे करें।';
     }
-    return '🌾 **Cotton IPM Complete Guide:**\n\n1. **Sucking Pests (Whitefly/Thrips/Jassids):**\n• Spray Flonicamid 50% WG @ 0.3g/L or Diafenthiuron 50% WP @ 1.2g/L.\n\n2. **Pink Bollworm:**\n• Install 5 Gossyplure pheromone traps/acre; spray Emamectin Benzoate 5% SG @ 0.4g/L.\n\n3. **Foliar Nutrition:**\n• Spray 13:00:45 (Potassium Nitrate) @ 10g/L during boll development.';
+    return '🌾 **Cotton IPM Advisory:**\n\n1. **Sucking Pests:** Spray Flonicamid 50% WG @ 0.3g/L.\n2. **Pink Bollworm:** Spray Emamectin Benzoate 5% SG @ 0.4g/L.\n3. **Foliar Nutrition:** Spray 13:00:45 @ 10g/L during boll development.';
   }
 
-  // 6. Rice / Paddy (धान / चावल)
-  if (q.includes('धान') || q.includes('चावल') || q.includes('rice') || q.includes('paddy') || q.includes('भात')) {
-    if (lang === 'hi') {
-      return '🌾 **धान (Rice) रोग एवं कीट समाधान:**\n\n1. **झोंका रोग (Leaf/Neck Blast):**\n• ट्राइसाइक्लाजोल 75% WP @ 0.6 ग्राम/लीटर या कसूगामाइसिन 3% SL @ 2 ml/लीटर।\n\n2. **तना छेदक (Stem Borer / सुंडी):**\n• क्लोरेंट्रानिलिप्रोल 0.4% GR (फर्टेरा) @ 4 किग्रा/एकड़ रेत में मिलाकर भुरकाव करें।\n\n3. **भूरा फुदका (BPH):**\n• पाइमेट्रोजिन 50% WG @ 0.6 ग्राम/लीटर का पौधों की जड़ों के पास स्प्रे करें।';
-    }
-    return '🌾 **Paddy (Rice) IPM Advisory:**\n\n1. **Rice Blast:** Spray Tricyclazole 75% WP @ 0.6g/L.\n2. **Stem Borer:** Broadcast Chlorantraniliprole 0.4% GR @ 4kg/acre.\n3. **BPH (Brown Planthopper):** Spray Pymetrozine 50% WG @ 0.6g/L directed at plant base.';
-  }
-
-  // 7. Fertilizer / NPK / Urea / Khad (खाद व पोषण)
+  // 6. Fertilizer / NPK / Urea / Khad (खाद व पोषण)
   if (q.includes('खाद') || q.includes('khad') || q.includes('fertilizer') || q.includes('urea') || q.includes('यूरिया') || q.includes('dap') || q.includes('npk') || q.includes('19 19 19')) {
     if (lang === 'hi') {
-      return '🧪 **खाद एवं पोषण प्रबंधन (ICAR सिफारिश):**\n\n1. **शुरुआती बढ़वार (0-30 दिन):**\n• NPK 19:19:19 @ 5 ग्राम/लीटर का स्प्रे करें या डीएपी (DAP) प्रति एकड़ 50 किग्रा दें।\n\n2. **फूल एवं कलियां बनते समय (30-60 दिन):**\n• NPK 12:61:00 (मोनो अमोनियम फॉस्फेट) @ 5 ग्राम/लीटर + बोरॉन 20% @ 1 ग्राम/लीटर।\n\n3. **फल / दाना भरते समय (60+ दिन):**\n• NPK 00:00:50 (पोटाश) @ 5 ग्राम/लीटर ताकि फलों का आकार व चमक बढ़े।\n\n⚠️ **सावधानी:** यूरिया हमेशा शाम को दें और उसके तुरंत बाद हल्की सिंचाई करें।';
+      return '🧪 **खाद एवं पोषण अनुसूची (ICAR मानक):**\n\n1. **शुरुआती बढ़वार (0-30 दिन):**\n• NPK 19:19:19 @ 5 ग्राम/लीटर या डीएपी (DAP) प्रति एकड़ 50 किग्रा दें।\n\n2. **फूल एवं कलियां बनते समय (30-60 दिन):**\n• NPK 12:61:00 @ 5 ग्राम/लीटर + चिलेटेड बोरॉन @ 1 ग्राम/लीटर।\n\n3. **फल / दाना भरते समय (60+ दिन):**\n• NPK 00:00:50 (पोटाश) @ 5 ग्राम/लीटर ताकि फलों का वजन व चमक बढ़े।';
     }
-    return '🧪 **Fertilizer & Nutrition Schedule (ICAR):**\n\n1. **Vegetative Stage:** Spray NPK 19:19:19 @ 5g/L.\n2. **Flowering Stage:** Spray NPK 12:61:00 @ 5g/L + Boron 20% @ 1g/L.\n3. **Fruit/Grain Filling:** Spray NPK 00:00:50 (Potassium Sulfate) @ 5g/L for grain luster.\n\n⚠️ Always apply nitrogenous fertilizers in the evening followed by light irrigation.';
+    return '🧪 **Crop Nutrition Schedule:**\n\n1. **Vegetative:** NPK 19:19:19 @ 5g/L.\n2. **Flowering:** NPK 12:61:00 @ 5g/L + Boron @ 1g/L.\n3. **Fruiting:** NPK 00:00:50 @ 5g/L for grain size & luster.';
   }
 
-  // 8. General Conversational Fallback
+  // 7. General Conversational Fallback
   if (lang === 'hi') {
-    return `🌾 **किसान सलाहकार उत्तर:** आपके प्रश्न "${query}" के संदर्भ में:\n\n1. **प्राथमिक सलाह:** खेत के 10-12 पौधों का बारीकी से निरीक्षण करें।\n2. **सुरक्षात्मक उपाय:** संतुलित पोषण (NPK 19:19:19 @ 5g/L) और सुरक्षात्मक नीम तेल (1500 ppm @ 5 ml/L) का छिड़काव करें।\n3. **सटीक जांच:** सटीक रोग निदान के लिए नीचे कैमरा 📷 आइकन पर टैप करके प्रभावित पत्ते की फोटो भेजें, मैं तुरंत सही दवा और मात्रा बता दूंगा।`;
+    return `🌾 **कृषि-रक्षा AI सलाह:** आपके प्रश्न "${query}" के संदर्भ में:\n\n1. **प्राथमिक निरीक्षण:** खेत के 10-12 पौधों की पत्तियों के दोनों तरफ कीड़ों या धब्बों की जांच करें।\n2. **सुरक्षात्मक उपाय:** संतुलित पोषण (NPK 19:19:19 @ 5g/L) और जैविक सुरक्षा के लिए नीम तेल (1500 ppm @ 5 ml/L) का छिड़काव करें।\n3. **सटीक फोटो जांच:** सटीक रोग पहचान के लिए नीचे 📷 आइकन से पत्ते की फोटो भेजें, मैं तुरंत सही दवा और मात्रा बता दूंगा।`;
   }
   if (lang === 'mr') {
-    return `🌾 **शेतकरी सल्लागार:** आपल्या "${query}" या प्रश्नासाठी:\n\n1. **प्राथमिक सल्ला:** पिकातील पानांचे आणि मुळांचे व्यवस्थित निरीक्षण करा.\n2. **उपाय:** १९:१९:१९ विद्राव्य खत (५ ग्रॅम/लिटर) आणि निंबोळी तेल (५ मिली/लिटर) फवारा.\n3. **अचूक तपासणी:** अचूक रोग ओळखीसाठी खालील कॅमेरा 📷 आयकॉनवरून पानाचा फोटो पाठवा.`;
+    return `🌾 **कृषी-रक्षा सल्ला:** आपल्या "${query}" या प्रश्नासाठी:\n\n1. **पाहणी:** पिकातील पानांचे आणि मुळांचे व्यवस्थित निरीक्षण करा.\n2. **उपाय:** १९:१९:१९ विद्राव्य खत (५ ग्रॅम/लिटर) आणि निंबोळी तेल (५ मिली/लिटर) फवारा.\n3. **अचूक तपासणी:** अचूक रोग ओळखीसाठी खालील 📷 आयकॉनवरून पानाचा फोटो पाठवा.`;
   }
-  return `🌾 **Agri Doctor Advice:** Regarding your question "${query}":\n\n1. **Inspection:** Carefully check both upper and lower leaf surfaces for spots or pests.\n2. **Preventive Action:** Apply NPK 19:19:19 @ 5g/L along with Neem Oil 1500 ppm @ 5 ml/L.\n3. **Accurate Diagnosis:** Upload a leaf photo using the camera icon 📷 below for instant AI vision diagnosis and ICAR dosage!`;
-}
-
-async function callDirectGemini(apiKey: string, messages: Message[], language: string) {
-  const languageName = getLanguageName(language);
-  const systemPrompt = `You are CropHealth AI, an empathetic, highly knowledgeable Senior Agricultural Scientist and Crop Doctor assisting Indian farmers.
-Language: Respond naturally and fluently in ${languageName} (use clean markdown formatting with bullet points and bold text).
-Guidelines:
-1. Always address the farmer warmly (e.g. "नमस्ते किसान भाई! 🙏").
-2. Provide exact ICAR-approved chemical dosages (in ml/L or grams/L), commercial product names (e.g. Emamectin, Mancozeb, Coragen), and biological remedies (Neem oil, Trichoderma).
-3. Mention safe spray timing (morning/evening) and Pre-Harvest Interval (PHI) in days.
-4. Keep answers crisp, actionable, structured, and easy to read.`;
-
-  const contents = messages.map((m) => {
-    const role = m.role === 'assistant' ? 'model' : 'user';
-    const parts: GeminiPart[] = [];
-    if (m.image) {
-      const match = m.image.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
-      if (match) parts.push({ inline_data: { mime_type: match[1], data: match[2] } });
-    }
-    if (m.content) parts.push({ text: m.content });
-    return { role, parts };
-  });
-
-  const payload = {
-    contents,
-    system_instruction: { parts: [{ text: systemPrompt }] },
-    generationConfig: { temperature: 0.4, maxOutputTokens: 800 },
-  };
-
-  let lastError: string | null = null;
-  for (const model of GEMINI_MODELS) {
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey.trim())}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        }
-      );
-      if (!response.ok) continue;
-      const data = await response.json();
-      const reply = extractGeminiReply(data);
-      if (reply) return reply;
-    } catch (err: any) {
-      lastError = err?.message;
-    }
-  }
-  throw new Error(lastError || 'All models exhausted');
+  return `🌾 **CropHealth AI Advisory:** Regarding "${query}":\n\n1. **Field Inspection:** Check upper and lower leaf surfaces for spot patterns or insect colonies.\n2. **Preventive Care:** Apply NPK 19:19:19 @ 5g/L with Neem Oil 1500 ppm @ 5 ml/L.\n3. **Photo Diagnosis:** Upload a leaf image below using the camera 📷 for instant ICAR dosage recommendations!`;
 }
 
 export default function AICropDoctor() {
@@ -179,6 +123,13 @@ export default function AICropDoctor() {
   const [welcomeMsg, setWelcomeMsg] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const assistantTitle = lang === 'hi' 
+    ? 'कृषि-रक्षा AI सलाहकार' 
+    : lang === 'mr' 
+    ? 'कृषी-रक्षा AI सल्लागार' 
+    : 'CropHealth AI Advisor';
 
   const quickPills = [
     { label: lang === 'hi' ? '🌿 पत्तों पर पीले धब्बे' : 'Yellow Leaves', query: 'फसल की पत्तियों पर पीले धब्बे आ रहे हैं, क्या उपाय करें?' },
@@ -189,10 +140,10 @@ export default function AICropDoctor() {
 
   useEffect(() => {
     const greeting = lang === 'hi'
-      ? 'राम-राम किसान भाई! 🙏 मैं आपका AI फसल डॉक्टर हूँ। अपनी फसल (कपास, टमाटर, धान, सोयाबीन आदि) का कोई भी रोग, कीड़े या खाद संबंधी प्रश्न पूछें।'
+      ? 'राम-राम किसान भाई! 🙏 मैं आपका कृषि-रक्षा AI सलाहकार हूँ। फसल रोग, कीड़े, खाद या आज के छिड़काव संबंधी कोई भी प्रश्न पूछें।'
       : lang === 'mr'
-      ? 'नमस्कार शेतकरी मित्र! 🙏 मी आपला AI पीक डॉक्टर आहे. पिकातील रोग, कीड किंवा खताविषयी काहीही विचारा.'
-      : 'Hello farmer friend! 🙏 I am your AI Crop Doctor. Ask me any question regarding crop diseases, pest dosages, or fertilizers.';
+      ? 'नमस्कार शेतकरी मित्र! 🙏 मी आपला कृषी-रक्षा AI सल्लागार आहे. पिकातील रोग, कीड किंवा खताविषयी काहीही विचारा.'
+      : 'Hello farmer friend! 🙏 I am your CropHealth AI Advisor. Ask me anything regarding crop diseases, pest dosages, or fertilizers.';
     setWelcomeMsg(greeting);
   }, [lang]);
 
@@ -211,6 +162,67 @@ export default function AICropDoctor() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, loading]);
+
+  // Clean up typing timer on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimerRef.current) clearInterval(typingTimerRef.current);
+    };
+  }, []);
+
+  /**
+   * Smooth progressive typing stream (साथ-साथ लिखना)
+   */
+  const streamTypingText = useCallback((fullText: string) => {
+    if (typingTimerRef.current) clearInterval(typingTimerRef.current);
+
+    const words = fullText.split(' ');
+    let currentIndex = 0;
+    const initialContent = words[0] || '';
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'assistant',
+        content: initialContent,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isStreaming: true,
+      },
+    ]);
+
+    typingTimerRef.current = setInterval(() => {
+      currentIndex++;
+      if (currentIndex >= words.length) {
+        if (typingTimerRef.current) clearInterval(typingTimerRef.current);
+        setMessages((prev) => {
+          const updated = [...prev];
+          const lastIdx = updated.length - 1;
+          if (lastIdx >= 0 && updated[lastIdx].role === 'assistant') {
+            updated[lastIdx] = {
+              ...updated[lastIdx],
+              content: fullText,
+              isStreaming: false,
+            };
+          }
+          return updated;
+        });
+      } else {
+        const partialText = words.slice(0, currentIndex + 1).join(' ');
+        setMessages((prev) => {
+          const updated = [...prev];
+          const lastIdx = updated.length - 1;
+          if (lastIdx >= 0 && updated[lastIdx].role === 'assistant') {
+            updated[lastIdx] = {
+              ...updated[lastIdx],
+              content: partialText,
+              isStreaming: true,
+            };
+          }
+          return updated;
+        });
+      }
+    }, 22); // Fast, natural 22ms per word stream
+  }, []);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -244,7 +256,7 @@ export default function AICropDoctor() {
     try {
       let reply: string | null = null;
 
-      // 1. Try Vercel Serverless Function `/api/chat` (Reads Vercel Environment Variables)
+      // 1. Call serverless backend proxy `/api/chat`
       try {
         const res = await fetch('/api/chat', {
           method: 'POST',
@@ -257,19 +269,50 @@ export default function AICropDoctor() {
           if (json?.reply) reply = json.reply;
         }
       } catch (err) {
-        console.warn('Vercel /api/chat endpoint not reachable, trying client env fallback:', err);
+        console.warn('Backend chat API error, switching to agronomy engine:', err);
       }
 
-      // 2. If /api/chat is not available (local Vite dev), try client env key
+      // 2. Direct client fallback if API key in client env
       if (!reply && import.meta.env.VITE_GEMINI_API_KEY) {
         try {
-          reply = await callDirectGemini(import.meta.env.VITE_GEMINI_API_KEY, newMessages, lang);
+          const languageName = getLanguageName(lang);
+          const systemPrompt = `You are CropHealth AI (कृषि-रक्षा AI), the official Senior Agricultural Scientist assisting Indian farmers. Respond in ${languageName} with ICAR dosages and spray guidelines.`;
+          const contents = newMessages.map((m) => {
+            const role = m.role === 'assistant' ? 'model' : 'user';
+            const parts: GeminiPart[] = [];
+            if (m.image) {
+              const match = m.image.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+              if (match) parts.push({ inline_data: { mime_type: match[1], data: match[2] } });
+            }
+            if (m.content) parts.push({ text: m.content });
+            return { role, parts };
+          });
+
+          for (const model of GEMINI_MODELS) {
+            const response = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(import.meta.env.VITE_GEMINI_API_KEY)}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents,
+                  system_instruction: { parts: [{ text: systemPrompt }] },
+                  generationConfig: { temperature: 0.35, maxOutputTokens: 800 },
+                }),
+              }
+            );
+            if (response.ok) {
+              const data = await response.json();
+              reply = extractGeminiReply(data);
+              if (reply) break;
+            }
+          }
         } catch (clientErr) {
-          console.warn('Direct client Gemini call failed:', clientErr);
+          console.warn('Direct client call failed:', clientErr);
         }
       }
 
-      // 3. Fallback to Dynamic ICAR Agronomist Knowledge Engine
+      // 3. Fallback to Dynamic ICAR Knowledge Engine
       if (!reply) {
         reply = getNaturalAgriculturalAdvice(userContent, lang);
       }
@@ -312,27 +355,14 @@ export default function AICropDoctor() {
         } catch {}
       }
 
-      setMessages((prev) => [
-        ...prev, 
-        { 
-          role: 'assistant', 
-          content: reply || 'कृषि सलाह प्राप्त नहीं हो सकी।',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ]);
+      setLoading(false);
+      // Stream the response with live progressive typing
+      streamTypingText(reply || (lang === 'hi' ? 'कृषि सलाह प्राप्त हो रही है...' : 'Generating advice...'));
     } catch (err) {
       console.warn('AICropDoctor error:', err);
       const fallback = getNaturalAgriculturalAdvice(userContent, lang);
-      setMessages((prev) => [
-        ...prev, 
-        { 
-          role: 'assistant', 
-          content: fallback,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ]);
-    } finally {
       setLoading(false);
+      streamTypingText(fallback);
     }
   };
 
@@ -344,6 +374,7 @@ export default function AICropDoctor() {
   };
 
   const handleClearChat = () => {
+    if (typingTimerRef.current) clearInterval(typingTimerRef.current);
     setMessages([{ 
       role: 'assistant', 
       content: welcomeMsg,
@@ -355,42 +386,48 @@ export default function AICropDoctor() {
 
   return (
     <>
-      {/* Floating Trigger Button */}
+      {/* ============================================================= */}
+      {/* 1. FLOATING TRIGGER BUTTON (AGRICULTURAL BOTANICAL EMBLEM)    */}
+      {/* ============================================================= */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-40 flex items-center gap-2.5 px-4 sm:px-5 py-3 rounded-full bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 hover:from-emerald-900 hover:to-teal-900 text-white shadow-2xl hover:shadow-emerald-900/40 transition-all duration-200 active:scale-95 group border-2 border-white ring-4 ring-emerald-500/20 select-none"
-          aria-label="Ask AI Crop Doctor"
+          className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-40 flex items-center gap-2.5 px-4 sm:px-5 py-3 rounded-full bg-gradient-to-r from-emerald-800 via-emerald-800 to-teal-900 hover:from-emerald-900 hover:to-teal-950 text-white shadow-xl hover:shadow-2xl hover:shadow-emerald-900/30 transition-all duration-200 active:scale-95 group border-2 border-white ring-4 ring-emerald-500/20 select-none"
+          aria-label="Open CropHealth AI Advisor"
         >
           <div className="relative">
-            <Bot className="w-5 h-5 text-white stroke-[2.4]" />
+            <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+              <Leaf className="w-3.5 h-3.5 text-white stroke-[2.4]" />
+            </div>
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
           </div>
           <span className="font-black text-xs sm:text-sm tracking-tight pr-1">
-            {lang === 'hi' ? '👨‍🌾 AI फसल डॉक्टर' : lang === 'mr' ? '👨‍🌾 AI पीक डॉक्टर' : '👨‍🌾 AI Crop Doctor'}
+            {assistantTitle}
           </span>
         </button>
       )}
 
-      {/* Chat Window */}
+      {/* ============================================================= */}
+      {/* 2. HIGH-AESTHETIC CHAT WINDOW                                */}
+      {/* ============================================================= */}
       {open && (
-        <div className="fixed inset-x-3 bottom-20 sm:bottom-6 sm:right-6 sm:left-auto sm:w-[420px] h-[540px] max-h-[85vh] bg-white rounded-3xl shadow-2xl border border-stone-200 z-50 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-x-3 bottom-20 sm:bottom-6 sm:right-6 sm:left-auto sm:w-[430px] h-[550px] max-h-[85vh] bg-white rounded-3xl shadow-2xl border border-stone-200 z-50 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
           
           {/* Header */}
           <div className="p-4 bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-2.5">
               <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center text-white border border-white/20">
-                <Bot className="w-5 h-5 stroke-[2.4]" />
+                <Sprout className="w-5 h-5 stroke-[2.4]" />
               </div>
               <div>
-                <div className="font-black text-sm text-white flex items-center gap-1.5">
-                  <span>AI Crop Doctor</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-400/30 text-emerald-300 text-[10px] font-bold border border-emerald-400/40">
-                    ICAR Verified
+                <div className="font-black text-sm text-white flex items-center gap-1.5 leading-none">
+                  <span>{assistantTitle}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-400/30 text-emerald-200 text-[9px] font-black border border-emerald-400/40">
+                    ICAR AI
                   </span>
                 </div>
-                <div className="text-[11px] text-emerald-200/90 font-medium">
-                  {lang === 'hi' ? 'कृषि वैज्ञानिक डिजिटल परामर्श' : 'AI Agronomist Consultation'}
+                <div className="text-[11px] text-emerald-200/90 font-medium mt-1">
+                  {lang === 'hi' ? 'डिजिटल कृषि वैज्ञानिक परामर्श' : 'Certified Agronomist Consultation'}
                 </div>
               </div>
             </div>
@@ -435,7 +472,7 @@ export default function AICropDoctor() {
                 className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
               >
                 <div
-                  className={`max-w-[88%] rounded-2xl p-3.5 text-xs leading-relaxed ${
+                  className={`max-w-[90%] rounded-2xl p-3.5 text-xs leading-relaxed ${
                     msg.role === 'user'
                       ? 'bg-emerald-800 text-white rounded-br-xs font-semibold shadow-sm'
                       : 'bg-white text-stone-800 rounded-bl-xs border border-stone-200 shadow-sm'
@@ -450,6 +487,9 @@ export default function AICropDoctor() {
                   )}
                   <div className="whitespace-pre-wrap font-medium">
                     {msg.content}
+                    {msg.isStreaming && (
+                      <span className="inline-block w-1.5 h-3.5 bg-emerald-600 animate-pulse ml-0.5 align-middle" />
+                    )}
                   </div>
                   {msg.timestamp && (
                     <div className={`text-[9px] mt-1.5 text-right font-medium ${
@@ -465,7 +505,11 @@ export default function AICropDoctor() {
             {loading && (
               <div className="flex items-center gap-2 text-stone-600 text-xs p-3 bg-white rounded-2xl border border-stone-200 w-fit shadow-2xs">
                 <Loader2 className="w-4 h-4 animate-spin text-emerald-700" />
-                <span className="font-bold">{lang === 'hi' ? 'Google Gemini AI उत्तर तैयार कर रहा है...' : 'AI Doctor Generating Response...'}</span>
+                <span className="font-bold">
+                  {lang === 'hi' 
+                    ? 'कृषि-रक्षा AI सलाह तैयार कर रहा है...' 
+                    : 'CropHealth AI Analyzing Guidelines...'}
+                </span>
               </div>
             )}
           </div>
@@ -510,7 +554,7 @@ export default function AICropDoctor() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={lang === 'hi' ? 'फसल की बीमारी या खाद के बारे में पूछें...' : 'Ask crop doctor about pest, dose, fertilizer...'}
+              placeholder={lang === 'hi' ? 'फसल की बीमारी, कीड़े या खाद के बारे में पूछें...' : 'Ask about crop pest, dosage, fertilizer...'}
               className="flex-1 px-3.5 py-2.5 rounded-xl border border-stone-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none text-xs font-bold text-stone-900 placeholder:text-stone-400"
             />
 
