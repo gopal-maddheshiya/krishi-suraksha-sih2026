@@ -24,6 +24,7 @@ const HotspotMap = lazy(() => import('@/components/HotspotMap'));
 const AdvisoryList = lazy(() => import('@/components/AdvisoryList'));
 const ExpertValidationPanel = lazy(() => import('@/components/ExpertValidationPanel'));
 const Dashboard = lazy(() => import('@/components/Dashboard'));
+const MedicalMapSection = lazy(() => import('@/components/MedicalMapSection'));
 
 const SectionFallback = () => (
   <div className="py-20 flex flex-col items-center justify-center">
@@ -63,18 +64,18 @@ function AppContent() {
   useEffect(() => {
     // Clean out old hardcoded demo records so only real user scans exist
     try {
-      const cached = localStorage.getItem('crophealth_observations_cache');
+      const cached = localStorage.getItem('kisanSarthi_observations_cache');
       if (cached) {
         const list = JSON.parse(cached);
         if (Array.isArray(list)) {
           const onlyReal = list.filter((r: any) => !r.id?.startsWith('obs_demo_'));
-          localStorage.setItem('crophealth_observations_cache', JSON.stringify(onlyReal));
+          localStorage.setItem('kisanSarthi_observations_cache', JSON.stringify(onlyReal));
         }
       }
     } catch {}
 
     // Check if farmer has completed first-time onboarding
-    const onboarded = localStorage.getItem('crophealth_onboarded');
+    const onboarded = localStorage.getItem('kisanSarthi_onboarded');
     if (!onboarded) {
       setShowOnboarding(true);
     }
@@ -170,6 +171,7 @@ function AppContent() {
                   onNavigateToAdvisory={() => handleNavigate('advisory')}
                 />
               )}
+              {activeSection === 'medical-map' && <MedicalMapSection />}
               {activeSection === 'weather' && <WeatherRisk />}
               {activeSection === 'advisory' && <AdvisoryList />}
               {activeSection === 'hotspots' && <HotspotMap />}

@@ -126,7 +126,7 @@ TASK:
     const apiKey = this.getApiKey();
     const targetLangName = getFullLanguageName(language);
 
-    const systemPrompt = `You are CropHealth AI (कृषि-रक्षा AI), the Official Senior Agricultural Scientist and Digital Crop Doctor assisting Indian farmers.
+    const systemPrompt = `You are KisanSarthi AI (कृषि-रक्षा AI), the Official Senior Agricultural Scientist and Digital Crop Doctor assisting Indian farmers.
 The farmer has uploaded an actual leaf/fruit photograph.
 Diagnosis Context from photo:
 - Identified Plant: ${diagnosisContext?.primaryPrediction?.diseaseName || 'Crop'}

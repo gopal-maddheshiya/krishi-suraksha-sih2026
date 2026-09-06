@@ -321,7 +321,7 @@ export class ComputerVisionDiagnosis {
       disclaimer: 'AI Visual Screening: Grounded in uploaded photo pixels and ICAR standards.',
       disclaimerHi: 'AI दृश्य जांच: अपलोड की गई फोटो के पिक्सल और ICAR मानकों पर आधारित।',
       disclaimerMr: 'AI दृश्य तपासणी: फोटोच्या पिक्सेलवर आधारित.',
-      modelName: 'CropHealth Vision AI Engine',
+      modelName: 'KisanSarthi Vision AI Engine',
       modelVersion: 'v2.8-edge',
       processedAt: new Date().toISOString(),
       status: isHealthy ? 'healthy' : 'suspected',

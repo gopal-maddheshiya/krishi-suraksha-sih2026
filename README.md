@@ -1,4 +1,4 @@
-# 🌱 CropHealth AI — Krishi Suraksha Platform
+# 🌱 KisanSarthi AI — Krishi Suraksha Platform
 ### *AI-Powered Early Crop Pest/Disease Detection, Surveillance & ICAR Advisory System*
 > **Smart India Hackathon 2026 | Problem Statement ID: 26131**  
 > *Ministry/Organization: Government of Maharashtra • MSInS*
@@ -6,7 +6,7 @@
 ---
 
 ## 🌟 Overview
-**CropHealth AI (Krishi Suraksha)** is an enterprise-grade, mobile-first agricultural decision support platform designed to empower smallholder and commercial farmers across India. Combining multimodal vision AI, live Open-Meteo microclimate telemetry, ICAR Integrated Pest Management (IPM) guidelines, certified KVK agricultural scientist validation, and real-time geospatial surveillance heatmaps.
+**KisanSarthi AI (Krishi Suraksha)** is an enterprise-grade, mobile-first agricultural decision support platform designed to empower smallholder and commercial farmers across India. Combining multimodal vision AI, live Open-Meteo microclimate telemetry, ICAR Integrated Pest Management (IPM) guidelines, certified KVK agricultural scientist validation, and real-time geospatial surveillance heatmaps.
 
 ---
 

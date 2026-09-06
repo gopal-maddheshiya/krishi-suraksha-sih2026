@@ -21,6 +21,8 @@ import {
   getFullLanguageName 
 } from '@/lib/agriLocalization';
 import type { LanguageCode } from '@/lib/i18n';
+import VoiceMicButton from '@/components/VoiceMicButton';
+import SpeakerButton from '@/components/SpeakerButton';
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
 
@@ -729,26 +731,32 @@ export default function ImageUpload({ onNavigateToHistory }: ImageUploadProps) {
                             <Bot className="w-3.5 h-3.5" />
                           </div>
                         )}
-                        <div
-                          className={`p-2.5 rounded-2xl max-w-[85%] whitespace-pre-wrap leading-relaxed ${
-                            msg.role === 'user'
-                              ? 'bg-emerald-800 text-white font-medium rounded-br-xs'
-                              : 'bg-stone-50 border border-stone-200/80 text-stone-900 rounded-tl-xs'
-                          }`}
-                        >
-                          {(() => {
-                            const parts = msg.text.split(/(\*\*.*?\*\*)/g);
-                            return parts.map((part, i) => {
-                              if (part.startsWith('**') && part.endsWith('**')) {
-                                return (
-                                  <strong key={i} className="font-black text-stone-950">
-                                    {part.slice(2, -2)}
-                                  </strong>
-                                );
-                              }
-                              return <span key={i}>{part}</span>;
-                            });
-                          })()}
+                        <div className="flex flex-col items-start gap-1 max-w-[85%]">
+                          <div
+                            className={`p-2.5 rounded-2xl whitespace-pre-wrap leading-relaxed ${
+                              msg.role === 'user'
+                                ? 'bg-emerald-800 text-white font-medium rounded-br-xs'
+                                : 'bg-stone-50 border border-stone-200/80 text-stone-900 rounded-tl-xs'
+                            }`}
+                          >
+                            {(() => {
+                              const parts = msg.text.split(/(\*\*.*?\*\*)/g);
+                              return parts.map((part, i) => {
+                                if (part.startsWith('**') && part.endsWith('**')) {
+                                  return (
+                                    <strong key={i} className="font-black text-stone-950">
+                                      {part.slice(2, -2)}
+                                    </strong>
+                                  );
+                                }
+                                return <span key={i}>{part}</span>;
+                              });
+                            })()}
+                          </div>
+                          {/* Speaker — only for AI replies */}
+                          {msg.role === 'assistant' && msg.text && (
+                            <SpeakerButton text={msg.text} iconSize={13} />
+                          )}
                         </div>
                       </div>
                     ))}
@@ -794,6 +802,11 @@ export default function ImageUpload({ onNavigateToHistory }: ImageUploadProps) {
                       }}
                       placeholder={t('chat_placeholder')}
                       className="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-emerald-300 text-xs font-bold text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                    />
+                    <VoiceMicButton
+                      currentValue={aiCustomQuestion}
+                      onTranscript={(text) => setAiCustomQuestion(text)}
+                      className="h-9 w-9 rounded-xl"
                     />
                     <button
                       type="button"

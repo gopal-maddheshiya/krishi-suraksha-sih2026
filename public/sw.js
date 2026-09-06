@@ -1,4 +1,4 @@
-const CACHE = 'crophealth-v1';
+const CACHE = 'kisanSarthi-v1';
 const ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg', '/icon-192.svg', '/icon-512.svg'];
 
 self.addEventListener('install', (event) => {

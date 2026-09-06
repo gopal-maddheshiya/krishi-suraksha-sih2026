@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { GeminiVisionLiveService } from '@/services/GeminiVisionLiveService';
+import VoiceMicButton from '@/components/VoiceMicButton';
+import SpeakerButton from '@/components/SpeakerButton';
 import type { LanguageCode } from '@/lib/i18n';
 
 type Message = { 
@@ -96,14 +98,14 @@ export default function AICropDoctor() {
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const assistantTitles: Record<LanguageCode, string> = {
-    hi: '🌾 कृषि-रक्षा AI सलाहकार',
-    mr: '🌾 कृषी-रक्षा AI सल्लागार',
-    bn: '🌾 কৃষি-রক্ষা AI সহকারী',
-    ta: '🌾 வேளாண் AI ஆலோசகர்',
-    te: '🌾 వ్యవసాయ AI సలహాదారు',
-    gu: '🌾 કૃષિ-રક્ષા AI સલાહકાર',
-    pa: '🌾 ਖੇਤੀ-ਰੱਖਿਆ AI ਸਲਾਹਕਾਰ',
-    en: '🌾 CropHealth AI Advisor',
+    hi: '🌾 किसानसारथी AI सलाहकार',
+    mr: '🌾 किसानसारथी AI सल्लागार',
+    bn: '🌾 কিষাণসারথি AI সহকারী',
+    ta: '🌾 கிசான்சாரதி AI ஆலோசகர்',
+    te: '🌾 కిసాన్‌సారథి AI సలహాదారు',
+    gu: '🌾 કિસાનસારથી AI સલાહકાર',
+    pa: '🌾 ਕਿਸਾਨਸਾਰਥੀ AI ਸਲਾਹਕਾਰ',
+    en: '🌾 KisanSarthi AI Advisor',
   };
 
   const assistantTitle = assistantTitles[lang] || assistantTitles.en;
@@ -480,6 +482,12 @@ export default function AICropDoctor() {
                     </div>
                   )}
                 </div>
+                {/* Speaker button — only for AI replies */}
+                {msg.role !== 'user' && !msg.isStreaming && msg.content && (
+                  <div className="mt-1 ml-1">
+                    <SpeakerButton text={msg.content} iconSize={13} />
+                  </div>
+                )}
               </div>
             ))}
 
@@ -537,6 +545,11 @@ export default function AICropDoctor() {
               onKeyDown={handleKeyDown}
               placeholder={lang === 'hi' ? 'फसल की बीमारी, कीड़े या खाद के बारे में पूछें...' : 'Ask about crop pest, dosage, fertilizer...'}
               className="flex-1 px-3.5 py-2.5 rounded-xl border border-stone-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none text-xs font-bold text-stone-900 placeholder:text-stone-400"
+            />
+
+            <VoiceMicButton
+              currentValue={input}
+              onTranscript={(text) => setInput(text)}
             />
 
             <button

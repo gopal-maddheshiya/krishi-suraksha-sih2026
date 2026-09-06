@@ -43,6 +43,7 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
   const primaryNav = [
     { section: 'home', label: lang === 'hi' ? 'होम' : lang === 'mr' ? 'मुख्य' : 'Home', icon: Home },
     { section: 'report', label: lang === 'hi' ? 'फसल जांच' : lang === 'mr' ? 'पीक तपासणी' : 'Check Crop', icon: Camera },
+    { section: 'medical-map', label: t('nav_medical_map') || (lang === 'hi' ? 'कृषि केंद्र व सेवाएं' : 'Farming Stores'), icon: MapPin },
     { section: 'weather', label: lang === 'hi' ? 'मौसम' : lang === 'mr' ? 'हवामान' : 'Weather', icon: Cloud },
     { section: 'advisory', label: lang === 'hi' ? 'कृषि सलाह' : lang === 'mr' ? 'कृषी सल्ला' : 'Advisory', icon: BookOpen },
     { section: 'hotspots', label: lang === 'hi' ? 'निगरानी' : lang === 'mr' ? 'पाहणी' : 'Surveillance', icon: Compass },
@@ -64,9 +65,9 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-stone-200/90 transition-all duration-200 shadow-2xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-[68px] gap-2 md:gap-4">
+      <header className="sticky top-0 z-40 bg-white/97 backdrop-blur-xl border-b border-stone-200/80 transition-all duration-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16 gap-2 lg:gap-3">
             
             {/* ========================================================= */}
             {/* 1. BRAND LOGO (CLEAN & NON-CROWDED)                       */}
@@ -81,7 +82,7 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
               <div>
                 <div className="flex items-center gap-1.5 leading-none">
                   <span className="font-black text-lg sm:text-xl tracking-tight text-stone-900 group-hover:text-emerald-800 transition-colors">
-                    CropHealth
+                    KisanSarthi
                   </span>
                   <span className="bg-emerald-800 text-emerald-100 text-[10px] font-black uppercase px-1.5 py-0.5 rounded-md tracking-wider">
                     AI
@@ -94,24 +95,34 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
             </div>
 
             {/* ========================================================= */}
-            {/* 2. LAPTOP / DESKTOP CLEAN NAVIGATION PILL TABS            */}
+            {/* 2. DESKTOP NAV — scrollable pill tabs                     */}
             {/* ========================================================= */}
-            <nav className="hidden lg:flex items-center gap-1 bg-stone-100/90 p-1.5 rounded-2xl border border-stone-200/90 flex-shrink-0">
+            <nav className="hidden lg:flex items-center gap-0.5 bg-stone-100/80 p-1 rounded-2xl border border-stone-200/80 flex-1 mx-3 xl:mx-6 overflow-x-auto max-w-[640px]">
               {primaryNav.map((item) => {
                 const isActive = activeSection === item.section;
                 const Icon = item.icon;
+                const isMedical = item.section === 'medical-map';
                 return (
                   <button
                     key={item.section}
                     onClick={() => handleNav(item.section)}
-                    className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 flex items-center gap-1.5 whitespace-nowrap ${
+                    className={`px-2.5 xl:px-3 py-1.5 rounded-xl text-[11px] xl:text-xs font-bold transition-all duration-150 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 ${
                       isActive
-                        ? 'bg-white text-emerald-950 shadow-xs border border-stone-200/80 font-black'
-                        : 'text-stone-600 hover:text-stone-900 hover:bg-white/50'
+                        ? isMedical
+                          ? 'bg-emerald-800 text-white shadow-sm font-black'
+                          : 'bg-white text-emerald-950 shadow-sm border border-stone-200/80 font-black'
+                        : isMedical
+                        ? 'text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900 border border-transparent hover:border-emerald-200'
+                        : 'text-stone-500 hover:text-stone-900 hover:bg-white/70'
                     }`}
                   >
-                    <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-emerald-700' : 'text-stone-400'}`} />
+                    <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${
+                      isActive ? (isMedical ? 'text-white' : 'text-emerald-700') : (isMedical ? 'text-emerald-600' : 'text-stone-400')
+                    }`} />
                     <span>{item.label}</span>
+                    {isMedical && !isActive && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+                    )}
                   </button>
                 );
               })}
@@ -318,7 +329,12 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
                   <Leaf className="w-5 h-5 stroke-[2.2]" />
                 </div>
                 <div>
-                  <div className="font-black text-base">CropHealth AI</div>
+                  <div className="font-black text-base tracking-tight text-white flex items-center gap-1.5">
+                    <span>KisanSarthi</span>
+                    <span className="bg-emerald-500 text-emerald-950 text-[10px] font-black uppercase px-1.5 py-0.5 rounded-md">
+                      AI
+                    </span>
+                  </div>
                   <div className="text-[11px] text-emerald-200 font-medium">
                     {lang === 'hi' ? 'राष्ट्रीय डिजिटल कृषि मंच' : 'National Digital Agri Platform'}
                   </div>
@@ -425,7 +441,7 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
                     </div>
                     <div>
                       <div className="text-xs font-black text-stone-900">{currentUser.fullName}</div>
-                      <div className="text-[10px] text-stone-500 font-medium">{currentUser.phoneNumber}</div>
+                      <div className="text-[10px] text-stone-500 font-medium">{currentUser.phone || currentUser.email}</div>
                     </div>
                   </div>
                   <button

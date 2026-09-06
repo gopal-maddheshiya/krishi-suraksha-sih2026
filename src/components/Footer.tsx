@@ -32,7 +32,9 @@ export default function Footer({ onNavigate }: FooterProps) {
               </div>
               <div>
                 <div className="flex items-center gap-1.5 leading-none">
-                  <span className="font-black text-lg text-stone-900 tracking-tight">CropHealth</span>
+                  <span className="font-black text-lg text-stone-900">
+                    KisanSarthi
+                  </span>
                   <span className="bg-emerald-800 text-emerald-100 text-[10px] font-black uppercase px-1.5 py-0.5 rounded-md tracking-wider">
                     AI
                   </span>
@@ -136,7 +138,7 @@ export default function Footer({ onNavigate }: FooterProps) {
         {/* Bottom Legal & Disclaimer Strip */}
         <div className="pt-6 border-t border-stone-200/90 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-stone-500 font-medium">
           <div>
-            © {new Date().getFullYear()} CropHealth AI · {lang === 'hi' ? 'भारतीय कृषि सुरक्षा प्रणाली' : 'Indian Agricultural Protection System'}
+            © {new Date().getFullYear()} KisanSarthi AI · {lang === 'hi' ? 'भारतीय कृषि सुरक्षा प्रणाली' : 'Indian Agricultural Protection System'}
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-stone-600 bg-stone-100/70 px-3 py-1 rounded-full border border-stone-200/80 shadow-2xs">
             <Info className="w-3.5 h-3.5 text-stone-500 flex-shrink-0" />

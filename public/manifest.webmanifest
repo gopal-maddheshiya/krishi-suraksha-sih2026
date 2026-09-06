@@ -1,6 +1,6 @@
 {
-  "name": "Crop Health Management Platform",
-  "short_name": "CropHealth",
+  "name": "KisanSarthi",
+  "short_name": "KisanSarthi",
   "description": "AI-powered crop disease detection, weather risks, pest monitoring and expert advisories for Indian farmers.",
   "start_url": "/",
   "scope": "/",

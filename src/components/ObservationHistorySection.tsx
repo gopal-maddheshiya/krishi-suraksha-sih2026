@@ -7,7 +7,7 @@ import {
 import { useLang } from '@/lib/LanguageContext';
 import { ObservationService } from '@/services/ObservationService';
 import { useFarmContext } from '@/contexts/FarmContext';
-import type { CropObservationEntity } from '@/services/types';
+import type { CropObservationEntity } from '@/services/ObservationService';
 import { getLocalizedCropName } from '@/lib/agriLocalization';
 
 type ObservationHistoryProps = {
