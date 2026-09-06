@@ -6,9 +6,10 @@ import { useLang } from '@/lib/LanguageContext';
 
 interface LocationBarProps {
   onLocationChange?: (loc: GeoLocation) => void;
+  compact?: boolean;
 }
 
-export default function LocationBar({ onLocationChange }: LocationBarProps) {
+export default function LocationBar({ onLocationChange, compact = false }: LocationBarProps) {
   const { lang } = useLang();
   const [currentLocation, setCurrentLocation] = useState<GeoLocation>(() => LocationService.getSavedLocation());
   const [isOpen, setIsOpen] = useState(false);
@@ -45,11 +46,15 @@ export default function LocationBar({ onLocationChange }: LocationBarProps) {
     <div className="relative inline-block text-left">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 text-emerald-900 font-semibold text-xs sm:text-sm transition-all"
+        className="flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/90 text-emerald-900 font-semibold text-xs transition-all shadow-2xs"
+        title={`${currentLocation.district}, ${currentLocation.state}`}
       >
         <MapPin className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-        <span className="truncate max-w-[130px] sm:max-w-[180px]">{currentLocation.district}, {currentLocation.state}</span>
-        <ChevronDown className={`w-3.5 h-3.5 text-emerald-600 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <span className="truncate max-w-[85px] 2xl:max-w-[130px]">
+          {currentLocation.district}
+          <span className="hidden 2xl:inline">, {currentLocation.state}</span>
+        </span>
+        <ChevronDown className={`w-3 h-3 text-emerald-600 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (

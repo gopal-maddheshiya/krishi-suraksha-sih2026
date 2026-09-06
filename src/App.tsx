@@ -3,10 +3,7 @@ import { LanguageProvider, useLang } from '@/lib/LanguageContext';
 import { FarmProvider, useFarmContext } from '@/contexts/FarmContext';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
-import TopQuickActionHub from '@/components/TopQuickActionHub';
 import LiveTicker from '@/components/LiveTicker';
-import TodayDecisionLayer from '@/components/TodayDecisionLayer';
-import LatestCropCheckCard from '@/components/LatestCropCheckCard';
 import InteractiveFarmMap from '@/components/InteractiveFarmMap';
 import ImageUpload from '@/components/ImageUpload';
 import Footer from '@/components/Footer';
@@ -18,6 +15,7 @@ import ObservationHistorySection from '@/components/ObservationHistorySection';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { DemoDataSeeder } from '@/services/DemoDataSeeder';
 import { WifiOff } from 'lucide-react';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const WeatherRisk = lazy(() => import('@/components/WeatherRisk'));
 const HotspotMap = lazy(() => import('@/components/HotspotMap'));
@@ -105,41 +103,25 @@ function AppContent() {
       
       <OfflineBanner />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 flex-1 w-full relative z-0">
-
-        {/* Active farm toolbar — compact, just below nav */}
-        <TopQuickActionHub
-          onAddNewFarm={() => setShowOnboarding(true)}
-        />
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 flex-1 w-full relative z-0">
 
         {/* Home dashboard */}
         {activeSection === 'home' && (
-          <div className="animate-in fade-in duration-200">
+          <div className="space-y-6 animate-in fade-in duration-200">
 
-            {/* Hero — crop-as-hero, calm status, primary CTA, weather module */}
+            {/* 1. Unified Hero — Crop-as-hero, live health status, primary camera scan CTA, weather bar */}
             <Hero
               onNavigate={handleNavigate}
               onOpenOnboarding={() => setShowOnboarding(true)}
             />
 
-            {/* Today decision — flows directly from Hero */}
-            <TodayDecisionLayer
-              onCheckCrop={() => handleNavigate('report')}
-              onViewAdvisory={() => handleNavigate('advisory')}
-              onViewExpertReview={() => handleNavigate('expert')}
-              onViewWeather={() => handleNavigate('weather')}
-            />
+            {/* 2. Interactive Crop Scanner & AI Doctor Hub */}
+            <section id="scanner-section" className="scroll-mt-20">
+              <ImageUpload />
+            </section>
 
-            {/* Latest crop check */}
-            <div className="border-b border-stone-200/90">
-              <LatestCropCheckCard
-                onCheckCrop={() => handleNavigate('report')}
-                onViewHistory={() => handleNavigate('history')}
-              />
-            </div>
-
-            {/* Live regional alerts + map in compact horizontal split */}
-            <section className="pt-5 pb-1">
+            {/* 3. Live Regional Surveillance Alerts & Farm Map */}
+            <section className="pt-2 pb-6">
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
                 <div className="lg:col-span-3">
                   <LiveTicker onNavigate={handleNavigate} />
@@ -148,11 +130,6 @@ function AppContent() {
                   <InteractiveFarmMap onNavigateToSurveillance={() => handleNavigate('hotspots')} />
                 </div>
               </div>
-            </section>
-
-            {/* Scanner (the actual crop scan flow) */}
-            <section id="scanner-section" className="scroll-mt-20 pt-3 pb-2">
-              <ImageUpload />
             </section>
 
           </div>
@@ -207,10 +184,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <LanguageProvider>
-      <FarmProvider>
-        <AppContent />
-      </FarmProvider>
-    </LanguageProvider>
+    <ErrorBoundary>
+      <LanguageProvider>
+        <FarmProvider>
+          <AppContent />
+        </FarmProvider>
+      </LanguageProvider>
+    </ErrorBoundary>
   );
 }

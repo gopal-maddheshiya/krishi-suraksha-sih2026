@@ -2,12 +2,13 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   X, Send, Loader2, ImagePlus, XCircle, 
   Sparkles, Leaf, Trash2, ShieldCheck, 
-  CheckCircle2, Sprout, Bot, ArrowRight
+  CheckCircle2, Sprout, Bot, ArrowRight,
+  Volume2, VolumeX
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { GeminiVisionLiveService } from '@/services/GeminiVisionLiveService';
 import VoiceMicButton from '@/components/VoiceMicButton';
-import SpeakerButton from '@/components/SpeakerButton';
+import SpeakerButton, { speakMessage, stopSpeech } from '@/components/SpeakerButton';
 import type { LanguageCode } from '@/lib/i18n';
 
 type Message = { 
@@ -93,6 +94,9 @@ export default function AICropDoctor() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [welcomeMsg, setWelcomeMsg] = useState('');
+  const [autoSpeak, setAutoSpeak] = useState(true);
+  const shouldAutoSpeakRef = useRef(false);
+  const handleSendRef = useRef<(text?: string) => Promise<void>>();
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -196,11 +200,37 @@ export default function AICropDoctor() {
     }
   }, [messages, loading]);
 
-  // Clean up typing timer on unmount
+  // Clean up typing timer & cancel speech on unmount or close
   useEffect(() => {
+    if (!open) {
+      stopSpeech();
+    }
     return () => {
+      stopSpeech();
       if (typingTimerRef.current) clearInterval(typingTimerRef.current);
     };
+  }, [open]);
+
+  // External open trigger (e.g. from Hero voice/chat buttons)
+  useEffect(() => {
+    const handleOpenEvent = (e: Event) => {
+      const ce = e as CustomEvent<{ query?: string; autoSend?: boolean; voice?: boolean }>;
+      setOpen(true);
+      if (ce.detail?.voice) {
+        // Voice query initiated — ensure speech playback triggers
+        shouldAutoSpeakRef.current = true;
+      }
+      if (ce.detail?.query) {
+        setInput(ce.detail.query);
+        if (ce.detail.autoSend) {
+          setTimeout(() => {
+            handleSendRef.current?.(ce.detail.query);
+          }, 350);
+        }
+      }
+    };
+    window.addEventListener('open-ai-crop-doctor', handleOpenEvent);
+    return () => window.removeEventListener('open-ai-crop-doctor', handleOpenEvent);
   }, []);
 
   /**
@@ -239,6 +269,12 @@ export default function AICropDoctor() {
           }
           return updated;
         });
+
+        // 🔊 AUTO-SPEAK: Automatically speak out loud once if triggered by voice or autoSpeak is on
+        if (shouldAutoSpeakRef.current || autoSpeak) {
+          speakMessage(fullText, lang);
+          shouldAutoSpeakRef.current = false;
+        }
       } else {
         const partialText = words.slice(0, currentIndex + 1).join(' ');
         setMessages((prev) => {
@@ -255,7 +291,7 @@ export default function AICropDoctor() {
         });
       }
     }, 22); // Fast, natural 22ms per word stream
-  }, []);
+  }, [autoSpeak, lang]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -268,6 +304,7 @@ export default function AICropDoctor() {
   };
 
   const handleSend = async (customText?: string) => {
+    stopSpeech();
     const text = (customText !== undefined ? customText : input).trim();
     if ((!text && !attachedImage) || loading) return;
 
@@ -348,6 +385,7 @@ export default function AICropDoctor() {
       streamTypingText(fallback);
     }
   };
+  handleSendRef.current = handleSend;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -357,6 +395,7 @@ export default function AICropDoctor() {
   };
 
   const handleClearChat = () => {
+    stopSpeech();
     if (typingTimerRef.current) clearInterval(typingTimerRef.current);
     setMessages([{ 
       role: 'assistant', 
@@ -415,7 +454,39 @@ export default function AICropDoctor() {
               </div>
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
+              {/* Auto-Speak Toggle Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !autoSpeak;
+                  setAutoSpeak(next);
+                  if (!next) stopSpeech();
+                }}
+                className={`p-1.5 sm:px-2 sm:py-1 rounded-xl border transition-all flex items-center gap-1 text-[11px] font-bold select-none ${
+                  autoSpeak 
+                    ? 'bg-emerald-500/25 text-emerald-200 hover:bg-emerald-500/35 border-emerald-400/40' 
+                    : 'bg-white/10 text-white/50 hover:bg-white/20 border-white/10'
+                }`}
+                title={autoSpeak 
+                  ? (lang === 'hi' ? 'स्वतः आवाज़ चालू है (Auto-Speak ON)' : 'Auto-Speak ON')
+                  : (lang === 'hi' ? 'स्वतः आवाज़ बंद है (Auto-Speak OFF)' : 'Auto-Speak OFF')
+                }
+                aria-label="Toggle Auto-Speak"
+              >
+                {autoSpeak ? (
+                  <>
+                    <Volume2 className="w-4 h-4 text-emerald-300 stroke-[2.4]" />
+                    <span className="hidden sm:inline">बोलें ON</span>
+                  </>
+                ) : (
+                  <>
+                    <VolumeX className="w-4 h-4 text-white/50 stroke-[2.2]" />
+                    <span className="hidden sm:inline">म्यूट</span>
+                  </>
+                )}
+              </button>
+
               <button
                 onClick={handleClearChat}
                 className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors"
@@ -424,7 +495,10 @@ export default function AICropDoctor() {
                 <Trash2 className="w-4 h-4" />
               </button>
               <button
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  stopSpeech();
+                  setOpen(false);
+                }}
                 className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
                 aria-label="Close Chat"
               >
@@ -482,10 +556,10 @@ export default function AICropDoctor() {
                     </div>
                   )}
                 </div>
-                {/* Speaker button — only for AI replies */}
+                {/* Speaker button — only for AI replies with clear label */}
                 {msg.role !== 'user' && !msg.isStreaming && msg.content && (
-                  <div className="mt-1 ml-1">
-                    <SpeakerButton text={msg.content} iconSize={13} />
+                  <div className="mt-1.5 ml-1 flex items-center gap-2">
+                    <SpeakerButton text={msg.content} showLabel iconSize={13} />
                   </div>
                 )}
               </div>
@@ -549,7 +623,10 @@ export default function AICropDoctor() {
 
             <VoiceMicButton
               currentValue={input}
-              onTranscript={(text) => setInput(text)}
+              onTranscript={(text) => {
+                setInput(text);
+                shouldAutoSpeakRef.current = true;
+              }}
             />
 
             <button
