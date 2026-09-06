@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { GeminiVisionLiveService } from '@/services/GeminiVisionLiveService';
+import type { LanguageCode } from '@/lib/i18n';
 
 type Message = { 
   role: 'user' | 'assistant'; 
@@ -14,38 +15,6 @@ type Message = {
   timestamp?: string;
   isStreaming?: boolean;
 };
-
-type GeminiPart = { text?: string; inline_data?: { mime_type: string; data: string } };
-
-const GEMINI_MODELS = [
-  'gemini-3.5-flash',
-  'gemini-3.6-flash',
-  'gemini-3.7-flash',
-  'gemini-1.5-flash',
-];
-
-function getLanguageName(language: string): string {
-  const map: Record<string, string> = {
-    en: 'English', hi: 'Hindi', mr: 'Marathi', bn: 'Bengali',
-    ta: 'Tamil', te: 'Telugu', gu: 'Gujarati', pa: 'Punjabi',
-  };
-  return map[language] || 'Hindi';
-}
-
-type GeminiResponse = { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
-
-function extractGeminiReply(data: unknown): string | null {
-  const candidates = (data as GeminiResponse)?.candidates ?? [];
-  for (const candidate of candidates) {
-    const parts = candidate?.content?.parts ?? [];
-    const textChunks = parts
-      .filter((p) => typeof p?.text === 'string')
-      .map((p) => p.text as string)
-      .filter(Boolean);
-    if (textChunks.length > 0) return textChunks.join('\n');
-  }
-  return null;
-}
 
 /**
  * Intelligent In-House ICAR Senior Agronomist Knowledge Engine (Offline Fallback)
