@@ -21,7 +21,7 @@ export default function Footer({ onNavigate }: FooterProps) {
 
   return (
     <footer className="bg-white/95 backdrop-blur-xl border-t border-stone-200/90 mt-14 pb-24 md:pb-8 shadow-xs relative z-10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 mb-8">
           
           {/* 1. Brand & Mission Statement (4 Columns) */}

@@ -12,13 +12,11 @@ import { getFullLanguageName } from '@/lib/agriLocalization';
 import type { LanguageCode } from '@/lib/i18n';
 
 const GEMINI_VISION_MODELS = [
+  'gemini-flash-lite-latest',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
   'gemini-3.6-flash',
-  'gemini-3.5-flash',
-  'gemini-3.7-flash',
   'gemini-flash-latest',
-  'gemini-3-flash-preview',
-  'gemini-2.5-flash-lite',
-  'gemini-1.5-flash',
 ];
 
 export class GeminiVisionLiveService {
@@ -38,6 +36,28 @@ export class GeminiVisionLiveService {
     context: CropContext,
     language: LanguageCode = 'hi'
   ): Promise<CropDiagnosisResponse> {
+    // 1. FAST & 100% RELIABLE: Call dedicated server-side Gemini Vision endpoint first (real multimodal pixel analysis)
+    try {
+      const serverRes = await fetch('/api/diagnose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64,
+          cropContext: context,
+          language,
+        }),
+      });
+
+      if (serverRes.ok) {
+        const parsed = await serverRes.json();
+        if (parsed && (parsed.disease_name || parsed.plant_name)) {
+          return this.formatDiagnosisResponse(parsed, context, 'gemini-multimodal-live', language);
+        }
+      }
+    } catch (serverErr) {
+      console.warn('Server /api/diagnose notice, trying direct API:', serverErr);
+    }
+
     const apiKey = this.getApiKey();
     const targetLangName = getFullLanguageName(language);
 

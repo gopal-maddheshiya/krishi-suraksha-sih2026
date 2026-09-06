@@ -87,17 +87,17 @@ export default function VisualFeatures({ onNavigate }: VisualFeaturesProps) {
   ];
 
   return (
-    <section className="py-14 sm:py-20 bg-gray-50/70 border-t border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-12 sm:py-16 bg-white/80 backdrop-blur-xl rounded-3xl border border-stone-200/60 shadow-[0_4px_30px_rgba(0,0,0,0.03)] overflow-hidden">
+      <div className="w-full px-5 sm:px-8 lg:px-10">
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
             {lang === 'hi'
               ? 'किसानों व कृषि अधिकारियों के लिए सम्पूर्ण तकनीकी समाधान'
               : lang === 'mr'
               ? 'शेतकरी व कृषी अधिकाऱ्यांसाठी परिपूर्ण तांत्रिक प्रणाली'
               : 'Complete Farm-to-Gov Surveillance & Management Suite'}
           </h2>
-          <p className="text-base sm:text-lg text-gray-600 mt-3">
+          <p className="text-sm sm:text-base text-stone-600 mt-3">
             {lang === 'hi'
               ? 'आधुनिक AI, IoT सेंसर, सैटेलाइट हीटमैप और कृषि वैज्ञानिकों की विशेषज्ञता का संगम।'
               : lang === 'mr'
@@ -114,10 +114,10 @@ export default function VisualFeatures({ onNavigate }: VisualFeaturesProps) {
               <div
                 key={feat.id}
                 onClick={() => onNavigate(feat.action)}
-                className="group relative bg-white rounded-3xl overflow-hidden border border-gray-200/90 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer flex flex-col"
+                className="group relative bg-white rounded-3xl overflow-hidden border border-stone-200/60 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col"
               >
                 {/* Image */}
-                <div className="relative h-64 sm:h-72 w-full overflow-hidden bg-gray-900">
+                <div className="relative h-64 sm:h-72 w-full overflow-hidden bg-stone-900">
                   <img
                     src={feat.image}
                     alt={feat.title}
@@ -166,23 +166,23 @@ export default function VisualFeatures({ onNavigate }: VisualFeaturesProps) {
               <div
                 key={i}
                 onClick={() => onNavigate(pillar.action)}
-                className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-200/80 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all cursor-pointer group flex flex-col justify-between"
+                className="bg-stone-50/70 p-5 sm:p-6 rounded-3xl border border-stone-200/60 shadow-2xs hover:shadow-md hover:border-emerald-400/50 transition-all duration-200 cursor-pointer group flex flex-col justify-between"
               >
                 <div>
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${pillar.color} transition-transform group-hover:scale-110`}>
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 ${pillar.color} transition-transform group-hover:scale-110`}>
                     <Icon className="w-6 h-6" />
                   </div>
-                  <h4 className="font-bold text-gray-900 text-base mb-2 group-hover:text-emerald-700 transition-colors">
+                  <h4 className="font-bold text-stone-900 text-base mb-2 group-hover:text-emerald-700 transition-colors">
                     {pillar.title}
                   </h4>
-                  <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-stone-600 leading-relaxed font-medium">
                     {pillar.desc}
                   </p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                <div className="mt-4 pt-3 border-t border-stone-200/50 flex items-center gap-1 text-xs font-black text-emerald-800">
                   <span>{lang === 'hi' ? 'खोलें' : lang === 'mr' ? 'उघडा' : 'Open'}</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
+                  <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </div>
               </div>
             );

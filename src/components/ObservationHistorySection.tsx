@@ -5,9 +5,8 @@ import {
   Sprout, X, ShieldCheck, UserCheck 
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
-import { ObservationService } from '@/services/ObservationService';
+import { ObservationService, DEFAULT_FARMER_OBSERVATIONS, type CropObservationEntity } from '@/services/ObservationService';
 import { useFarmContext } from '@/contexts/FarmContext';
-import type { CropObservationEntity } from '@/services/ObservationService';
 import { getLocalizedCropName } from '@/lib/agriLocalization';
 
 type ObservationHistoryProps = {
@@ -21,8 +20,8 @@ export default function ObservationHistorySection({
 }: ObservationHistoryProps) {
   const { lang, t } = useLang();
   const { currentUser } = useFarmContext();
-  const [observations, setObservations] = useState<CropObservationEntity[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [observations, setObservations] = useState<CropObservationEntity[]>(DEFAULT_FARMER_OBSERVATIONS);
+  const [loading, setLoading] = useState(false);
   const [filterCrop, setFilterCrop] = useState<string>('all');
   const [selectedObs, setSelectedObs] = useState<CropObservationEntity | null>(null);
 

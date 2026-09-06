@@ -5,7 +5,7 @@ import {
   ChevronRight, MapPin, Sparkles, Sun, CheckCircle2,
   Calendar, Layers, ArrowDown, Activity, Leaf, Eye,
   Mic, Tractor, Plus, Check, ChevronDown, Clock, Shield,
-  Volume2
+  Volume2, AlertOctagon, Wifi
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { useFarmContext } from '@/contexts/FarmContext';
@@ -414,7 +414,7 @@ export default function Hero({ onNavigate, onOpenOnboarding }: HeroProps) {
   return (
     <section 
       aria-label="Farm Overview & Hero Command Center"
-      className="relative bg-white/95 backdrop-blur-md rounded-3xl border border-stone-200/90 shadow-sm overflow-hidden"
+      className="relative bg-white/90 backdrop-blur-xl rounded-3xl border border-stone-200/60 shadow-[0_4px_30px_rgba(0,0,0,0.03)] overflow-hidden"
     >
       {/* Hidden Camera / File Input for 1-Tap Direct Scan */}
       <input
@@ -430,7 +430,7 @@ export default function Hero({ onNavigate, onOpenOnboarding }: HeroProps) {
       <div className="absolute top-0 right-0 w-96 h-96 bg-radial from-emerald-100/40 via-teal-50/20 to-transparent pointer-events-none rounded-full blur-2xl -mr-20 -mt-20" />
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-radial from-amber-100/20 via-transparent to-transparent pointer-events-none rounded-full blur-xl -ml-16 -mb-16" />
 
-      <div className="relative p-4 sm:p-6 lg:p-7 space-y-5 sm:space-y-6">
+      <div className="relative p-3.5 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
 
         {/* ============================================================= */}
         {/* 1. TOP UNIFIED COMMAND BAR: GREETING + PLOT SWITCHER          */}
@@ -528,23 +528,31 @@ export default function Hero({ onNavigate, onOpenOnboarding }: HeroProps) {
         </div>
 
         {/* ============================================================= */}
-        {/* 2. MAIN GRID: CROP PASSPORT (LEFT) + REAL DIAGNOSTIC (RIGHT)  */}
+        {/* 2. MAIN GRID: CROP PASSPORT (LEFT) + CLEAN VISUAL CARD (RIGHT)*/}
         {/* ============================================================= */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-7 items-center">
 
-          {/* LEFT: Live Health Passport & Actions */}
-          <div className="lg:col-span-7 space-y-4 sm:space-y-5">
+          {/* LEFT: Live Health Passport & Primary Actions */}
+          <div className="lg:col-span-7 space-y-4">
             
-            {/* National AI Shield Header */}
+            {/* Passport Header */}
             <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-emerald-900 bg-emerald-100/80 px-3 py-1 rounded-full border border-emerald-200/80 mb-2">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
-                <span>{lang === 'hi' ? 'लाइव फसल स्वास्थ्य पासपोर्ट' : 'Live Crop Health Passport'}</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+              <div className="flex items-center gap-2 flex-wrap mb-2">
+                <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-emerald-900 bg-emerald-100/80 px-3 py-1 rounded-full border border-emerald-200/80">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>{lang === 'hi' ? 'डिजिटल फसल स्वास्थ्य पासपोर्ट' : 'Digital Crop Health Passport'}</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                </div>
+
+                {/* Reassuring Offline Field Guarantee Badge */}
+                <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-stone-700 bg-stone-100/90 px-2.5 py-1 rounded-full border border-stone-200 shadow-2xs">
+                  <Wifi className="w-3 h-3 text-emerald-600" />
+                  <span>{lang === 'hi' ? '📶 100% ऑफलाइन रेडी: नेटवर्क न होने पर भी सुरक्षित' : '📶 100% Offline Ready: Records Safe'}</span>
+                </div>
               </div>
               
               <div className="flex items-baseline gap-3 flex-wrap">
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-stone-900 tracking-tight leading-none">
+                <h1 className="text-3xl sm:text-4xl font-black text-stone-900 tracking-tight leading-none">
                   {cropName}
                 </h1>
                 <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-700 text-xs font-bold border border-stone-200">
@@ -553,26 +561,26 @@ export default function Hero({ onNavigate, onOpenOnboarding }: HeroProps) {
               </div>
             </div>
 
-            {/* Phenological Stage Progress Bar (फसल विकास चक्र) */}
-            <div className="p-3 rounded-2xl bg-stone-50/90 border border-stone-200/80 space-y-1.5">
+            {/* Growth Stage Stepper */}
+            <div className="p-3.5 rounded-2xl bg-stone-50/70 border border-stone-200/50 space-y-2">
               <div className="flex items-center justify-between text-[11px] font-bold text-stone-500">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-emerald-700" />
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-emerald-700" />
                   <span>{lang === 'hi' ? 'विकास अवस्था (Growth Stage)' : 'Growth Stage'}</span>
                 </span>
                 <span className="text-emerald-800 font-extrabold">{cropStage}</span>
               </div>
-              <div className="grid grid-cols-4 gap-1.5 pt-1">
+              <div className="grid grid-cols-4 gap-2 pt-0.5">
                 {stages.map((st, idx) => (
-                  <div key={idx} className="space-y-1">
+                  <div key={idx} className="space-y-1.5">
                     <div className={`h-1.5 rounded-full transition-all ${
                       st.done 
                         ? 'bg-emerald-600' 
                         : st.active 
                         ? 'bg-emerald-500 animate-pulse' 
-                        : 'bg-stone-200'
+                        : 'bg-stone-200/70'
                     }`} />
-                    <div className={`text-[9.5px] truncate font-bold ${
+                    <div className={`text-[10px] truncate font-bold ${
                       st.active ? 'text-emerald-800 font-black' : 'text-stone-400'
                     }`}>
                       {st.label}
@@ -585,15 +593,15 @@ export default function Hero({ onNavigate, onOpenOnboarding }: HeroProps) {
             {/* AI Crop Health Condition Card */}
             <div 
               role="status" 
-              className={`p-3.5 sm:p-4 rounded-2xl border transition-all ${
+              className={`p-4 sm:p-5 rounded-2xl border transition-all ${
                 statusTone === 'urgent' 
-                  ? 'bg-rose-50/90 border-rose-200/90 text-rose-950' 
+                  ? 'bg-rose-50/70 border-rose-200/70 text-rose-950' 
                   : statusTone === 'attention' 
-                  ? 'bg-amber-50/90 border-amber-200/90 text-amber-950' 
-                  : 'bg-emerald-50/90 border-emerald-200/90 text-emerald-950'
+                  ? 'bg-amber-50/70 border-amber-200/70 text-amber-950' 
+                  : 'bg-emerald-50/70 border-emerald-200/70 text-emerald-950'
               }`}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3.5">
                 
                 {/* Health Score Ring Badge */}
                 <div className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center flex-shrink-0 shadow-2xs font-black text-white ${
@@ -604,7 +612,7 @@ export default function Hero({ onNavigate, onOpenOnboarding }: HeroProps) {
                     : 'bg-emerald-700'
                 }`}>
                   <span className="text-base leading-none">{healthScore}%</span>
-                  <span className="text-[8px] uppercase tracking-tighter opacity-90">Health</span>
+                  <span className="text-[8px] uppercase tracking-tighter opacity-90">Score</span>
                 </div>
 
                 <div className="min-w-0 flex-1">
@@ -615,10 +623,10 @@ export default function Hero({ onNavigate, onOpenOnboarding }: HeroProps) {
                   <p className="text-xs mt-0.5 opacity-90 font-medium leading-relaxed">
                     {statusDetail}
                   </p>
-                  <div className="text-[11px] text-stone-500 font-bold mt-1.5 flex items-center gap-2 pt-1.5 border-t border-black/5 flex-wrap">
-                    <span>🌱 NDVI: 0.74 (सशक्त बायोमास)</span>
+                  <div className="text-[11px] text-stone-600 font-bold mt-2 flex items-center gap-3 pt-2 border-t border-black/5 flex-wrap">
+                    <span className="flex items-center gap-1">🌱 <span>NDVI: 0.82 ({lang === 'hi' ? 'स्वस्थ बायोमास' : 'Healthy Biomass'})</span></span>
                     <span>•</span>
-                    <span>💧 नमी: 34% (संतोषजनक)</span>
+                    <span className="flex items-center gap-1">💧 <span>{lang === 'hi' ? 'मिट्टी नमी: 38% (पर्याप्त)' : 'Soil Moisture: 38% (Adequate)'}</span></span>
                   </div>
                 </div>
 
@@ -626,7 +634,7 @@ export default function Hero({ onNavigate, onOpenOnboarding }: HeroProps) {
             </div>
 
             {/* Interactive Primary Action Buttons */}
-            <div className="relative flex items-center gap-3 flex-wrap pt-1">
+            <div className="flex items-center gap-3 flex-wrap pt-1">
               
               {/* Primary: Direct Camera / Scanner Scan */}
               <button
@@ -635,32 +643,46 @@ export default function Hero({ onNavigate, onOpenOnboarding }: HeroProps) {
                 className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-800 via-emerald-800 to-teal-900 hover:from-emerald-900 hover:to-teal-950 text-white font-black text-sm sm:text-base shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2.5 active:scale-[0.98] ring-4 ring-emerald-600/20 group"
               >
                 <Camera className="w-5 h-5 stroke-[2.4] group-hover:scale-110 transition-transform" />
-                <span>{lang === 'hi' ? 'फसल जांचें (AI Doctor)' : 'Scan Crop (AI Doctor)'}</span>
+                <span>{lang === 'hi' ? 'बीमार पत्ती स्कैन करें (AI Doctor)' : 'Scan Crop (AI Doctor)'}</span>
                 <ArrowDown className="w-4 h-4 opacity-70 group-hover:translate-y-0.5 transition-transform" />
               </button>
 
-              {/* Secondary: 1-Tap DIRECT Mic Speech-to-Text Button (सीधा माइक ओपन) */}
+              {/* Secondary: 1-Tap DIRECT Mic Speech-to-Text Button (Very Clear for Farmers) */}
               <div className="relative">
                 <button
+                  id="tour-voice-btn"
                   type="button"
                   onClick={handleDirectMicQuery}
-                  className={`px-4 py-3.5 rounded-2xl border font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2.5 active:scale-[0.98] select-none ${
+                  className={`px-5 py-3.5 rounded-2xl border font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2.5 active:scale-[0.98] select-none shadow-2xs cursor-pointer ${
                     isVoiceListening
                       ? 'bg-rose-600 text-white border-rose-500 shadow-lg shadow-rose-600/30 ring-4 ring-rose-400/40 animate-pulse'
-                      : 'bg-stone-50 hover:bg-stone-100 border-stone-200/90 text-stone-800 shadow-2xs hover:shadow-xs'
+                      : 'bg-emerald-50 hover:bg-emerald-100/90 border-emerald-200/90 text-emerald-950 hover:shadow-xs'
                   }`}
                   title={isVoiceListening ? 'बोलना बंद करें (Stop listening)' : 'माइक से बोलकर पूछें (Voice Query)'}
                 >
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                    isVoiceListening ? 'bg-white text-rose-600 animate-bounce' : 'bg-emerald-100 text-emerald-800'
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    isVoiceListening ? 'bg-white text-rose-600' : 'bg-emerald-700 text-white shadow-2xs'
                   }`}>
-                    <Mic className="w-3.5 h-3.5" />
+                    <Mic className="w-3.5 h-3.5 stroke-[2.4]" />
                   </div>
-                  <span>
-                    {isVoiceListening
-                      ? (lang === 'hi' ? 'सुन रहे हैं... बोलिए' : 'Listening... Speak now')
-                      : (lang === 'hi' ? 'बोलकर पूछें' : 'Voice Query')}
-                  </span>
+
+                  {isVoiceListening ? (
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-white text-xs sm:text-sm">
+                        {lang === 'hi' ? 'सुन रहे हैं... बोलिए' : 'Listening... Speak now'}
+                      </span>
+                      {/* Dynamic 5-Bar Soundwave Equalizer */}
+                      <div className="flex items-center gap-0.5 h-4">
+                        <span className="w-0.5 bg-white rounded-full animate-soundwave-1" />
+                        <span className="w-0.5 bg-white rounded-full animate-soundwave-2" />
+                        <span className="w-0.5 bg-white rounded-full animate-soundwave-3" />
+                        <span className="w-0.5 bg-white rounded-full animate-soundwave-4" />
+                        <span className="w-0.5 bg-white rounded-full animate-soundwave-5" />
+                      </div>
+                    </div>
+                  ) : (
+                    <span>{lang === 'hi' ? '🎙️ बोलकर अपनी समस्या बताएं' : lang === 'mr' ? '🎙️ बोलून समस्या सांगा' : '🎙️ Ask by Voice (AI)'}</span>
+                  )}
                 </button>
 
                 {/* Floating Live Speech Feedback Toast */}
@@ -671,6 +693,17 @@ export default function Hero({ onNavigate, onOpenOnboarding }: HeroProps) {
                   </div>
                 )}
               </div>
+
+              {/* 🚨 24h Crop Emergency First-Aid Button */}
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('open-crop-emergency'))}
+                className="px-4 py-3.5 rounded-2xl bg-rose-50 hover:bg-rose-100/90 border border-rose-200/90 text-rose-950 font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-2xs cursor-pointer group"
+                title="टिड्डी दल, फॉल आर्मीवर्म या उकठा रोग के लिए 24 घंटे की आपातकालीन सहायता"
+              >
+                <AlertOctagon className="w-4 h-4 text-rose-600 animate-pulse group-hover:rotate-12 transition-transform" />
+                <span>{lang === 'hi' ? '🚨 आपातकालीन सहायता (24h)' : lang === 'mr' ? '🚨 आपत्कालीन मदत (24h)' : '🚨 Crop Emergency (24h)'}</span>
+              </button>
 
               {/* Tertiary: Agro Stores & Centers */}
               <button
@@ -686,34 +719,40 @@ export default function Hero({ onNavigate, onOpenOnboarding }: HeroProps) {
 
           </div>
 
-          {/* RIGHT: High-Tech Diagnostic Preview & Precision Spray Advisory */}
+          {/* RIGHT: Clean, High-Impact Agronomy Card (NO STICKER CLUTTER) */}
           <div className="lg:col-span-5">
-            <div className="rounded-[28px] border border-stone-200/90 shadow-md hover:shadow-lg transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[320px] group bg-stone-950">
+            <div className="rounded-3xl border border-stone-200/60 shadow-md hover:shadow-xl transition-all duration-500 relative overflow-hidden flex flex-col justify-between min-h-[360px] lg:min-h-[410px] group bg-stone-950">
               
-              {/* Actual Background Photo of Recent Crop Leaf */}
+              {/* Clean Farmland / Crop Photo */}
               <img 
                 src={cropImageUrl} 
                 alt={cropName} 
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90" 
               />
 
-              {/* Natural Gradient Layer for High Contrast */}
+              {/* Dark Gradient Overlay for Crisp Text Contrast */}
               <div className="absolute inset-0 bg-gradient-to-t from-stone-950/95 via-stone-950/30 to-stone-950/50 pointer-events-none" />
 
-              {/* Top Meta Badges (Floating Pills) */}
-              <div className="flex items-center justify-between p-3.5 z-10">
+              {/* Top Row: Clean Single Bar (No Random Pills) */}
+              <div className="flex items-center justify-between p-4 z-10">
                 <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5 bg-emerald-900/85 backdrop-blur-md px-3 py-1.5 rounded-full border border-emerald-400/30 shadow-md">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
-                  <span>{getCommonLabel('recentScan', lang)}</span>
+                  <span>{lang === 'hi' ? 'ICAR सत्यापित डायग्नोसिस' : 'ICAR Verified Diagnosis'}</span>
                 </span>
-                <span className="text-[11px] font-black text-emerald-200 bg-stone-950/70 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 shadow-md">
-                  ICAR Verified
-                </span>
+
+                {/* Subtle Geospatial Radar Indicator */}
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-stone-950/80 backdrop-blur-md border border-emerald-500/30 text-[10px] font-bold text-emerald-300 shadow-md">
+                  <div className="relative w-3.5 h-3.5 rounded-full border border-emerald-400/40 flex items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-emerald-400/50 to-transparent animate-radar-sweep" />
+                    <div className="w-1 h-1 rounded-full bg-emerald-400" />
+                  </div>
+                  <span>Bhuvan GIS</span>
+                </div>
               </div>
 
-              {/* Bottom Integrated Glassmorphism Advisory Card */}
-              <div className="p-3.5 z-10">
-                <div className="p-3.5 rounded-2xl bg-stone-950/80 backdrop-blur-xl border border-white/15 shadow-xl space-y-2.5">
+              {/* Bottom Integrated Glassmorphic Status Bar */}
+              <div className="p-4 z-10">
+                <div className="p-4 rounded-2xl bg-stone-950/85 backdrop-blur-xl border border-white/15 shadow-xl space-y-2.5">
                   
                   {/* Crop Title & Disease Indicator */}
                   <div>
@@ -734,13 +773,13 @@ export default function Hero({ onNavigate, onOpenOnboarding }: HeroProps) {
                       </span>
                       <span className="font-black text-emerald-300 flex items-center gap-1 text-xs">
                         <Activity className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>{isSafeSpray ? '4:00 PM – 7:30 PM' : 'Postpone Spray'}</span>
+                        <span>{isSafeSpray ? '9:00 AM – 11:30 AM' : (lang === 'hi' ? 'छिड़काव टालें' : 'Postpone Spray')}</span>
                       </span>
                     </div>
                     <div className="text-[10.5px] text-stone-400 font-medium leading-tight">
                       {isSafeSpray
-                        ? (lang === 'hi' ? 'हवा की गति कम (11 km/h) • वर्षा की 0% संभावना' : 'Low wind & 0% rain probability.')
-                        : (lang === 'hi' ? 'उच्च नमी या वर्षा की संभावना, छिड़काव टालें।' : 'Unfavorable weather for spraying.')}
+                        ? (lang === 'hi' ? 'हवा की गति 11 km/h (अनुकूल) • वर्षा की 0% संभावना' : 'Low wind (11 km/h) & 0% rain probability.')
+                        : (lang === 'hi' ? 'उच्च नमी या वर्षा की संभावना, दवा बहने का खतरा।' : 'Unfavorable weather for spraying.')}
                     </div>
                   </div>
 
@@ -755,83 +794,83 @@ export default function Hero({ onNavigate, onOpenOnboarding }: HeroProps) {
         {/* ============================================================= */}
         {/* 3. SLEEK INTEGRATED WEATHER & MICROCLIMATE BAR               */}
         {/* ============================================================= */}
-        <div className="pt-3 border-t border-stone-100/90">
-          <div className="flex items-center justify-between mb-2 px-0.5">
-            <div className="flex items-center gap-1.5">
+        <div className="pt-4 border-t border-stone-100">
+          <div className="flex items-center justify-between mb-3 px-1">
+            <div className="flex items-center gap-2">
               <Sun className="w-4 h-4 text-amber-600 stroke-[2.2]" />
-              <span className="text-xs font-bold text-stone-700 tracking-tight">
-                {t('home_weather_today') || (lang === 'hi' ? 'खेत का आज का मौसम' : 'Field Weather Today')}
+              <span className="text-xs font-black text-stone-800 tracking-tight uppercase">
+                {lang === 'hi' ? 'खेत का आज का मौसम व माइक्रो-क्लाइमेट' : 'Field Weather & Microclimate'}
               </span>
             </div>
             
             <button
               type="button"
               onClick={() => onNavigate('weather')}
-              className="text-xs font-black text-emerald-800 hover:text-emerald-950 flex items-center gap-0.5 transition-colors"
+              className="text-xs font-black text-emerald-800 hover:text-emerald-950 flex items-center gap-1 transition-colors group"
             >
-              <span>{t('home_view_forecast') || (lang === 'hi' ? '7-दिवसीय पूर्वानुमान देखें' : '7-Day Forecast')}</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <span>{lang === 'hi' ? '7-दिवसीय पूर्वानुमान देखें' : '7-Day Forecast'}</span>
+              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             
             {/* Temperature */}
-            <div className="px-3 py-2 rounded-xl bg-stone-50 hover:bg-stone-100/80 border border-stone-200/70 shadow-2xs flex items-center gap-2.5 transition-all">
-              <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-700 flex items-center justify-center flex-shrink-0">
-                <Thermometer className="w-3.5 h-3.5 stroke-[2.2]" />
+            <div className="px-4 py-3 rounded-2xl bg-white/70 hover:bg-white border border-stone-200/60 backdrop-blur-sm shadow-2xs hover:shadow-xs flex items-center gap-3 transition-all">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-700 flex items-center justify-center flex-shrink-0">
+                <Thermometer className="w-4 h-4 stroke-[2.2]" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-black text-stone-900 leading-none">
+                <div className="text-base font-black text-stone-900 leading-none">
                   {temp}°C
                 </div>
-                <div className="text-[9.5px] text-stone-500 font-bold uppercase tracking-wide mt-0.5 truncate">
-                  {t('home_weather_temp') || 'Temp'}
+                <div className="text-[10px] text-stone-500 font-bold uppercase tracking-wider mt-1 truncate">
+                  {lang === 'hi' ? 'तापमान (Temp)' : 'Temperature'}
                 </div>
               </div>
             </div>
 
             {/* Humidity */}
-            <div className="px-3 py-2 rounded-xl bg-stone-50 hover:bg-stone-100/80 border border-stone-200/70 shadow-2xs flex items-center gap-2.5 transition-all">
-              <div className="w-7 h-7 rounded-lg bg-sky-500/10 text-sky-700 flex items-center justify-center flex-shrink-0">
-                <Droplets className="w-3.5 h-3.5 stroke-[2.2]" />
+            <div className="px-4 py-3 rounded-2xl bg-white/70 hover:bg-white border border-stone-200/60 backdrop-blur-sm shadow-2xs hover:shadow-xs flex items-center gap-3 transition-all">
+              <div className="w-9 h-9 rounded-xl bg-sky-500/10 text-sky-700 flex items-center justify-center flex-shrink-0">
+                <Droplets className="w-4 h-4 stroke-[2.2]" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-black text-stone-900 leading-none">
+                <div className="text-base font-black text-stone-900 leading-none">
                   {humidity}%
                 </div>
-                <div className="text-[9.5px] text-stone-500 font-bold uppercase tracking-wide mt-0.5 truncate">
-                  {t('home_weather_humidity') || 'Humidity'}
+                <div className="text-[10px] text-stone-500 font-bold uppercase tracking-wider mt-1 truncate">
+                  {lang === 'hi' ? 'नमी (Humidity)' : 'Humidity'}
                 </div>
               </div>
             </div>
 
             {/* Rain Status */}
-            <div className="px-3 py-2 rounded-xl bg-stone-50 hover:bg-stone-100/80 border border-stone-200/70 shadow-2xs flex items-center gap-2.5 transition-all">
-              <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-700 flex items-center justify-center flex-shrink-0">
-                <CloudRain className="w-3.5 h-3.5 stroke-[2.2]" />
+            <div className="px-4 py-3 rounded-2xl bg-white/70 hover:bg-white border border-stone-200/60 backdrop-blur-sm shadow-2xs hover:shadow-xs flex items-center gap-3 transition-all">
+              <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-700 flex items-center justify-center flex-shrink-0">
+                <CloudRain className="w-4 h-4 stroke-[2.2]" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-black text-stone-900 leading-none truncate">
+                <div className="text-base font-black text-stone-900 leading-none truncate">
                   {rainLabel}
                 </div>
-                <div className="text-[9.5px] text-stone-500 font-bold uppercase tracking-wide mt-0.5 truncate">
-                  {t('home_weather_rain') || 'Rain'}
+                <div className="text-[10px] text-stone-500 font-bold uppercase tracking-wider mt-1 truncate">
+                  {lang === 'hi' ? 'बारिश (Rain)' : 'Rain Status'}
                 </div>
               </div>
             </div>
 
             {/* Wind */}
-            <div className="px-3 py-2 rounded-xl bg-stone-50 hover:bg-stone-100/80 border border-stone-200/70 shadow-2xs flex items-center gap-2.5 transition-all">
-              <div className="w-7 h-7 rounded-lg bg-teal-500/10 text-teal-700 flex items-center justify-center flex-shrink-0">
-                <Wind className="w-3.5 h-3.5 stroke-[2.2]" />
+            <div className="px-4 py-3 rounded-2xl bg-white/70 hover:bg-white border border-stone-200/60 backdrop-blur-sm shadow-2xs hover:shadow-xs flex items-center gap-3 transition-all">
+              <div className="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-700 flex items-center justify-center flex-shrink-0">
+                <Wind className="w-4 h-4 stroke-[2.2]" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-black text-stone-900 leading-none">
-                  {windKph} {t('home_kph') || 'km/h'}
+                <div className="text-base font-black text-stone-900 leading-none">
+                  {windKph} {lang === 'hi' ? 'किमी/घं' : 'km/h'}
                 </div>
-                <div className="text-[9.5px] text-stone-500 font-bold uppercase tracking-wide mt-0.5 truncate">
-                  {t('home_weather_wind') || 'Wind'}
+                <div className="text-[10px] text-stone-500 font-bold uppercase tracking-wider mt-1 truncate">
+                  {lang === 'hi' ? 'हवा (Wind)' : 'Wind Speed'}
                 </div>
               </div>
             </div>

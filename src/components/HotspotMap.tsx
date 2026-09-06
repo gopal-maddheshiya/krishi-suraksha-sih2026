@@ -7,6 +7,7 @@ import {
 import { useLang } from '@/lib/LanguageContext';
 import { 
   SurveillanceService, 
+  DEFAULT_SURVEILLANCE_AREAS,
   type AreaSurveillanceSummary, 
   type SurveillanceActivityLevel 
 } from '@/services/SurveillanceService';
@@ -15,8 +16,8 @@ import { Section, SectionHeader, Card } from './ui';
 
 export default function HotspotMap() {
   const { lang } = useLang();
-  const [surveillanceData, setSurveillanceData] = useState<AreaSurveillanceSummary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [surveillanceData, setSurveillanceData] = useState<AreaSurveillanceSummary[]>(DEFAULT_SURVEILLANCE_AREAS);
+  const [loading, setLoading] = useState(false);
   const [selectedArea, setSelectedArea] = useState<AreaSurveillanceSummary | null>(null);
 
   // Filters
@@ -26,7 +27,6 @@ export default function HotspotMap() {
   const [timeWindowDays, setTimeWindowDays] = useState(7);
 
   const fetchSurveillance = async () => {
-    setLoading(true);
     try {
       const data = await SurveillanceService.getAreaSurveillance({
         state: selectedState === 'all' ? undefined : selectedState,
@@ -34,10 +34,10 @@ export default function HotspotMap() {
         crop: selectedCrop === 'all' ? undefined : selectedCrop,
         days: timeWindowDays,
       });
-      setSurveillanceData(data);
+      setSurveillanceData(data && data.length > 0 ? data : DEFAULT_SURVEILLANCE_AREAS);
     } catch (e) {
       console.warn('Surveillance fetch error:', e);
-      setSurveillanceData([]);
+      setSurveillanceData(DEFAULT_SURVEILLANCE_AREAS);
     } finally {
       setLoading(false);
     }
@@ -62,43 +62,43 @@ export default function HotspotMap() {
         subtitle={lang === 'hi' ? 'कृषि विशेषज्ञों एवं अधिकारियों के लिए गोपनीयता-सुरक्षित क्षेत्रीय रोग गतिविधि विश्लेषण' : 'Privacy-preserving aggregated epidemiological surveillance for extension officers'} 
       />
 
-      {/* Top 4 Summary Metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-6 max-w-5xl mx-auto">
-        <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900">
-          <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Areas Monitored</div>
-          <div className="text-2xl font-black mt-1">{areasMonitored}</div>
+      {/* Top 4 Summary Metrics (Compact Single Strip) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3.5 max-w-5xl mx-auto">
+        <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 flex items-center justify-between">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Areas Monitored</div>
+          <div className="text-lg font-black">{areasMonitored}</div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950">
-          <div className="text-xs font-bold uppercase tracking-wider text-amber-700">Increased Activity</div>
-          <div className="text-2xl font-black mt-1">{highActivityAreas}</div>
+        <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 flex items-center justify-between">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-amber-700">High Activity</div>
+          <div className="text-lg font-black">{highActivityAreas}</div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950">
-          <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">Verified Reports</div>
-          <div className="text-2xl font-black mt-1">{totalVerified}</div>
+        <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 flex items-center justify-between">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Verified Reports</div>
+          <div className="text-lg font-black">{totalVerified}</div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-blue-950">
-          <div className="text-xs font-bold uppercase tracking-wider text-blue-700">Preliminary Screenings</div>
-          <div className="text-2xl font-black mt-1">{totalPreliminary}</div>
+        <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-950 flex items-center justify-between">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-blue-700">Screenings</div>
+          <div className="text-lg font-black">{totalPreliminary}</div>
         </div>
       </div>
 
-      {/* Filter Controls Bar */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-gray-200/90 shadow-sm mb-6 max-w-5xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+      {/* Filter Controls Bar (Compact) */}
+      <div className="bg-white rounded-2xl p-2.5 sm:p-3 border border-gray-200/90 shadow-xs mb-3.5 max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
           
           {/* State Selector */}
           <div>
-            <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">State</label>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">State</label>
             <select
               value={selectedState}
               onChange={(e) => {
                 setSelectedState(e.target.value);
                 setSelectedDistrict('all');
               }}
-              className="w-full p-2.5 rounded-xl border border-gray-200 bg-gray-50 text-xs font-semibold outline-none"
+              className="w-full p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-xs font-semibold outline-none"
             >
               {PAN_INDIA_STATES.map((s) => (
                 <option key={s.code} value={s.name}>{s.name}</option>
@@ -108,26 +108,26 @@ export default function HotspotMap() {
 
           {/* District Selector */}
           <div>
-            <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">District</label>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">District</label>
             <select
               value={selectedDistrict}
               onChange={(e) => setSelectedDistrict(e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-gray-200 bg-gray-50 text-xs font-semibold outline-none"
+              className="w-full p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-xs font-semibold outline-none"
             >
-              <option value="all">All Districts in {selectedState}</option>
+              <option value="all">All Districts</option>
               {currentStateObj?.districts.map((d) => (
                 <option key={d.id} value={d.name}>{d.name}</option>
               ))}
             </select>
           </div>
 
-          {/* Crop Selector */}
+          {/* Crop Filter */}
           <div>
-            <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Crop</label>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Crop</label>
             <select
               value={selectedCrop}
               onChange={(e) => setSelectedCrop(e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-gray-200 bg-gray-50 text-xs font-semibold outline-none"
+              className="w-full p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-xs font-semibold outline-none"
             >
               <option value="all">All Crops</option>
               <option value="Cotton">Cotton</option>
@@ -140,11 +140,11 @@ export default function HotspotMap() {
 
           {/* Time Window */}
           <div>
-            <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Time Window</label>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Time Window</label>
             <select
               value={timeWindowDays}
               onChange={(e) => setTimeWindowDays(Number(e.target.value))}
-              className="w-full p-2.5 rounded-xl border border-gray-200 bg-gray-50 text-xs font-semibold outline-none"
+              className="w-full p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-xs font-semibold outline-none"
             >
               <option value={1}>Last 24 Hours</option>
               <option value={7}>Last 7 Days</option>

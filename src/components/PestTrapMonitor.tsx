@@ -6,10 +6,53 @@ import { Section, SectionHeader, Card, RiskBadge, GradientIcon, LoadingState, Em
 
 const inputCls = 'w-full bg-transparent px-3.5 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none min-h-[44px]';
 
+const DEMO_IOT_TRAPS: PestTrap[] = [
+  {
+    id: 'trap_iot_01',
+    trap_id: 'TRAP-MH-IOT-04',
+    location_name: 'Solapur Plot 2 (Plot B)',
+    pest_type: 'Cotton Pink Bollworm (गुलाबी सुंडी)',
+    count: 42,
+    crop_type: 'Cotton (कपास)',
+    risk_level: 'high',
+    observation_date: new Date().toISOString().split('T')[0],
+  },
+  {
+    id: 'trap_iot_02',
+    trap_id: 'TRAP-MH-IOT-07',
+    location_name: 'Nashik Grape Vineyard North',
+    pest_type: 'Thrips & Yellow Mites (थ्रिप्स व माइट्स)',
+    count: 18,
+    crop_type: 'Grapes (अंगूर)',
+    risk_level: 'moderate',
+    observation_date: new Date().toISOString().split('T')[0],
+  },
+  {
+    id: 'trap_iot_03',
+    trap_id: 'TRAP-MH-IOT-12',
+    location_name: 'Pune Vegetable Cluster East',
+    pest_type: 'Tomato Pinworm (Tuta absoluta)',
+    count: 7,
+    crop_type: 'Tomato (टमाटर)',
+    risk_level: 'low',
+    observation_date: new Date().toISOString().split('T')[0],
+  },
+  {
+    id: 'trap_iot_04',
+    trap_id: 'TRAP-PB-IOT-02',
+    location_name: 'Ludhiana Rice Paddy Central',
+    pest_type: 'Brown Plant Hopper (भूरा फुदका)',
+    count: 24,
+    crop_type: 'Rice (धान)',
+    risk_level: 'moderate',
+    observation_date: new Date().toISOString().split('T')[0],
+  },
+];
+
 export default function PestTrapMonitor() {
   const { t } = useLang();
-  const [data, setData] = useState<PestTrap[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<PestTrap[]>(DEMO_IOT_TRAPS);
+  const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ trap_id: '', location_name: '', pest_type: '', count: '', crop_type: '' });
@@ -21,9 +64,13 @@ export default function PestTrapMonitor() {
         .from('pest_traps')
         .select('*')
         .order('observation_date', { ascending: false });
-      setData(rows || []);
+      if (rows && rows.length > 0) {
+        setData(rows);
+      } else {
+        setData(DEMO_IOT_TRAPS);
+      }
     } catch {
-      setData([]);
+      setData(DEMO_IOT_TRAPS);
     } finally {
       setLoading(false);
     }

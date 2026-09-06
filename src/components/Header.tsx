@@ -211,6 +211,20 @@ export default function Header({ activeSection, onNavigate, onOpenAccount }: Hea
             {/* ========================================================= */}
             <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               
+              {/* ✨ SIH 2026 JURY 30-SECOND PITCH BUTTON */}
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('open-sih-jury-tour'))}
+                className="h-10 px-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs transition-all flex items-center gap-1.5 shadow-xs shadow-emerald-900/20 active:scale-95 group cursor-pointer border border-emerald-400/40"
+                title="हैकथॉन जजों के लिए 30-सेकंड फास्ट-ट्रैक लाइव डेमो (30s Fast Pitch Tour)"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-spin" style={{ animationDuration: '4s' }} />
+                <span className="font-extrabold tracking-tight">SIH 30s Pitch</span>
+                <span className="text-[9px] bg-amber-400 text-stone-950 font-black px-1.5 py-0.2 rounded-full uppercase hidden sm:inline">
+                  30s
+                </span>
+              </button>
+
               {/* Location Pill (Compact on wide screens, hidden on compact laptop to avoid squeeze) */}
               <div className="hidden 2xl:block">
                 <LocationBar compact />

@@ -13,9 +13,17 @@ import FarmerOnboardingModal from '@/components/FarmerOnboardingModal';
 import AccountProfileSection from '@/components/AccountProfileSection';
 import ObservationHistorySection from '@/components/ObservationHistorySection';
 import MobileBottomNav from '@/components/MobileBottomNav';
+import CropEmergencyModal from '@/components/CropEmergencyModal';
+import SIHJuryPitchTour from '@/components/SIHJuryPitchTour';
+import PMFBYClaimModal from '@/components/PMFBYClaimModal';
 import { DemoDataSeeder } from '@/services/DemoDataSeeder';
 import { WifiOff } from 'lucide-react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+
+import TodayDecisionLayer from '@/components/TodayDecisionLayer';
+import SampleScanDemo from '@/components/SampleScanDemo';
+import VisualFeatures from '@/components/VisualFeatures';
+import ImpactMetrics from '@/components/ImpactMetrics';
 
 const WeatherRisk = lazy(() => import('@/components/WeatherRisk'));
 const HotspotMap = lazy(() => import('@/components/HotspotMap'));
@@ -23,6 +31,7 @@ const AdvisoryList = lazy(() => import('@/components/AdvisoryList'));
 const ExpertValidationPanel = lazy(() => import('@/components/ExpertValidationPanel'));
 const Dashboard = lazy(() => import('@/components/Dashboard'));
 const MedicalMapSection = lazy(() => import('@/components/MedicalMapSection'));
+const PestTrapMonitor = lazy(() => import('@/components/PestTrapMonitor'));
 
 const SectionFallback = () => (
   <div className="py-20 flex flex-col items-center justify-center">
@@ -32,7 +41,7 @@ const SectionFallback = () => (
 );
 
 function OfflineBanner() {
-  const { t } = useLang();
+  const { lang } = useLang();
   const [online, setOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
 
   useEffect(() => {
@@ -48,9 +57,15 @@ function OfflineBanner() {
 
   if (online) return null;
   return (
-    <div className="bg-amber-100 text-amber-950 border-b border-amber-200 px-4 py-2.5 flex items-center justify-center gap-2 text-xs font-bold">
-      <WifiOff className="w-4 h-4 flex-shrink-0 text-amber-800" />
-      <span>You are currently in offline mode. Cached farm records and verified advisories remain accessible.</span>
+    <div className="bg-emerald-900 text-white border-b border-emerald-950 px-4 py-2 flex items-center justify-center gap-2.5 text-xs font-bold shadow-xs">
+      <WifiOff className="w-4 h-4 flex-shrink-0 text-amber-300" />
+      <span>
+        {lang === 'hi' 
+          ? '📶 आप अभी ऑफलाइन हैं • चिंता न करें! आपके सभी पुराने पर्चे, फसल रिकॉर्ड्स व आपातकालीन फर्स्ट-एड सुरक्षित उपलब्ध हैं।'
+          : lang === 'mr'
+          ? '📶 तुम्ही आता ऑफलाइन आहात • काळजी करू नका! जुनी औषधपत्रे व आपत्कालीन उपचार उपलब्ध आहेत.'
+          : '📶 Offline Mode Active • Cached prescriptions, farm records & emergency protocols are 100% accessible.'}
+      </span>
     </div>
   );
 }
@@ -58,6 +73,36 @@ function OfflineBanner() {
 function AppContent() {
   const [activeSection, setActiveSection] = useState('home');
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+  const [showJuryTour, setShowJuryTour] = useState(false);
+  const [pmfbyModal, setPmfbyModal] = useState<{ open: boolean; cropName?: string; diseaseName?: string }>({ open: false });
+
+  useEffect(() => {
+    const handleOpenEmergency = () => setShowEmergencyModal(true);
+    const handleOpenJury = () => setShowJuryTour(true);
+    const handleOpenPmfby = (e: any) => setPmfbyModal({ 
+      open: true, 
+      cropName: e.detail?.cropName, 
+      diseaseName: e.detail?.diseaseName 
+    });
+
+    const handleClosePmfby = () => setPmfbyModal({ open: false });
+    const handleCloseEmergency = () => setShowEmergencyModal(false);
+
+    window.addEventListener('open-crop-emergency', handleOpenEmergency);
+    window.addEventListener('close-crop-emergency', handleCloseEmergency);
+    window.addEventListener('open-sih-jury-tour', handleOpenJury);
+    window.addEventListener('open-pmfby-claim', handleOpenPmfby);
+    window.addEventListener('close-pmfby-claim', handleClosePmfby);
+
+    return () => {
+      window.removeEventListener('open-crop-emergency', handleOpenEmergency);
+      window.removeEventListener('close-crop-emergency', handleCloseEmergency);
+      window.removeEventListener('open-sih-jury-tour', handleOpenJury);
+      window.removeEventListener('open-pmfby-claim', handleOpenPmfby);
+      window.removeEventListener('close-pmfby-claim', handleClosePmfby);
+    };
+  }, []);
 
   useEffect(() => {
     // Clean out old hardcoded demo records so only real user scans exist
@@ -79,18 +124,41 @@ function AppContent() {
     }
   }, []);
 
-  const handleNavigate = (section: string) => {
+  const handleNavigate = (section: string, skipScroll = false) => {
     setActiveSection(section);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!skipScroll && !showJuryTour) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (
     <div className="min-h-screen agri-canvas-bg pb-20 md:pb-0 font-sans selection:bg-emerald-600 selection:text-white flex flex-col justify-between relative overflow-x-hidden">
 
+      {/* 30-Second SIH Jury Fast-Track Live Showcase */}
+      <SIHJuryPitchTour
+        isOpen={showJuryTour}
+        onClose={() => setShowJuryTour(false)}
+        onNavigateToSection={handleNavigate}
+      />
+
+      {/* PM Fasal Bima Yojana (PMFBY) 72-Hour Claim Modal */}
+      <PMFBYClaimModal
+        isOpen={pmfbyModal.open}
+        onClose={() => setPmfbyModal({ open: false })}
+        cropName={pmfbyModal.cropName}
+        diagnosedIssue={pmfbyModal.diseaseName}
+      />
+
       {/* First-time Farmer Onboarding / Farm Setup Modal */}
       <FarmerOnboardingModal
         isOpen={showOnboarding}
         onComplete={() => setShowOnboarding(false)}
+      />
+
+      {/* 24-Hour Crop Emergency First-Aid Modal */}
+      <CropEmergencyModal
+        isOpen={showEmergencyModal}
+        onClose={() => setShowEmergencyModal(false)}
       />
 
       <LanguageModal />
@@ -103,34 +171,47 @@ function AppContent() {
       
       <OfflineBanner />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 flex-1 w-full relative z-0">
+      <main className="w-full max-w-[1400px] mx-auto px-3.5 sm:px-6 lg:px-8 pt-3 pb-8 flex-1 relative z-0">
 
         {/* Home dashboard */}
         {activeSection === 'home' && (
-          <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="space-y-8 sm:space-y-12 animate-in fade-in duration-200">
 
-            {/* 1. Unified Hero — Crop-as-hero, live health status, primary camera scan CTA, weather bar */}
+            {/* 1. Unified Hero — SIH Badge, Crop-as-hero, live health status, primary camera scan CTA, weather bar */}
             <Hero
               onNavigate={handleNavigate}
               onOpenOnboarding={() => setShowOnboarding(true)}
             />
 
-            {/* 2. Interactive Crop Scanner & AI Doctor Hub */}
+            {/* 2. Today's Farmer Decision Layer (Actionable Daily Priority) */}
+            <TodayDecisionLayer
+              onCheckCrop={() => handleNavigate('report')}
+              onViewAdvisory={() => handleNavigate('advisory')}
+              onViewExpertReview={() => handleNavigate('expert')}
+              onViewWeather={() => handleNavigate('weather')}
+            />
+
+            {/* 3. Interactive Crop Scanner & AI Doctor Hub */}
             <section id="scanner-section" className="scroll-mt-20">
               <ImageUpload />
             </section>
 
-            {/* 3. Live Regional Surveillance Alerts & Farm Map */}
-            <section className="pt-2 pb-6">
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
-                <div className="lg:col-span-3">
-                  <LiveTicker onNavigate={handleNavigate} />
-                </div>
-                <div className="lg:col-span-2" id="map-section">
-                  <InteractiveFarmMap onNavigateToSurveillance={() => handleNavigate('hotspots')} />
-                </div>
+            {/* 4. Judge-Ready Sample Scans (Instant 1-Click Diagnosis Demonstration) */}
+            <SampleScanDemo onNavigate={handleNavigate} />
+
+            {/* 5. Live Regional Surveillance Alerts & Farm Map */}
+            <section className="space-y-3" id="map-section">
+              <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-stone-200/70 px-4 py-2.5 shadow-2xs">
+                <LiveTicker onNavigate={handleNavigate} />
               </div>
+              <InteractiveFarmMap onNavigateToSurveillance={() => handleNavigate('hotspots')} />
             </section>
+
+            {/* 6. Four Core Technical Pillars of SIH 2026 (AI, IoT Traps, GIS Heatmaps, IPM) */}
+            <VisualFeatures onNavigate={handleNavigate} />
+
+            {/* 7. National Scale & Quantitative Impact Metrics (Hackathon Jury Pitch Bar) */}
+            <ImpactMetrics />
 
           </div>
         )}
@@ -152,6 +233,7 @@ function AppContent() {
               {activeSection === 'weather' && <WeatherRisk />}
               {activeSection === 'advisory' && <AdvisoryList />}
               {activeSection === 'hotspots' && <HotspotMap />}
+              {activeSection === 'pest' && <PestTrapMonitor />}
               {activeSection === 'expert' && <ExpertValidationPanel />}
               {activeSection === 'dashboard' && <Dashboard />}
               {activeSection === 'account' && (

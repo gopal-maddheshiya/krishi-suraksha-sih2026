@@ -7,16 +7,16 @@ import {
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { supabase } from '@/lib/supabase';
-import { ObservationService, type CropObservationEntity } from '@/services/ObservationService';
+import { ObservationService, DEMO_EXPERT_QUEUE, type CropObservationEntity } from '@/services/ObservationService';
 import { WeatherService } from '@/services/WeatherService';
 import type { WeatherDataBundle } from '@/services/types';
 import { Section, SectionHeader, Card, PrimaryButton, SecondaryButton } from './ui';
 
 export default function ExpertValidationPanel() {
   const { lang, t } = useLang();
-  const [queue, setQueue] = useState<CropObservationEntity[]>([]);
+  const [queue, setQueue] = useState<CropObservationEntity[]>(DEMO_EXPERT_QUEUE);
   const [selectedObs, setSelectedObs] = useState<CropObservationEntity | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'submitted' | 'processing' | 'verified' | 'pending_expert' | 'diagnosed'>('all');
 
   // Review Form State

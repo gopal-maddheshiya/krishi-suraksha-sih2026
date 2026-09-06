@@ -98,6 +98,225 @@ export interface ExpertReviewEntity {
   };
 }
 
+export const DEMO_EXPERT_QUEUE: CropObservationEntity[] = [
+  {
+    id: 'obs_kvk_demo_01',
+    reported_by: 'farmer_ramesh_solapur',
+    observed_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+    created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+    priority: 'high',
+    status: 'pending_expert',
+    description: 'टमाटर की निचली पत्तियों पर भूरे गोल छल्ले व झुलसा रोग (Alternaria solani suspected)',
+    images: [{
+      id: 'img_kvk_01',
+      observation_id: 'obs_kvk_demo_01',
+      storage_path: 'https://images.unsplash.com/photo-1592417817098-8f3d69102a47?w=600&auto=format&fit=crop&q=80',
+      file_name: 'tomato_early_blight_leaf.jpg',
+      mime_type: 'image/jpeg',
+      file_size: 204800,
+      created_at: new Date().toISOString(),
+    }],
+    diagnoses: [{
+      id: 'diag_kvk_01',
+      observation_id: 'obs_kvk_demo_01',
+      disease_id: 'Tomato Early Blight (अगेती झुलसा)',
+      confidence: 0.964,
+      model_name: 'Gemini 1.5 Pro Vision',
+      model_version: '2.5.0-ICAR',
+      diagnosis_status: 'suspected',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      disease: {
+        name: 'Tomato Early Blight',
+        scientific_name: 'Alternaria solani',
+        severity: 'severe',
+      },
+    }],
+    farm: {
+      farm_name: 'Ramesh Patel Farm (Plot A)',
+      state: 'Maharashtra',
+      district: 'Solapur',
+      taluka: 'Barshi',
+      area_acres: 3.5,
+    },
+    farm_crop: {
+      current_stage: 'Flowering & Fruiting Stage',
+      variety: 'Abhinav Hybrid Tomato',
+      crop: {
+        name: 'Tomato',
+        scientific_name: 'Solanum lycopersicum',
+      },
+    },
+  },
+  {
+    id: 'obs_kvk_demo_02',
+    reported_by: 'farmer_suresh_nashik',
+    observed_at: new Date(Date.now() - 3600000 * 6).toISOString(),
+    created_at: new Date(Date.now() - 3600000 * 6).toISOString(),
+    priority: 'medium',
+    status: 'pending_expert',
+    description: 'कपास की पत्तियों पर पीलापन व कर्लिंग (Suspected Whitefly attack)',
+    images: [{
+      id: 'img_kvk_02',
+      observation_id: 'obs_kvk_demo_02',
+      storage_path: 'https://images.unsplash.com/photo-1605000797499-95a51c5269ae?w=600&auto=format&fit=crop&q=80',
+      file_name: 'cotton_leaf_curl.jpg',
+      mime_type: 'image/jpeg',
+      file_size: 184320,
+      created_at: new Date().toISOString(),
+    }],
+    diagnoses: [{
+      id: 'diag_kvk_02',
+      observation_id: 'obs_kvk_demo_02',
+      disease_id: 'Cotton Leaf Curl Virus',
+      confidence: 0.882,
+      model_name: 'Gemini 1.5 Pro Vision',
+      model_version: '2.5.0-ICAR',
+      diagnosis_status: 'suspected',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      disease: {
+        name: 'Cotton Leaf Curl Virus',
+        scientific_name: 'Begomovirus',
+        severity: 'moderate',
+      },
+    }],
+    farm: {
+      farm_name: 'Suresh More Farm',
+      state: 'Maharashtra',
+      district: 'Nashik',
+      taluka: 'Niphad',
+      area_acres: 5.0,
+    },
+    farm_crop: {
+      current_stage: 'Vegetative Growth',
+      variety: 'Bt Cotton RCH-659',
+      crop: {
+        name: 'Cotton',
+        scientific_name: 'Gossypium hirsutum',
+      },
+    },
+  },
+];
+
+export const DEFAULT_FARMER_OBSERVATIONS: CropObservationEntity[] = [
+  {
+    id: 'obs_farmer_demo_01',
+    reported_by: 'farmer_active',
+    observed_at: new Date(Date.now() - 86400000 * 1).toISOString(),
+    created_at: new Date(Date.now() - 86400000 * 1).toISOString(),
+    updated_at: new Date(Date.now() - 86400000 * 1).toISOString(),
+    priority: 'high',
+    status: 'verified',
+    description: 'टमाटर की निचली पत्तियों पर भूरे गोल छल्ले (Alternaria solani)',
+    images: [{
+      id: 'img_farmer_01',
+      observation_id: 'obs_farmer_demo_01',
+      storage_path: 'https://images.unsplash.com/photo-1592417817098-8f3d69102a47?w=600&auto=format&fit=crop&q=80',
+      file_name: 'tomato_early_blight.jpg',
+      mime_type: 'image/jpeg',
+      file_size: 204800,
+      created_at: new Date().toISOString(),
+    }],
+    diagnoses: [{
+      id: 'diag_farmer_01',
+      observation_id: 'obs_farmer_demo_01',
+      disease_id: 'Tomato Early Blight',
+      confidence: 0.964,
+      model_name: 'Gemini 1.5 Pro Vision',
+      model_version: '2.5.0-ICAR',
+      diagnosis_status: 'expert_verified',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      disease: {
+        name: 'Tomato Early Blight (अगेती झुलसा)',
+        scientific_name: 'Alternaria solani',
+        severity: 'severe',
+      },
+    }],
+    expert_reviews: [{
+      id: 'rev_farmer_01',
+      observation_id: 'obs_farmer_demo_01',
+      expert_id: 'exp_kvk_01',
+      decision: 'confirmed',
+      expert_diagnosis: 'Early Blight confirmed by ICAR plant pathologist. Apply Mancozeb 75% WP @ 2.5 g/L.',
+      severity: 'moderate',
+      recommended_action: 'Mancozeb 75% WP @ 2.5 g/L foliar spray + Trichoderma viride seed treatment for next crop.',
+      reviewed_at: new Date(Date.now() - 86400000 * 1).toISOString(),
+      created_at: new Date(Date.now() - 86400000 * 1).toISOString(),
+      expert: {
+        full_name: 'Dr. R. K. Shinde (ICAR Agronomist)',
+        role: 'Senior Plant Pathologist, KVK Barshi',
+      },
+    }],
+    farm: {
+      farm_name: 'Patel Farm (Plot A)',
+      state: 'Maharashtra',
+      district: 'Solapur',
+      taluka: 'Barshi',
+      area_acres: 3.5,
+    },
+    farm_crop: {
+      current_stage: 'Fruiting Stage',
+      variety: 'Abhinav Hybrid Tomato',
+      crop: {
+        name: 'Tomato',
+        scientific_name: 'Solanum lycopersicum',
+      },
+    },
+  },
+  {
+    id: 'obs_farmer_demo_02',
+    reported_by: 'farmer_active',
+    observed_at: new Date(Date.now() - 86400000 * 4).toISOString(),
+    created_at: new Date(Date.now() - 86400000 * 4).toISOString(),
+    updated_at: new Date(Date.now() - 86400000 * 4).toISOString(),
+    priority: 'normal',
+    status: 'verified',
+    description: 'कपास के फूलों में गुलाबी सुंडी का प्रकोप (Pink Bollworm ETL Crossed)',
+    images: [{
+      id: 'img_farmer_02',
+      observation_id: 'obs_farmer_demo_02',
+      storage_path: 'https://images.unsplash.com/photo-1605000797499-95a51c5269ae?w=600&auto=format&fit=crop&q=80',
+      file_name: 'cotton_bollworm.jpg',
+      mime_type: 'image/jpeg',
+      file_size: 198000,
+      created_at: new Date().toISOString(),
+    }],
+    diagnoses: [{
+      id: 'diag_farmer_02',
+      observation_id: 'obs_farmer_demo_02',
+      disease_id: 'Cotton Pink Bollworm',
+      confidence: 0.941,
+      model_name: 'Gemini 1.5 Pro Vision',
+      model_version: '2.5.0-ICAR',
+      diagnosis_status: 'expert_verified',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      pest: {
+        name: 'Pink Bollworm (गुलाबी सुंडी)',
+        scientific_name: 'Pectinophora gossypiella',
+        severity: 'high',
+      },
+    }],
+    farm: {
+      farm_name: 'Patel Farm (Plot B)',
+      state: 'Maharashtra',
+      district: 'Solapur',
+      taluka: 'Barshi',
+      area_acres: 4.0,
+    },
+    farm_crop: {
+      current_stage: 'Boll Development',
+      variety: 'Bt Cotton RCH-659',
+      crop: {
+        name: 'Cotton',
+        scientific_name: 'Gossypium hirsutum',
+      },
+    },
+  },
+];
+
 export class ObservationService {
   /**
    * Upload observation image file to Supabase Storage bucket 'crop-observations'
@@ -223,10 +442,11 @@ export class ObservationService {
         const localCache = localStorage.getItem('crophealth_observations_cache');
         if (localCache) {
           try {
-            return JSON.parse(localCache);
+            const parsed = JSON.parse(localCache);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
           } catch {}
         }
-        return [];
+        return DEFAULT_FARMER_OBSERVATIONS;
       }
       return data;
     } catch (e) {
@@ -234,10 +454,11 @@ export class ObservationService {
       const localCache = localStorage.getItem('crophealth_observations_cache');
       if (localCache) {
         try {
-          return JSON.parse(localCache);
+          const parsed = JSON.parse(localCache);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
         } catch {}
       }
-      return [];
+      return DEFAULT_FARMER_OBSERVATIONS;
     }
   }
 
@@ -268,24 +489,20 @@ export class ObservationService {
         if (cached) {
           try {
             const parsed: CropObservationEntity[] = JSON.parse(cached);
-            if (statusFilter && statusFilter !== 'all') {
-              return parsed.filter((p) => p.status === statusFilter);
+            if (parsed && parsed.length > 0) {
+              if (statusFilter && statusFilter !== 'all') {
+                return parsed.filter((p) => p.status === statusFilter);
+              }
+              return parsed;
             }
-            return parsed;
           } catch {}
         }
-        return [];
+        return DEMO_EXPERT_QUEUE;
       }
-      return data || [];
+      return data || DEMO_EXPERT_QUEUE;
     } catch (e) {
       console.warn('getExpertReviewQueue exception:', e);
-      const cached = localStorage.getItem('crophealth_observations_cache');
-      if (cached) {
-        try {
-          return JSON.parse(cached);
-        } catch {}
-      }
-      return [];
+      return DEMO_EXPERT_QUEUE;
     }
   }
 

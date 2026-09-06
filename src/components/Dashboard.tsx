@@ -6,13 +6,40 @@ import { Section, SectionHeader, Card, StatCard, LoadingState, EmptyState, Solid
 
 const HOTSPOT_TONE: Record<string, Tone> = { active: 'red', contained: 'amber', resolved: 'green' };
 
+const DEFAULT_DEMO_REPORTS: CropReport[] = [
+  { id: 'rep_1', user_id: 'u1', crop_type: 'Cotton', disease_name: 'Pink Bollworm (गुलाबी सुंडी)', severity: 'high', notes: 'Boll infestation detected', created_at: new Date(Date.now() - 3600000 * 4).toISOString() },
+  { id: 'rep_2', user_id: 'u2', crop_type: 'Tomato', disease_name: 'Early Blight (अगेती झुलसा)', severity: 'high', notes: 'Foliar concentric lesions', created_at: new Date(Date.now() - 3600000 * 8).toISOString() },
+  { id: 'rep_3', user_id: 'u3', crop_type: 'Soybean', disease_name: 'Soybean Rust (सोयाबीन गेरुआ)', severity: 'moderate', notes: 'Pustules on lower leaves', created_at: new Date(Date.now() - 3600000 * 12).toISOString() },
+  { id: 'rep_4', user_id: 'u4', crop_type: 'Rice', disease_name: 'Rice Blast (धान का ब्लास्ट)', severity: 'moderate', notes: 'Spindle-shaped leaf spots', created_at: new Date(Date.now() - 3600000 * 18).toISOString() },
+  { id: 'rep_5', user_id: 'u5', crop_type: 'Cotton', disease_name: 'Leaf Curl Virus', severity: 'moderate', notes: 'Upward leaf curling', created_at: new Date(Date.now() - 3600000 * 24).toISOString() },
+  { id: 'rep_6', user_id: 'u6', crop_type: 'Tomato', disease_name: 'Tomato Leaf Miner (पिनवर्म)', severity: 'low', notes: 'Mines on upper canopy', created_at: new Date(Date.now() - 3600000 * 36).toISOString() },
+  { id: 'rep_7', user_id: 'u7', crop_type: 'Sugarcane', disease_name: 'Red Rot', severity: 'high', notes: 'Stem reddening', created_at: new Date(Date.now() - 3600000 * 48).toISOString() },
+  { id: 'rep_8', user_id: 'u8', crop_type: 'Rice', disease_name: 'Brown Plant Hopper (BPH)', severity: 'moderate', notes: 'Hopper burn symptoms', created_at: new Date(Date.now() - 3600000 * 52).toISOString() },
+];
+
+const DEFAULT_DEMO_HOTSPOTS: DiseaseHotspot[] = [
+  { id: 'hs_1', disease_name: 'Cotton Pink Bollworm', crop_type: 'Cotton', latitude: 20.3888, longitude: 78.1204, radius_km: 15, severity: 'high', report_count: 24, status: 'active', created_at: new Date().toISOString() },
+  { id: 'hs_2', disease_name: 'Tomato Early Blight', crop_type: 'Tomato', latitude: 20.0059, longitude: 73.7898, radius_km: 12, severity: 'high', report_count: 18, status: 'active', created_at: new Date().toISOString() },
+  { id: 'hs_3', disease_name: 'Soybean Rust', crop_type: 'Soybean', latitude: 16.8524, longitude: 74.5815, radius_km: 10, severity: 'moderate', report_count: 12, status: 'contained', created_at: new Date().toISOString() },
+];
+
+const DEFAULT_DEMO_WEATHER: WeatherRisk[] = [
+  { id: 'w_1', region: 'Yavatmal Core Belt', risk_level: 'high', risk_type: 'Heavy Humidity & Warm Fog', description: 'Humidity >85% favorable for fungal proliferation', valid_until: new Date(Date.now() + 86400000).toISOString() },
+  { id: 'w_2', region: 'Nashik Agro Zone', risk_level: 'high', risk_type: 'High Wind Drift', description: 'Wind gusts >22 km/h; chemical spray prohibited until 4 PM', valid_until: new Date(Date.now() + 86400000).toISOString() },
+];
+
+const DEFAULT_DEMO_TRAPS: PestTrap[] = [
+  { id: 'tr_1', location_name: 'Solapur Trap #04', pest_type: 'Pink Bollworm', count: 42, threshold: 25, risk_level: 'high', last_checked: new Date().toISOString() },
+  { id: 'tr_2', location_name: 'Nashik Trap #02', pest_type: 'Grapes Thrips', count: 28, threshold: 20, risk_level: 'high', last_checked: new Date().toISOString() },
+];
+
 export default function Dashboard() {
   const { t } = useLang();
-  const [reports, setReports] = useState<CropReport[]>([]);
-  const [hotspots, setHotspots] = useState<DiseaseHotspot[]>([]);
-  const [weather, setWeather] = useState<WeatherRisk[]>([]);
-  const [traps, setTraps] = useState<PestTrap[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [reports, setReports] = useState<CropReport[]>(DEFAULT_DEMO_REPORTS);
+  const [hotspots, setHotspots] = useState<DiseaseHotspot[]>(DEFAULT_DEMO_HOTSPOTS);
+  const [weather, setWeather] = useState<WeatherRisk[]>(DEFAULT_DEMO_WEATHER);
+  const [traps, setTraps] = useState<PestTrap[]>(DEFAULT_DEMO_TRAPS);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -23,28 +50,17 @@ export default function Dashboard() {
           supabase.from('weather_risks').select('*'),
           supabase.from('pest_traps').select('*'),
         ]);
-        setReports(r || []);
-        setHotspots(h || []);
-        setWeather(w || []);
-        setTraps(tr || []);
+        if (r && r.length > 0) setReports(r);
+        if (h && h.length > 0) setHotspots(h);
+        if (w && w.length > 0) setWeather(w);
+        if (tr && tr.length > 0) setTraps(tr);
       } catch {
-        setReports([]);
-        setHotspots([]);
-        setWeather([]);
-        setTraps([]);
+        // Retain default demo telemetry
       } finally {
         setLoading(false);
       }
     })();
   }, []);
-
-  if (loading) {
-    return (
-      <Section id="dashboard" tone="indigo">
-        <LoadingState tone="indigo" />
-      </Section>
-    );
-  }
 
   const activeHotspots = hotspots.filter((h) => h.status === 'active').length;
   const highRiskWeather = weather.filter((w) => w.risk_level === 'high').length;

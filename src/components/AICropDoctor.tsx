@@ -3,7 +3,7 @@ import {
   X, Send, Loader2, ImagePlus, XCircle, 
   Sparkles, Leaf, Trash2, ShieldCheck, 
   CheckCircle2, Sprout, Bot, ArrowRight,
-  Volume2, VolumeX
+  Volume2, VolumeX, Zap, Move
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { GeminiVisionLiveService } from '@/services/GeminiVisionLiveService';
@@ -20,7 +20,79 @@ type Message = {
 };
 
 /**
- * Intelligent In-House ICAR Senior Agronomist Knowledge Engine (Offline Fallback)
+ * Clean Formatted Markdown Component (Eliminates raw `**` asterisks and styles bullets & bold tags)
+ */
+function FormattedMessageContent({ text, isStreaming }: { text: string; isStreaming?: boolean }) {
+  if (!text) return null;
+
+  const lines = text.split('\n');
+
+  return (
+    <div className="space-y-1.5 text-xs leading-relaxed">
+      {lines.map((rawLine, idx) => {
+        const line = rawLine.trim();
+        if (!line) {
+          return <div key={idx} className="h-1" />;
+        }
+
+        // Check if header line (### or ## or #)
+        const isHeader = /^#{1,4}\s+/.test(line);
+        const headerText = isHeader ? line.replace(/^#{1,4}\s+/, '') : line;
+
+        // Check if bullet point (- or * or •)
+        const isBullet = /^[-*•]\s+/.test(headerText);
+        const contentText = isBullet ? headerText.replace(/^[-*•]\s+/, '') : headerText;
+
+        // Parse **bold** tokens into <strong> tags
+        const parts = contentText.split(/(\*\*[^*]+\*\*)/g);
+
+        const renderedText = parts.map((part, pIdx) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            const boldContent = part.slice(2, -2).trim();
+            return (
+              <strong key={pIdx} className="font-black text-stone-950 tracking-tight">
+                {boldContent}
+              </strong>
+            );
+          }
+          // Strip any stray single or double asterisks
+          return part.replace(/\*+/g, '');
+        });
+
+        if (isHeader) {
+          return (
+            <div key={idx} className="font-black text-xs sm:text-sm text-stone-900 pt-1.5 pb-0.5 border-b border-stone-100 flex items-center gap-1.5">
+              <span>{renderedText}</span>
+            </div>
+          );
+        }
+
+        if (isBullet) {
+          return (
+            <div key={idx} className="flex items-start gap-2 pl-1 my-0.5">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-600 mt-1.5 flex-shrink-0 shadow-2xs" />
+              <div className="flex-1 text-stone-800 font-medium">
+                {renderedText}
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <p key={idx} className="text-stone-800 font-medium">
+            {renderedText}
+          </p>
+        );
+      })}
+      {isStreaming && (
+        <span className="inline-block w-1.5 h-3.5 bg-emerald-600 animate-pulse ml-0.5 align-middle rounded-xs" />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Intelligent In-House ICAR Senior Agronomist Knowledge Engine (Instant Fallback)
  */
 function getNaturalAgriculturalAdvice(query: string, lang: string): string {
   const q = query.toLowerCase().trim();
@@ -101,15 +173,229 @@ export default function AICropDoctor() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Movable Draggable Window State
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<{
+    startX: number;
+    startY: number;
+    initialX: number;
+    initialY: number;
+  } | null>(null);
+  const windowRef = useRef<HTMLDivElement>(null);
+
+  // Set default initial position on any screen size respecting bottom navigation
+  useEffect(() => {
+    if (open && typeof window !== 'undefined') {
+      const isMobile = window.innerWidth < 1024;
+      const clearance = isMobile ? 96 : 24;
+      const pWidth = Math.min(430, window.innerWidth - 24);
+      const pHeight = Math.min(560, window.innerHeight - 100);
+      const initX = Math.max(8, window.innerWidth - pWidth - 16);
+      const initY = Math.max(16, window.innerHeight - pHeight - clearance);
+      setPosition((prev) => prev ?? { x: initX, y: initY });
+    }
+  }, [open]);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Only drag from drag handle or header background, ignore clicks on buttons/inputs
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('input') || target.closest('a')) {
+      return;
+    }
+
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
+
+    const isMobile = window.innerWidth < 1024;
+    const clearance = isMobile ? 96 : 24;
+    const panelWidth = windowRef.current?.offsetWidth || 430;
+    const panelHeight = windowRef.current?.offsetHeight || 560;
+    const currentX = position?.x ?? Math.max(8, window.innerWidth - panelWidth - 16);
+    const currentY = position?.y ?? Math.max(16, window.innerHeight - panelHeight - clearance);
+
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: currentX,
+      initialY: currentY,
+    };
+    setIsDragging(true);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging || !dragRef.current) return;
+
+    const deltaX = e.clientX - dragRef.current.startX;
+    const deltaY = e.clientY - dragRef.current.startY;
+
+    const isMobile = window.innerWidth < 1024;
+    const clearance = isMobile ? 96 : 24;
+    const panelWidth = windowRef.current?.offsetWidth || 430;
+    const panelHeight = windowRef.current?.offsetHeight || 560;
+
+    const maxX = Math.max(4, window.innerWidth - panelWidth - 4);
+    const maxY = Math.max(4, window.innerHeight - panelHeight - clearance);
+
+    const nextX = Math.max(4, Math.min(maxX, dragRef.current.initialX + deltaX));
+    const nextY = Math.max(4, Math.min(maxY, dragRef.current.initialY + deltaY));
+
+    setPosition({ x: nextX, y: nextY });
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDragging) {
+      setIsDragging(false);
+      dragRef.current = null;
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {}
+    }
+  };
+
+  // Floating Launcher Button Draggable State & Handlers with localStorage persistence
+  const [btnPos, setBtnPos] = useState<{ x: number; y: number } | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const saved = localStorage.getItem('krishi_ai_btn_pos');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
+          const isMobile = window.innerWidth < 1024;
+          const clearance = isMobile ? 96 : 24;
+          const maxX = Math.max(8, window.innerWidth - 170);
+          const maxY = Math.max(8, window.innerHeight - 50 - clearance);
+          return {
+            x: Math.max(8, Math.min(maxX, parsed.x)),
+            y: Math.max(8, Math.min(maxY, parsed.y)),
+          };
+        }
+      }
+    } catch {}
+    return null;
+  });
+
+  const [isBtnDragging, setIsBtnDragging] = useState(false);
+  const btnDragRef = useRef<{
+    startX: number;
+    startY: number;
+    initX: number;
+    initY: number;
+    hasMoved: boolean;
+  } | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Initialize and keep floating launcher button strictly inside the visible screen and above bottom navbar
+  useEffect(() => {
+    const handleResize = () => {
+      setBtnPos((prev) => {
+        const isMobile = window.innerWidth < 1024;
+        const clearance = isMobile ? 96 : 24;
+        const bWidth = buttonRef.current?.offsetWidth || 160;
+        const bHeight = buttonRef.current?.offsetHeight || 44;
+        if (!prev) {
+          return {
+            x: Math.max(12, window.innerWidth - bWidth - (isMobile ? 16 : 24)),
+            y: Math.max(12, window.innerHeight - bHeight - clearance),
+          };
+        }
+        const maxX = Math.max(8, window.innerWidth - bWidth - 8);
+        const maxY = Math.max(8, window.innerHeight - bHeight - clearance);
+        return {
+          x: Math.max(8, Math.min(maxX, prev.x)),
+          y: Math.max(8, Math.min(maxY, prev.y)),
+        };
+      });
+    };
+
+    if (btnPos === null && typeof window !== 'undefined') {
+      handleResize();
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleBtnPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
+
+    const isMobile = window.innerWidth < 1024;
+    const clearance = isMobile ? 96 : 24;
+    const bWidth = buttonRef.current?.offsetWidth || 160;
+    const bHeight = buttonRef.current?.offsetHeight || 44;
+    const curX = btnPos?.x ?? Math.max(12, window.innerWidth - bWidth - (isMobile ? 16 : 24));
+    const curY = btnPos?.y ?? Math.max(12, window.innerHeight - bHeight - clearance);
+
+    btnDragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initX: curX,
+      initY: curY,
+      hasMoved: false,
+    };
+    setIsBtnDragging(true);
+  };
+
+  const handleBtnPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!isBtnDragging || !btnDragRef.current) return;
+
+    const deltaX = e.clientX - btnDragRef.current.startX;
+    const deltaY = e.clientY - btnDragRef.current.startY;
+
+    if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
+      btnDragRef.current.hasMoved = true;
+    }
+
+    const isMobile = window.innerWidth < 1024;
+    const clearance = isMobile ? 96 : 24;
+    const bWidth = buttonRef.current?.offsetWidth || 160;
+    const bHeight = buttonRef.current?.offsetHeight || 44;
+
+    const maxX = Math.max(8, window.innerWidth - bWidth - 8);
+    const maxY = Math.max(8, window.innerHeight - bHeight - clearance);
+
+    const nextX = Math.max(8, Math.min(maxX, btnDragRef.current.initX + deltaX));
+    const nextY = Math.max(8, Math.min(maxY, btnDragRef.current.initY + deltaY));
+
+    setBtnPos({ x: nextX, y: nextY });
+  };
+
+  const handleBtnPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!isBtnDragging) return;
+
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {}
+
+    const hasMoved = btnDragRef.current?.hasMoved;
+    setIsBtnDragging(false);
+    btnDragRef.current = null;
+
+    // Persist position so it stays exactly where user placed it
+    if (btnPos) {
+      try {
+        localStorage.setItem('krishi_ai_btn_pos', JSON.stringify(btnPos));
+      } catch {}
+    }
+
+    // If it was tapped without dragging, OPEN the chat!
+    if (!hasMoved) {
+      setOpen(true);
+    }
+  };
+
   const assistantTitles: Record<LanguageCode, string> = {
-    hi: '🌾 किसानसारथी AI सलाहकार',
-    mr: '🌾 किसानसारथी AI सल्लागार',
-    bn: '🌾 কিষাণসারথি AI সহকারী',
-    ta: '🌾 கிசான்சாரதி AI ஆலோசகர்',
-    te: '🌾 కిసాన్‌సారథి AI సలహాదారు',
-    gu: '🌾 કિસાનસારથી AI સલાહકાર',
-    pa: '🌾 ਕਿਸਾਨਸਾਰਥੀ AI ਸਲਾਹਕਾਰ',
-    en: '🌾 KisanSarthi AI Advisor',
+    hi: '🌾 किसानसारथी AI',
+    mr: '🌾 किसानसारथी AI',
+    bn: '🌾 কিষাণসারথি AI',
+    ta: '🌾 கிசான்சாரதி AI',
+    te: '🌾 కిసాన్‌సారథి AI',
+    gu: '🌾 કિસાનસારથી AI',
+    pa: '🌾 ਕਿਸਾਨਸਾਰਥੀ AI',
+    en: '🌾 KisanSarthi AI',
   };
 
   const assistantTitle = assistantTitles[lang] || assistantTitles.en;
@@ -217,7 +503,6 @@ export default function AICropDoctor() {
       const ce = e as CustomEvent<{ query?: string; autoSend?: boolean; voice?: boolean }>;
       setOpen(true);
       if (ce.detail?.voice) {
-        // Voice query initiated — ensure speech playback triggers
         shouldAutoSpeakRef.current = true;
       }
       if (ce.detail?.query) {
@@ -234,14 +519,15 @@ export default function AICropDoctor() {
   }, []);
 
   /**
-   * Smooth progressive typing stream (साथ-साथ लिखना)
+   * Fast, natural progressive typing stream (चंक-आधारित द्रुत गति)
    */
   const streamTypingText = useCallback((fullText: string) => {
     if (typingTimerRef.current) clearInterval(typingTimerRef.current);
 
     const words = fullText.split(' ');
     let currentIndex = 0;
-    const initialContent = words[0] || '';
+    const CHUNK_SIZE = 2; // Stream 2 words at a time for lightning feel
+    const initialContent = words.slice(0, CHUNK_SIZE).join(' ');
 
     setMessages((prev) => [
       ...prev,
@@ -253,8 +539,10 @@ export default function AICropDoctor() {
       },
     ]);
 
+    currentIndex += CHUNK_SIZE;
+
     typingTimerRef.current = setInterval(() => {
-      currentIndex++;
+      currentIndex += CHUNK_SIZE;
       if (currentIndex >= words.length) {
         if (typingTimerRef.current) clearInterval(typingTimerRef.current);
         setMessages((prev) => {
@@ -276,7 +564,7 @@ export default function AICropDoctor() {
           shouldAutoSpeakRef.current = false;
         }
       } else {
-        const partialText = words.slice(0, currentIndex + 1).join(' ');
+        const partialText = words.slice(0, currentIndex).join(' ');
         setMessages((prev) => {
           const updated = [...prev];
           const lastIdx = updated.length - 1;
@@ -290,7 +578,7 @@ export default function AICropDoctor() {
           return updated;
         });
       }
-    }, 22); // Fast, natural 22ms per word stream
+    }, 14); // Ultra-responsive 14ms stream
   }, [autoSpeak, lang]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -376,7 +664,6 @@ export default function AICropDoctor() {
       }
 
       setLoading(false);
-      // Stream the response with live progressive typing
       streamTypingText(reply || (lang === 'hi' ? 'कृषि सलाह प्राप्त हो रही है...' : 'Generating advice...'));
     } catch (err) {
       console.warn('AICropDoctor error:', err);
@@ -409,21 +696,42 @@ export default function AICropDoctor() {
   return (
     <>
       {/* ============================================================= */}
-      {/* 1. FLOATING TRIGGER BUTTON (AGRICULTURAL BOTANICAL EMBLEM)    */}
+      {/* 1. FLOATING LAUNCHER BUTTON                                   */}
       {/* ============================================================= */}
+      {/* 1. FLOATING LAUNCHER BUTTON (COMPACT, SIMPLE & DRAGGABLE) */}
       {!open && (
         <button
-          onClick={() => setOpen(true)}
-          className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-40 flex items-center gap-2.5 px-4 sm:px-5 py-3 rounded-full bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 hover:from-emerald-950 hover:to-teal-950 text-white shadow-xl hover:shadow-2xl hover:shadow-emerald-900/40 transition-all duration-200 active:scale-95 group border border-emerald-400/40 ring-4 ring-emerald-500/15 select-none"
+          ref={buttonRef}
+          onPointerDown={handleBtnPointerDown}
+          onPointerMove={handleBtnPointerMove}
+          onPointerUp={handleBtnPointerUp}
+          style={
+            btnPos
+              ? {
+                  position: 'fixed',
+                  left: `${btnPos.x}px`,
+                  top: `${btnPos.y}px`,
+                  right: 'auto',
+                  bottom: 'auto',
+                  margin: 0,
+                  touchAction: 'none',
+                }
+              : undefined
+          }
+          className={`fixed z-40 bottom-20 md:bottom-6 right-3 sm:right-6 flex items-center justify-center gap-2 p-2.5 sm:px-3.5 sm:py-2 rounded-full bg-gradient-to-r from-emerald-800 to-teal-800 hover:from-emerald-900 hover:to-teal-900 text-white shadow-xl hover:shadow-2xl select-none touch-none cursor-grab active:cursor-grabbing border border-emerald-400/40 ring-2 ring-emerald-500/20 ${
+            isBtnDragging ? 'ring-emerald-400 scale-105 shadow-2xl opacity-95' : 'transition-transform active:scale-95'
+          }`}
           aria-label="Open CropHealth AI Advisor"
+          title="स्क्रीन पर कहीं भी घुमाएं (Drag anywhere on screen) या टैप करें"
         >
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-              <Leaf className="w-3.5 h-3.5 text-emerald-200 stroke-[2.4]" />
+              <Leaf className="w-3.5 h-3.5 text-emerald-100 stroke-[2.4]" />
             </div>
-            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_#34d399]" />
+            {/* Calm, gentle pulse indicator */}
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 animate-pulse ring-1 ring-emerald-950 shadow-[0_0_6px_#34d399]" />
           </div>
-          <span className="font-black text-xs sm:text-sm tracking-tight pr-1">
+          <span className="hidden sm:inline font-bold text-xs tracking-tight pr-0.5 whitespace-nowrap">
             {assistantTitle}
           </span>
         </button>
@@ -433,29 +741,68 @@ export default function AICropDoctor() {
       {/* 2. HIGH-AESTHETIC CHAT WINDOW                                */}
       {/* ============================================================= */}
       {open && (
-        <div className="fixed inset-x-3 bottom-20 sm:bottom-6 sm:right-6 sm:left-auto sm:w-[430px] h-[550px] max-h-[85vh] bg-white rounded-3xl shadow-2xl border border-stone-200 z-50 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        <div 
+          ref={windowRef}
+          style={
+            position
+              ? {
+                  position: 'fixed',
+                  left: `${position.x}px`,
+                  top: `${position.y}px`,
+                  right: 'auto',
+                  bottom: 'auto',
+                  margin: 0,
+                }
+              : undefined
+          }
+          className={`fixed z-[1000] w-[calc(100vw-24px)] max-w-[430px] h-[560px] max-h-[85vh] bg-white rounded-3xl shadow-2xl border border-stone-200 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 ${
+            isDragging ? 'select-none ring-2 ring-emerald-500/50 shadow-emerald-950/40 opacity-95' : ''
+          }`}
+        >
           
-          {/* Header */}
-          <div className="p-4 bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white flex items-center justify-between shadow-xs">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center text-white border border-white/20">
+          {/* 1. Dedicated Top Drag Handle Bar */}
+          <div
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            className="bg-gradient-to-r from-emerald-950 via-teal-950 to-stone-900 text-white select-none cursor-grab active:cursor-grabbing px-3.5 pt-2.5 pb-1.5 flex items-center justify-between border-b border-white/10 touch-none"
+            title="क्लिक करके कहीं भी ले जाएं (Click and drag anywhere on screen)"
+          >
+            <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-300">
+              <Move className="w-3 h-3 text-emerald-400" />
+              <span className="hidden sm:inline">{lang === 'hi' ? 'खींचकर कहीं भी रखें' : 'Drag to reposition'}</span>
+            </div>
+            <div className="w-10 h-1 rounded-full bg-white/30 hover:bg-white/60 transition-colors" />
+            <div className="flex items-center gap-1 text-[10px] font-black text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Live AI</span>
+            </div>
+          </div>
+
+          {/* 2. Main Header Content Bar */}
+          <div 
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            className="px-4 py-2.5 bg-gradient-to-r from-emerald-900 via-teal-900 to-stone-900 text-white flex items-center justify-between gap-2 shadow-xs cursor-grab active:cursor-grabbing select-none touch-none"
+          >
+            {/* Left: Avatar & Clean Single-Line Title */}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-md flex items-center justify-center text-white border border-white/20 flex-shrink-0 shadow-2xs">
                 <Sprout className="w-5 h-5 stroke-[2.4]" />
               </div>
-              <div>
-                <div className="font-black text-sm text-white flex items-center gap-1.5 leading-none">
-                  <span>{assistantTitle}</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-400/30 text-emerald-200 text-[9px] font-black border border-emerald-400/40">
-                    ICAR AI
-                  </span>
-                </div>
-                <div className="text-[11px] text-emerald-200/90 font-medium mt-1">
-                  {lang === 'hi' ? 'डिजिटल कृषि वैज्ञानिक परामर्श' : 'Certified Agronomist Consultation'}
-                </div>
+              <div className="min-w-0">
+                <h3 className="font-black text-sm text-white truncate leading-none">
+                  {assistantTitle}
+                </h3>
+                <p className="text-[10px] text-emerald-200/90 font-medium truncate mt-1">
+                  {lang === 'hi' ? 'ICAR प्रमाणित कृषि वैज्ञानिक ऑनलाइन' : 'ICAR Certified Agronomist Online'}
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
-              {/* Auto-Speak Toggle Button */}
+            {/* Right: Clean, un-crowded action buttons */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
               <button
                 type="button"
                 onClick={() => {
@@ -463,43 +810,45 @@ export default function AICropDoctor() {
                   setAutoSpeak(next);
                   if (!next) stopSpeech();
                 }}
-                className={`p-1.5 sm:px-2 sm:py-1 rounded-xl border transition-all flex items-center gap-1 text-[11px] font-bold select-none ${
+                className={`px-2 py-1.5 rounded-xl border transition-all flex items-center gap-1 text-[11px] font-bold select-none ${
                   autoSpeak 
                     ? 'bg-emerald-500/25 text-emerald-200 hover:bg-emerald-500/35 border-emerald-400/40' 
                     : 'bg-white/10 text-white/50 hover:bg-white/20 border-white/10'
                 }`}
-                title={autoSpeak 
-                  ? (lang === 'hi' ? 'स्वतः आवाज़ चालू है (Auto-Speak ON)' : 'Auto-Speak ON')
-                  : (lang === 'hi' ? 'स्वतः आवाज़ बंद है (Auto-Speak OFF)' : 'Auto-Speak OFF')
-                }
+                title={autoSpeak ? 'Auto-Speak ON' : 'Auto-Speak OFF'}
                 aria-label="Toggle Auto-Speak"
               >
                 {autoSpeak ? (
                   <>
-                    <Volume2 className="w-4 h-4 text-emerald-300 stroke-[2.4]" />
+                    <Volume2 className="w-3.5 h-3.5 text-emerald-300" />
                     <span className="hidden sm:inline">बोलें ON</span>
                   </>
                 ) : (
                   <>
-                    <VolumeX className="w-4 h-4 text-white/50 stroke-[2.2]" />
+                    <VolumeX className="w-3.5 h-3.5 text-white/50" />
                     <span className="hidden sm:inline">म्यूट</span>
                   </>
                 )}
               </button>
 
               <button
+                type="button"
                 onClick={handleClearChat}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors"
-                title="चैट रीसेट करें"
+                className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors"
+                title={lang === 'hi' ? 'चैट साफ़ करें' : 'Clear Chat'}
+                aria-label="Clear chat"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
+
               <button
+                type="button"
                 onClick={() => {
                   stopSpeech();
                   setOpen(false);
                 }}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+                className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+                title={lang === 'hi' ? 'बंद करें' : 'Close'}
                 aria-label="Close Chat"
               >
                 <X className="w-4 h-4" />
@@ -508,13 +857,13 @@ export default function AICropDoctor() {
           </div>
 
           {/* Quick Tap Question Pills */}
-          <div className="px-3 py-2 bg-stone-100/90 border-b border-stone-200 flex items-center gap-1.5 overflow-x-auto text-[11px]">
+          <div className="px-3 py-2 bg-stone-100/90 border-b border-stone-200 flex items-center gap-1.5 overflow-x-auto text-[11px] scrollbar-none">
             {quickPills.map((pill, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => handleSend(pill.query)}
-                className="px-2.5 py-1 rounded-full bg-white hover:bg-emerald-50 text-stone-700 hover:text-emerald-900 border border-stone-200 font-bold whitespace-nowrap shadow-2xs transition-all active:scale-95"
+                className="px-2.5 py-1 rounded-full bg-white hover:bg-emerald-50 text-stone-700 hover:text-emerald-950 border border-stone-200 font-black whitespace-nowrap shadow-2xs transition-all active:scale-95"
               >
                 {pill.label}
               </button>
@@ -529,9 +878,9 @@ export default function AICropDoctor() {
                 className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
               >
                 <div
-                  className={`max-w-[90%] rounded-2xl p-3.5 text-xs leading-relaxed ${
+                  className={`max-w-[90%] rounded-2xl p-3.5 leading-relaxed ${
                     msg.role === 'user'
-                      ? 'bg-emerald-800 text-white rounded-br-xs font-semibold shadow-sm'
+                      ? 'bg-emerald-800 text-white rounded-br-xs shadow-sm'
                       : 'bg-white text-stone-800 rounded-bl-xs border border-stone-200 shadow-sm'
                   }`}
                 >
@@ -542,12 +891,15 @@ export default function AICropDoctor() {
                       className="w-full max-h-44 object-cover rounded-xl mb-2.5 border border-stone-200 shadow-2xs"
                     />
                   )}
-                  <div className="whitespace-pre-wrap font-medium">
-                    {msg.content}
-                    {msg.isStreaming && (
-                      <span className="inline-block w-1.5 h-3.5 bg-emerald-600 animate-pulse ml-0.5 align-middle" />
-                    )}
-                  </div>
+                  
+                  {msg.role === 'user' ? (
+                    <div className="whitespace-pre-wrap font-bold text-white text-xs leading-relaxed">
+                      {msg.content.replace(/\*+/g, '')}
+                    </div>
+                  ) : (
+                    <FormattedMessageContent text={msg.content} isStreaming={msg.isStreaming} />
+                  )}
+
                   {msg.timestamp && (
                     <div className={`text-[9px] mt-1.5 text-right font-medium ${
                       msg.role === 'user' ? 'text-emerald-200' : 'text-stone-400'
@@ -556,7 +908,8 @@ export default function AICropDoctor() {
                     </div>
                   )}
                 </div>
-                {/* Speaker button — only for AI replies with clear label */}
+
+                {/* Speaker button — for AI replies with clean text */}
                 {msg.role !== 'user' && !msg.isStreaming && msg.content && (
                   <div className="mt-1.5 ml-1 flex items-center gap-2">
                     <SpeakerButton text={msg.content} showLabel iconSize={13} />
@@ -566,9 +919,9 @@ export default function AICropDoctor() {
             ))}
 
             {loading && (
-              <div className="flex items-center gap-2 text-stone-600 text-xs p-3 bg-white rounded-2xl border border-stone-200 w-fit shadow-2xs">
+              <div className="flex items-center gap-2 text-stone-700 text-xs p-3 bg-white rounded-2xl border border-stone-200 w-fit shadow-2xs">
                 <Loader2 className="w-4 h-4 animate-spin text-emerald-700" />
-                <span className="font-bold">
+                <span className="font-black">
                   {lang === 'hi' 
                     ? 'कृषि-रक्षा AI सलाह तैयार कर रहा है...' 
                     : 'CropHealth AI Analyzing Guidelines...'}
@@ -617,7 +970,7 @@ export default function AICropDoctor() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={lang === 'hi' ? 'फसल की बीमारी, कीड़े या खाद के बारे में पूछें...' : 'Ask about crop pest, dosage, fertilizer...'}
+              placeholder={lang === 'hi' ? 'फसल रोग, कीड़े, दवा या खाद के बारे में पूछें...' : 'Ask about crop disease, pest, spray...'}
               className="flex-1 px-3.5 py-2.5 rounded-xl border border-stone-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none text-xs font-bold text-stone-900 placeholder:text-stone-400"
             />
 
