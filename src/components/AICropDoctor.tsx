@@ -5,6 +5,7 @@ import {
   CheckCircle2, Sprout, Bot, ArrowRight
 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
+import { GeminiVisionLiveService } from '@/services/GeminiVisionLiveService';
 
 type Message = { 
   role: 'user' | 'assistant'; 
@@ -315,68 +316,18 @@ export default function AICropDoctor() {
     setLoading(true);
 
     try {
-      let reply: string | null = null;
+      const historyFormatted = messages.map((m) => ({
+        role: m.role,
+        text: m.content,
+      }));
 
-      // 1. Call serverless backend proxy `/api/chat`
-      try {
-        const res = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: newMessages, language: lang }),
-        });
-
-        if (res.ok) {
-          const json = await res.json();
-          if (json?.reply) reply = json.reply;
-        }
-      } catch (err) {
-        console.warn('Backend chat API error, switching to agronomy engine:', err);
-      }
-
-      // 2. Direct client fallback if API key in client env
-      if (!reply && import.meta.env.VITE_GEMINI_API_KEY) {
-        try {
-          const languageName = getLanguageName(lang);
-          const systemPrompt = `You are CropHealth AI (कृषि-रक्षा AI), the official Senior Agricultural Scientist assisting Indian farmers. Respond in ${languageName} with ICAR dosages and spray guidelines.`;
-          const contents = newMessages.map((m) => {
-            const role = m.role === 'assistant' ? 'model' : 'user';
-            const parts: GeminiPart[] = [];
-            if (m.image) {
-              const match = m.image.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
-              if (match) parts.push({ inline_data: { mime_type: match[1], data: match[2] } });
-            }
-            if (m.content) parts.push({ text: m.content });
-            return { role, parts };
-          });
-
-          for (const model of GEMINI_MODELS) {
-            const response = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(import.meta.env.VITE_GEMINI_API_KEY)}`,
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  contents,
-                  system_instruction: { parts: [{ text: systemPrompt }] },
-                  generationConfig: { temperature: 0.35, maxOutputTokens: 800 },
-                }),
-              }
-            );
-            if (response.ok) {
-              const data = await response.json();
-              reply = extractGeminiReply(data);
-              if (reply) break;
-            }
-          }
-        } catch (clientErr) {
-          console.warn('Direct client call failed:', clientErr);
-        }
-      }
-
-      // 3. Fallback to Dynamic ICAR Knowledge Engine
-      if (!reply) {
-        reply = getNaturalAgriculturalAdvice(userContent, lang);
-      }
+      const reply = await GeminiVisionLiveService.chatWithGemini(
+        userContent,
+        historyFormatted,
+        currentAttachment,
+        null,
+        lang
+      );
 
       // Save scan to history if image was attached
       if (currentAttachment) {
