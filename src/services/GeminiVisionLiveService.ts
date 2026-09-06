@@ -167,6 +167,29 @@ Instructions:
       });
     }
 
+    // 1. Primary: Call backend dev/edge server proxy `/api/chat`
+    try {
+      const apiRes = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            ...history.map((m) => ({ role: m.role, content: m.text })),
+            { role: 'user', content: userMessage, image: imageBase64 || undefined },
+          ],
+          language,
+        }),
+      });
+
+      if (apiRes.ok) {
+        const json = await apiRes.json();
+        if (json?.reply) return json.reply.trim();
+      }
+    } catch (apiErr) {
+      console.warn('Call to /api/chat had notice:', apiErr);
+    }
+
+    // 2. Direct client fallback with Gemini Vision models
     for (const model of GEMINI_VISION_MODELS) {
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;

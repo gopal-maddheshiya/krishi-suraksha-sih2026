@@ -349,6 +349,42 @@ export class ComputerVisionDiagnosis {
     const bioInstructions = diagnosis?.biologicalInstructions || 'पत्तियों के दोनों ओर अच्छी तरह छिड़कें।';
     const timing = diagnosis?.sprayTimingAdvice || 'शाम को 4:00 बजे के बाद छिड़काव करें।';
 
+    // 0. Greetings, Salutations & Casual Friendly Talk (e.g. "aur bhai kaise ho", "namaste", "ram ram")
+    if (
+      q.includes('kaise ho') || q.includes('kaisa hai') || q.includes('kya haal') || 
+      q.includes('namaste') || q.includes('ram ram') || q.includes('pranam') || 
+      q.includes('hello') || q.includes('hey') || q.includes('namaskar') || 
+      q.includes('kem cho') || (q.includes('bhai') && q.length < 25)
+    ) {
+      if (language === 'hi') {
+        return `राम-राम किसान भाई! 🙏 मैं एकदम बढ़िया हूँ।\n\nआपकी फसल और खेत में सब कैसा चल रहा है? यदि किसी पौधे में बीमारी, पत्तियों का पीलापन, कीड़े या खाद-छिड़काव के बारे में कोई सवाल है तो सीधे पूछें, या नीचे 📷 से पत्ते की फोटो भेजें!`;
+      } else if (language === 'mr') {
+        return `राम-राम शेतकरी मित्र! 🙏 मी एकदम मजेत आहे.\n\nआपल्या शेतात पीक कसे आहे? पिकातील रोग, किडी किंवा फवारणीविषयी काही अडचण असल्यास नक्की विचारा!`;
+      } else {
+        return `Hello farmer friend! 🙏 I am doing great. How are your crops and farm doing today? Feel free to ask any question about plant diseases, pest control, or fertilizers!`;
+      }
+    }
+
+    // 0.1 Identity Questions (e.g. "kaun ho tum", "tum kya ho", "who are you")
+    if (q.includes('kaun ho') || q.includes('kya ho') || q.includes('who are you') || q.includes('tumhara naam') || q.includes('kon ahes')) {
+      if (language === 'hi') {
+        return `मैं **कृषि-रक्षा AI (CropHealth AI)** हूँ — आपका समर्पित डिजिटल कृषि वैज्ञानिक और क्रॉप डॉक्टर! 🌾\n\nमैं आपकी फसलों की बीमारी पहचानने, सही ICAR अनुमोदित दवा व जैविक उपचार बताने, और मौसम अनुसार सुरक्षित छिड़काव में मदद करता हूँ।`;
+      } else if (language === 'mr') {
+        return `मी **कृषी-रक्षा AI** आहे — आपला समर्पित डिजिटल कृषी तज्ञ आणि पीक डॉक्टर! 🌾`;
+      } else {
+        return `I am **CropHealth AI (कृषि-रक्षा AI)** — your dedicated Senior Agronomist and Digital Crop Doctor! 🌾`;
+      }
+    }
+
+    // 0.2 Gratitude (e.g. "dhanyawad", "shukriya", "thanks", "thank you")
+    if (q.includes('dhanyawad') || q.includes('shukriya') || q.includes('thank') || q.includes('abhaar') || q.includes('aabhar')) {
+      if (language === 'hi') {
+        return `आपका बहुत-बहुत धन्यवाद किसान भाई! 🙏 सदैव आपकी सेवा में। यदि कोई और समस्या हो तो बेझिझक पूछें। जय जवान, जय किसान! 🌾`;
+      } else {
+        return `You are most welcome! Always here to assist your farm. Jai Jawan, Jai Kisan! 🌾`;
+      }
+    }
+
     // 1. User asks what crop/fruit it is ("kaun si fasal", "fal batao", "ye kya hai")
     if (
       q.includes('kaun si') || q.includes('kaunsa') || q.includes('kon sa') || 
