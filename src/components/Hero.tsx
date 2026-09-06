@@ -727,7 +727,13 @@ export default function Hero({ onNavigate, onOpenOnboarding }: HeroProps) {
               <img 
                 src={cropImageUrl} 
                 alt={cropName} 
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90" 
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.endsWith('/images/sample-cotton.jpg')) {
+                    target.src = '/images/sample-cotton.jpg';
+                  }
+                }}
               />
 
               {/* Dark Gradient Overlay for Crisp Text Contrast */}
